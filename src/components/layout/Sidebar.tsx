@@ -7,7 +7,7 @@ import {
   Text,
 } from "@chakra-ui/react";
 import { FiUsers, FiCompass } from "react-icons/fi";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
 
 const recentViewed = [
   {

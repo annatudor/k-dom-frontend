@@ -9,7 +9,14 @@ import {
 
 export function Footer() {
   return (
-    <Box bg="purple.900" color="white" py={12} px={0} width="100%">
+    <Box
+      bgGradient="linear(to-t, red.800, pink.100)"
+      color="white"
+      py={12}
+      px={0}
+      width="100%"
+      borderRadius={"10px"}
+    >
       <Box maxW="1400px" mx="auto" px={8}>
         <Flex
           wrap="wrap"

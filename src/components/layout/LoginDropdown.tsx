@@ -11,7 +11,7 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { useState } from "react";
 
-export function SignInDropdown() {
+export function LoginDropdown() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

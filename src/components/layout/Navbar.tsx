@@ -11,13 +11,13 @@ import {
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
-import { useAuth } from "../hooks/useAuth";
-import { SignInDropdown } from "./SignInDropdown";
+import { useAuth } from "@/context/AuthContext";
+import { LoginDropdown } from "./LoginDropdown";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { AvatarDrawer } from "./AvatarDrawer";
 
 export function Navbar() {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const bg = useColorModeValue("white", "gray.900");
 
   return (
@@ -63,7 +63,9 @@ export function Navbar() {
                   Start a K-Dom
                 </Button>
               </RouterLink>
-              <SignInDropdown />
+              <RouterLink to="/login">
+                <LoginDropdown />
+              </RouterLink>
             </>
           ) : (
             <>

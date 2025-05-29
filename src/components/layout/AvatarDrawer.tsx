@@ -1,6 +1,7 @@
 import {
   Avatar,
   Box,
+  Button,
   Divider,
   Drawer,
   DrawerBody,
@@ -13,10 +14,12 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "@/context/AuthContext";
+
+//               <Button as={RouterLink} to="/auth/signin">
 
 export function AvatarDrawer() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   if (!user) return null;
@@ -25,7 +28,6 @@ export function AvatarDrawer() {
     <>
       <Avatar
         name={user.username}
-        src={user.avatar}
         size="sm"
         cursor="pointer"
         onClick={onOpen}
@@ -37,7 +39,7 @@ export function AvatarDrawer() {
           <DrawerCloseButton />
           <DrawerHeader borderBottomWidth="1px">
             <Stack direction="row" align="center" spacing={4}>
-              <Avatar src={user.avatar} name={user.username} />
+              <Avatar name={user.username} />
               <Box fontWeight="bold">{user.username}</Box>
             </Stack>
           </DrawerHeader>
@@ -56,6 +58,7 @@ export function AvatarDrawer() {
               <Link as={RouterLink} to="/create-post">
                 Create a Post
               </Link>
+              <Button onClick={logout}>Logout</Button>
 
               {["admin", "moderator"].includes(user.role) && (
                 <>

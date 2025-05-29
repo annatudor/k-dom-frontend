@@ -1,23 +1,24 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { ChakraProvider, extendTheme, ColorModeScript } from "@chakra-ui/react";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App";
+import { ChakraProvider, ColorModeScript } from "@chakra-ui/react";
+import { RouterProvider } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./context/AuthContext";
 
-const theme = extendTheme({
-  config: {
-    initialColorMode: "light",
-    useSystemColorMode: false,
-  },
-});
+import { router } from "@/routes/router";
+import theme from "@/themes/theme"; // dacă ai un fișier pentru temă Chakra
+
+const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
+    <ColorModeScript initialColorMode={theme.config.initialColorMode} />
     <ChakraProvider theme={theme}>
-      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </QueryClientProvider>
     </ChakraProvider>
   </React.StrictMode>
 );
