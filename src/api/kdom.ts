@@ -11,11 +11,20 @@ import type {
   KDomTagSearchResultDto,
   KDomTrendingDto,
   KDomSubCreateDto,
+  Language,
+  Hub,
+  KDomTheme,
 } from "../types/KDom";
 
 // CRUD
 export const createKDom = async (data: KDomCreateDto) => {
-  await API.post("/kdoms", data);
+  // The issue is likely with the Content-Type header or data serialization
+  const response = await API.post("/kdoms", data, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return response;
 };
 
 export const editKDom = async (id: string, data: KDomEditDto) => {
@@ -139,17 +148,17 @@ export const getSuggestedKdoms = async (): Promise<
   return res.data;
 };
 
-export const getLanguages = async (): Promise<string[]> => {
-  const res = await API.get("/kdoms/languages");
+export const getLanguages = async (): Promise<Language[]> => {
+  const res = await API.get<Language[]>("/kdoms/languages");
   return res.data;
 };
 
-export const getThemes = async (): Promise<string[]> => {
-  const res = await API.get("/kdoms/themes");
+export const getHubs = async (): Promise<Hub[]> => {
+  const res = await API.get<Hub[]>("/kdoms/hubs");
   return res.data;
 };
 
-export const getHubs = async (): Promise<string[]> => {
-  const res = await API.get("/kdoms/hubs");
+export const getThemes = async (): Promise<KDomTheme[]> => {
+  const res = await API.get<KDomTheme[]>("/kdoms/themes");
   return res.data;
 };

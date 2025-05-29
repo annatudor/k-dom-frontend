@@ -7,9 +7,18 @@ import { KDomNameStep } from "./KDomNameStep";
 import { KDomAboutStep } from "./KDomAboutStep";
 import { ThemeSelectionStep } from "./ThemeSelectionStep";
 import { FinalStep } from "./FinalStep";
+import type { Language, Hub, KDomTheme } from "@/types/KDom";
+import { useCreateKDom } from "@/hooks/useCreateKDom";
+import { useKDomToasts } from "@/utils/toastUtils";
+import {
+  isStepComplete,
+  mapFormDataToCreateDto,
+  validateCompleteForm,
+} from "@/utils/formValidation";
 
 const MotionBox = motion.create(Box);
 
+// FormData actualizat fără categories
 export type FormData = {
   kdomName: string;
   kdomUrl: string;
@@ -17,7 +26,6 @@ export type FormData = {
   description: string;
   hub: string;
   isForChildren: boolean;
-  categories: string[];
   theme: string;
 };
 
@@ -26,27 +34,73 @@ export type FieldChange = <K extends keyof FormData>(
   value: FormData[K]
 ) => void;
 
+const STEP_NAMES = [
+  "Name your K-Dom",
+  "About your K-Dom",
+  "Choose theme",
+  "All set!",
+];
+
 export function StartKDomForm() {
   const [activeStep, setActiveStep] = useState(0);
   const prev = useRef(activeStep);
+
   useEffect(() => {
     prev.current = activeStep;
   }, [activeStep]);
+
   const dir = activeStep > prev.current ? 1 : -1;
 
   const [formData, setFormData] = useState<FormData>({
     kdomName: "",
     kdomUrl: "",
-    language: "en",
+    language: undefined as unknown as Language,
     description: "",
-    hub: "",
+    hub: undefined as unknown as Hub,
     isForChildren: false,
-    categories: [],
-    theme: "",
+    theme: undefined as unknown as KDomTheme,
+  });
+
+  const { showStepIncomplete, showValidationErrors } = useKDomToasts();
+  const createKDom = useCreateKDom({
+    onSuccess: () => {
+      // Navighează la step-ul final
+      setActiveStep(3);
+    },
   });
 
   const handleFieldChange: FieldChange = (field, value) => {
     setFormData((f) => ({ ...f, [field]: value }));
+  };
+
+  const handleNext = () => {
+    const currentStepComplete = isStepComplete(activeStep, formData);
+
+    if (!currentStepComplete) {
+      showStepIncomplete(STEP_NAMES[activeStep]);
+      return;
+    }
+
+    setActiveStep((s) => s + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((s) => s - 1);
+  };
+
+  const handleCreateKDom = async () => {
+    // Validare finală
+    console.log("FormData înainte de mapare:", formData);
+    const errors = validateCompleteForm(formData);
+    if (errors.length > 0) {
+      showValidationErrors(errors);
+      return;
+    }
+
+    // Transformă și trimite datele
+    const createDto = mapFormDataToCreateDto(formData);
+    console.log("DTO generat:", createDto);
+    createKDom.mutate(createDto);
   };
 
   const steps = [
@@ -68,11 +122,15 @@ export function StartKDomForm() {
     <FinalStep key="final" />,
   ];
 
+  const isCurrentStepComplete = isStepComplete(activeStep, formData);
+  const isLastStep = activeStep === steps.length - 1;
+  const isSecondToLastStep = activeStep === steps.length - 2;
+
   return (
     <Container maxW="container.md" py={8}>
       <StepProgress activeStep={activeStep} />
 
-      <Box pos="relative" h="400px" overflow="hidden">
+      <Box pos="relative" h="500px" overflow="hidden">
         <AnimatePresence initial={false} custom={dir}>
           <MotionBox
             key={activeStep}
@@ -98,24 +156,37 @@ export function StartKDomForm() {
         </AnimatePresence>
       </Box>
 
-      <Box mt={8} display="flex" justifyContent="space-between">
-        <Button
-          onClick={() => setActiveStep((s) => s - 1)}
-          isDisabled={activeStep === 0}
-        >
-          Back
-        </Button>
-        {activeStep < steps.length - 1 ? (
+      {!isLastStep && (
+        <Box mt={8} display="flex" justifyContent="space-between">
           <Button
-            colorScheme="purple"
-            onClick={() => setActiveStep((s) => s + 1)}
+            onClick={handleBack}
+            isDisabled={activeStep === 0}
+            variant="outline"
           >
-            Next
+            Back
           </Button>
-        ) : (
-          <Button colorScheme="green">Create My K-Dom</Button>
-        )}
-      </Box>
+
+          {isSecondToLastStep ? (
+            <Button
+              colorScheme="green"
+              onClick={handleCreateKDom}
+              isLoading={createKDom.isPending}
+              loadingText="Creating..."
+              isDisabled={!isCurrentStepComplete}
+            >
+              Create My K-Dom
+            </Button>
+          ) : (
+            <Button
+              colorScheme="purple"
+              onClick={handleNext}
+              isDisabled={!isCurrentStepComplete}
+            >
+              Next
+            </Button>
+          )}
+        </Box>
+      )}
     </Container>
   );
 }

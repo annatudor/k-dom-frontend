@@ -15,35 +15,50 @@ interface StepProgressProps {
 
 export function StepProgress({ activeStep }: StepProgressProps) {
   return (
-    <Flex align="center" w="100%" mb={6}>
+    <Flex align="center" w="100%" mb={8}>
       {labels.map((label, i) => {
         const Icon = icons[i];
         const isActive = i === activeStep;
         const isDone = i < activeStep;
+        const isLast = i === labels.length - 1;
+
         return (
-          <Flex key={i} align="center" flex="1">
-            <Box
-              p={2}
-              borderRadius="full"
-              bg={isDone ? "purple.500" : isActive ? "purple.400" : "gray.200"}
-              color="white"
-            >
-              <Icon />
-            </Box>
-            <Text
-              ml={2}
-              fontSize="sm"
-              fontWeight={isActive ? "bold" : "normal"}
-              color={isDone || isActive ? "gray.800" : "gray.500"}
-            >
-              {label}
-            </Text>
-            {i < labels.length - 1 && (
+          <Flex key={i} align="center" flex={isLast ? "0" : "1"}>
+            <Flex align="center" minW="fit-content">
+              <Box
+                p={2}
+                borderRadius="full"
+                bg={isDone ? "green.500" : isActive ? "purple.500" : "gray.200"}
+                color={isDone || isActive ? "white" : "gray.500"}
+                minW="40px"
+                minH="40px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Icon size="16px" />
+              </Box>
+              <Box ml={3}>
+                <Text
+                  fontSize="sm"
+                  fontWeight={isActive ? "bold" : "normal"}
+                  color={
+                    isDone ? "green.600" : isActive ? "purple.600" : "gray.500"
+                  }
+                  whiteSpace="nowrap"
+                >
+                  {label}
+                </Text>
+              </Box>
+            </Flex>
+
+            {!isLast && (
               <Divider
                 orientation="horizontal"
                 flex="1"
-                mx={2}
-                borderColor={i < activeStep ? "purple.500" : "gray.200"}
+                mx={4}
+                borderColor={i < activeStep ? "green.500" : "gray.200"}
+                borderWidth="2px"
               />
             )}
           </Flex>

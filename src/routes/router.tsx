@@ -9,6 +9,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import StartKDom from "@/pages/StartKDom";
 // import KDomPage from "@/pages/KDom";
 // import NotFound from "@/pages/NotFound";
 
@@ -26,6 +27,7 @@ export const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: "/", element: <Home /> },
+      { path: "/start-kdom", element: <StartKDom /> }, // Placeholder for Start K-Dom page
       // { path: "/kdoms/:slug", element: <KDomPage /> },
       // { path: "*", element: <NotFound /> },
     ],

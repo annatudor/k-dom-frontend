@@ -58,7 +58,7 @@ export function Navbar() {
         <HStack spacing={4}>
           {!isAuthenticated ? (
             <>
-              <RouterLink to="/start">
+              <RouterLink to="/start-kdom">
                 <Button variant="ghost" size="sm">
                   Start a K-Dom
                 </Button>
@@ -69,6 +69,11 @@ export function Navbar() {
             </>
           ) : (
             <>
+              <RouterLink to="/start-kdom">
+                <Button variant="ghost" size="sm">
+                  Start a K-Dom
+                </Button>
+              </RouterLink>
               <NotificationDropdown />
               <AvatarDrawer />
             </>

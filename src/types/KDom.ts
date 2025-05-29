@@ -1,6 +1,12 @@
-export type Language = "en" | "ro" | "fr" | "de" | "es";
-export type Hub = "News" | "Music" | "Games" | "Groups" | "Sports";
-export type KDomTheme = "light" | "dark" | "vibrant" | "minimal";
+export type Language = "En" | "Ro" | "Kr" | "Jp" | "Fr" | "De";
+export type Hub =
+  | "Music"
+  | "Anime"
+  | "Kpop"
+  | "Gaming"
+  | "Literature"
+  | "Fashion";
+export type KDomTheme = "Light" | "Dark" | "Vibrant" | "Pastel";
 
 export interface KDomCreateDto {
   title: string;
