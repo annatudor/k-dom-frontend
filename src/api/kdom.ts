@@ -74,21 +74,27 @@ export const getMetadataHistory = async (
 
 // Relations
 export const getParentKDom = async (
-  id: string
-): Promise<KDomTagSearchResultDto> => {
-  const res = await API.get(`/kdoms/${id}/parent`);
-  return res.data;
+  idOrSlug: string
+): Promise<KDomTagSearchResultDto | null> => {
+  try {
+    const res = await API.get(`/kdoms/${idOrSlug}/parent`);
+    return res.data;
+  } catch {
+    return null;
+  }
 };
 
-export const getChildKDoms = async (id: string): Promise<KDomDisplayDto[]> => {
-  const res = await API.get(`/kdoms/${id}/children`);
+export const getChildKDoms = async (
+  idOrSlug: string
+): Promise<KDomDisplayDto[]> => {
+  const res = await API.get(`/kdoms/${idOrSlug}/children`);
   return res.data;
 };
 
 export const getRelatedKDoms = async (
-  id: string
+  idOrSlug: string
 ): Promise<KDomDisplayDto[]> => {
-  const res = await API.get(`/kdoms/${id}/related`);
+  const res = await API.get(`/kdoms/${idOrSlug}/related`);
   return res.data;
 };
 
@@ -162,3 +168,25 @@ export const getThemes = async (): Promise<KDomTheme[]> => {
   const res = await API.get<KDomTheme[]>("/kdoms/themes");
   return res.data;
 };
+
+export const getKDomBySlug = async (slug: string): Promise<KDomReadDto> => {
+  const res = await API.get(`/kdoms/slug/${slug}`);
+  return res.data;
+};
+// Slug = async (slug: string): Promise<KDomReadDto> => {
+//   // Înainte de a implementa endpoint-ul specific pentru slug,
+//   // poți folosi o soluție temporară care caută prin toate K-Dom-urile
+//   // sau poți adăuga un endpoint nou în backend
+
+//   // Pentru moment, returnez un call la endpoint-ul existing
+//   // și voi căuta K-Dom-ul după slug
+//   try {
+//     // Dacă ai un endpoint specific pentru slug
+//     const res = await API.get(`/kdoms/by-slug/${slug}`);
+//     return res.data;
+//   } catch (error) {
+//     // Fallback: încearcă să găsești K-Dom-ul după ID dacă slug-ul e de fapt un ID
+//     const res = await API.get(`/kdoms/${slug}`);
+//     return res.data;
+//   }
+// };
