@@ -21,6 +21,8 @@ import {
   FiBookOpen,
   FiGitBranch,
   FiExternalLink,
+  FiSettings,
+  FiPlus,
 } from "react-icons/fi";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink } from "react-router-dom";
@@ -31,15 +33,29 @@ import {
   getRelatedKDoms,
   getKDomFollowersCount,
 } from "@/api/kdom";
+import { useAuth } from "@/context/AuthContext";
 
 interface KDomSidebarProps {
   kdomId: string;
-  kdomSlug: string; // Add slug prop
+  kdomSlug: string;
+  kdomUserId?: number; // Add user ID to check permissions
 }
 
-export function KDomSidebar({ kdomId, kdomSlug }: KDomSidebarProps) {
+export function KDomSidebar({
+  kdomId,
+  kdomSlug,
+  kdomUserId,
+}: KDomSidebarProps) {
+  const { user } = useAuth();
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const cardBg = useColorModeValue("white", "gray.700");
+
+  // Check if user can edit this K-Dom
+  const canEdit =
+    user &&
+    (user.id === kdomUserId ||
+      user.role === "admin" ||
+      user.role === "moderator");
 
   // Query pentru pagina părinte
   const { data: parentKdom } = useQuery({
@@ -158,7 +174,7 @@ export function KDomSidebar({ kdomId, kdomSlug }: KDomSidebarProps) {
       )}
 
       {/* Sub-pagini */}
-      {childKdoms.length > 0 && (
+      {(childKdoms.length > 0 || canEdit) && (
         <Card
           bg={cardBg}
           borderWidth="1px"
@@ -175,45 +191,85 @@ export function KDomSidebar({ kdomId, kdomSlug }: KDomSidebarProps) {
                   Sub-pages
                 </Heading>
               </HStack>
-              <Badge
-                colorScheme="purple"
-                borderRadius="full"
-                fontSize="sm"
-                fontWeight="bold"
-              >
-                {childKdoms.length}
-              </Badge>
+              <HStack spacing={2}>
+                {childKdoms.length > 0 && (
+                  <Badge
+                    colorScheme="purple"
+                    borderRadius="full"
+                    fontSize="sm"
+                    fontWeight="bold"
+                  >
+                    {childKdoms.length}
+                  </Badge>
+                )}
+                {canEdit && (
+                  <Button
+                    as={RouterLink}
+                    to={`/kdoms/${kdomSlug}/create-sub`}
+                    size="xs"
+                    colorScheme="green"
+                    leftIcon={<Icon as={FiPlus} />}
+                    borderRadius="full"
+                  >
+                    Add
+                  </Button>
+                )}
+              </HStack>
             </HStack>
           </CardHeader>
           <CardBody pt={3}>
             <VStack align="start" spacing={3}>
-              {childKdoms.slice(0, 5).map((child) => (
-                <Link
-                  key={child.id}
-                  as={RouterLink}
-                  to={`/kdom/${child.slug}`}
-                  color="blue.500"
-                  fontSize="md"
-                  fontWeight="semibold"
-                  _hover={{
-                    textDecoration: "none",
-                    color: "blue.600",
-                    bg: "blue.50",
-                    px: 3,
-                    py: 2,
-                    borderRadius: "md",
-                    ml: -3,
-                  }}
-                  transition="all 0.2s"
-                  display="block"
-                  w="full"
-                >
-                  {child.title}
-                </Link>
-              ))}
-              {childKdoms.length > 5 && (
-                <Text fontSize="sm" color="gray.500" fontWeight="medium">
-                  +{childKdoms.length - 5} more pages
+              {childKdoms.length > 0 ? (
+                <>
+                  {childKdoms.slice(0, 5).map((child) => (
+                    <Link
+                      key={child.id}
+                      as={RouterLink}
+                      to={`/kdoms/${child.slug}`}
+                      color="blue.500"
+                      fontSize="md"
+                      fontWeight="semibold"
+                      _hover={{
+                        textDecoration: "none",
+                        color: "blue.600",
+                        bg: "blue.50",
+                        px: 3,
+                        py: 2,
+                        borderRadius: "md",
+                        ml: -3,
+                      }}
+                      transition="all 0.2s"
+                      display="block"
+                      w="full"
+                    >
+                      {child.title}
+                    </Link>
+                  ))}
+                  {childKdoms.length > 5 && (
+                    <Text fontSize="sm" color="gray.500" fontWeight="medium">
+                      +{childKdoms.length - 5} more pages
+                    </Text>
+                  )}
+                </>
+              ) : canEdit ? (
+                <VStack spacing={2} align="start" w="full">
+                  <Text fontSize="sm" color="gray.500">
+                    No sub-pages yet
+                  </Text>
+                  <Button
+                    as={RouterLink}
+                    to={`/kdoms/${kdomSlug}/create-sub`}
+                    size="sm"
+                    colorScheme="green"
+                    leftIcon={<Icon as={FiPlus} />}
+                    variant="outline"
+                  >
+                    Create First Sub-page
+                  </Button>
+                </VStack>
+              ) : (
+                <Text fontSize="sm" color="gray.500">
+                  No sub-pages available
                 </Text>
               )}
             </VStack>
@@ -289,10 +345,9 @@ export function KDomSidebar({ kdomId, kdomSlug }: KDomSidebarProps) {
         </CardHeader>
         <CardBody pt={3}>
           <VStack align="start" spacing={3}>
-            {/* Fixed: Use slug instead of ID */}
             <Button
               as={RouterLink}
-              to={`/kdom/${kdomSlug}/history`}
+              to={`/kdoms/${kdomSlug}/history`}
               variant="ghost"
               size="md"
               leftIcon={<Icon as={FiClock} />}
@@ -306,7 +361,26 @@ export function KDomSidebar({ kdomId, kdomSlug }: KDomSidebarProps) {
             >
               View History
             </Button>
-            {/* Fixed: Use slug for consistency */}
+
+            {canEdit && (
+              <Button
+                as={RouterLink}
+                to={`/kdom/${kdomSlug}/metadata`}
+                variant="ghost"
+                size="md"
+                leftIcon={<Icon as={FiSettings} />}
+                justifyContent="flex-start"
+                w="full"
+                color="gray.600"
+                fontWeight="semibold"
+                _hover={{ bg: "gray.100", color: "gray.800" }}
+                px={3}
+                py={2}
+              >
+                Edit Settings
+              </Button>
+            )}
+
             <Button
               as={RouterLink}
               to={`/kdom/${kdomSlug}/contributors`}
@@ -363,15 +437,30 @@ export function KDomSidebar({ kdomId, kdomSlug }: KDomSidebarProps) {
               Add content, fix errors, or suggest improvements to make this page
               better for everyone
             </Text>
-            <Button
-              colorScheme="blue"
-              size="sm"
-              variant="solid"
-              borderRadius="full"
-              px={6}
-            >
-              Contribute
-            </Button>
+            {canEdit ? (
+              <Button
+                as={RouterLink}
+                to={`/kdom/${kdomSlug}/edit`}
+                colorScheme="blue"
+                size="sm"
+                variant="solid"
+                borderRadius="full"
+                px={6}
+              >
+                Edit Content
+              </Button>
+            ) : (
+              <Button
+                colorScheme="blue"
+                size="sm"
+                variant="solid"
+                borderRadius="full"
+                px={6}
+                isDisabled
+              >
+                Contribute
+              </Button>
+            )}
           </VStack>
         </CardBody>
       </Card>

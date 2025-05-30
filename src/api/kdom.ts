@@ -14,6 +14,7 @@ import type {
   Language,
   Hub,
   KDomTheme,
+  KDomSearchResult, // <-- Add this import
 } from "../types/KDom";
 
 // CRUD
@@ -202,4 +203,24 @@ export const getHubs = async (): Promise<Hub[]> => {
 export const getThemes = async (): Promise<KDomTheme[]> => {
   const res = await API.get<KDomTheme[]>("/kdoms/themes");
   return res.data;
+};
+
+export const searchKDomsForParent: (
+  query: string
+) => Promise<KDomSearchResult[]> = async (
+  query: string
+): Promise<KDomSearchResult[]> => {
+  if (!query.trim()) return [];
+
+  const res = await API.get(`/kdoms/search-tag-slug`, {
+    params: { q: query.trim() },
+  });
+
+  // Transformă rezultatele pentru a avea interfața corectă
+  return res.data.map((item: KDomSearchResult) => ({
+    id: item.id,
+    title: item.title,
+    slug: item.slug,
+    description: item.description || "Unknown",
+  }));
 };

@@ -36,7 +36,7 @@ export interface KDomUpdateMetadataDto {
   language: Language;
   theme: KDomTheme;
   isForKids: boolean;
-  parentId?: string;
+  parentId?: string | null; // Allow null for no parent
 }
 
 export interface KDomRejectDto {
@@ -64,6 +64,8 @@ export interface KDomMetadataEditReadDto {
 
 export interface KDomReadDto {
   id: string;
+  parentId?: string | null; // Allow null for no parent
+  // Changed from kdomId to slug for frontend-backend compatibility
   title: string;
   slug: string;
   description: string;
@@ -109,4 +111,11 @@ export interface KDomSubCreateDto {
   description: string;
   contentHtml: string;
   theme: KDomTheme;
+}
+
+export interface KDomSearchResult {
+  id: string;
+  title: string;
+  slug: string;
+  description?: string;
 }

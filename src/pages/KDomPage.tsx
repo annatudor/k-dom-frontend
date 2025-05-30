@@ -310,7 +310,7 @@ export default function KDomPage() {
                           variant="outline"
                           size="lg"
                           as={RouterLink}
-                          to={`/kdom/${kdom.slug}/edit`}
+                          to={`/kdoms/${kdom.slug}/edit`}
                           borderColor="white"
                           color="white"
                           _hover={{ bg: "whiteAlpha.200" }}
@@ -393,7 +393,11 @@ export default function KDomPage() {
             {/* Sidebar */}
             <GridItem display={{ base: "none", lg: "block" }}>
               <Box position="sticky" top="20px">
-                <KDomSidebar kdomId={kdom.id} kdomSlug={kdom.slug} />
+                <KDomSidebar
+                  kdomId={kdom.id}
+                  kdomSlug={kdom.slug}
+                  kdomUserId={kdom.userId}
+                />
               </Box>
             </GridItem>
           </Grid>
