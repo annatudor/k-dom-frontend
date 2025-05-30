@@ -21,12 +21,15 @@ export interface KDomCreateDto {
 }
 
 export interface KDomEditDto {
+  kdomSlug: string; // Changed from kdomId to kdomSlug
   contentHtml: string;
   editNote?: string;
   isMinor?: boolean;
+  isAutoSave?: boolean;
 }
 
 export interface KDomUpdateMetadataDto {
+  kdomSlug: string; // Added kdomSlug field for frontend-backend compatibility
   title: string;
   description: string;
   hub: Hub;

@@ -18,7 +18,6 @@ import type {
 
 // CRUD
 export const createKDom = async (data: KDomCreateDto) => {
-  // The issue is likely with the Content-Type header or data serialization
   const response = await API.post("/kdoms", data, {
     headers: {
       "Content-Type": "application/json",
@@ -27,10 +26,25 @@ export const createKDom = async (data: KDomCreateDto) => {
   return response;
 };
 
+// Updated to use slug-based editing (primary method)
+export const editKDomBySlug = async (slug: string, data: KDomEditDto) => {
+  await API.put(`/kdoms/slug/${slug}`, data);
+};
+
+// Keep backward compatibility with ID-based editing
 export const editKDom = async (id: string, data: KDomEditDto) => {
   await API.put(`/kdoms/${id}`, data);
 };
 
+// Updated to use slug-based metadata updates (primary method)
+export const updateMetadataBySlug = async (
+  slug: string,
+  data: KDomUpdateMetadataDto
+) => {
+  await API.put(`/kdoms/slug/${slug}/metadata`, data);
+};
+
+// Keep backward compatibility with ID-based metadata updates
 export const updateMetadata = async (
   id: string,
   data: KDomUpdateMetadataDto
@@ -38,7 +52,7 @@ export const updateMetadata = async (
   await API.put(`/kdoms/${id}/metadata`, data);
 };
 
-// Approve/Reject
+// Approve/Reject (still ID-based for admin operations)
 export const approveKDom = async (id: string) => {
   await API.post(`/kdoms/${id}/approve`);
 };
@@ -52,9 +66,22 @@ export const getPendingKdoms = async (): Promise<KDomDisplayDto[]> => {
   return res.data;
 };
 
-// Read
+// Read operations - supporting both ID and slug
 export const getKDomById = async (id: string): Promise<KDomReadDto> => {
   const res = await API.get(`/kdoms/${id}`);
+  return res.data;
+};
+
+export const getKDomBySlug = async (slug: string): Promise<KDomReadDto> => {
+  const res = await API.get(`/kdoms/slug/${slug}`);
+  return res.data;
+};
+
+// Edit History - supporting both slug and ID
+export const getEditHistoryBySlug = async (
+  slug: string
+): Promise<KDomEditReadDto[]> => {
+  const res = await API.get(`/kdoms/slug/${slug}/edits`);
   return res.data;
 };
 
@@ -65,6 +92,14 @@ export const getEditHistory = async (
   return res.data;
 };
 
+// Metadata History - supporting both slug and ID
+export const getMetadataHistoryBySlug = async (
+  slug: string
+): Promise<KDomMetadataEditReadDto[]> => {
+  const res = await API.get(`/kdoms/slug/${slug}/metadata-history`);
+  return res.data;
+};
+
 export const getMetadataHistory = async (
   id: string
 ): Promise<KDomMetadataEditReadDto[]> => {
@@ -72,7 +107,7 @@ export const getMetadataHistory = async (
   return res.data;
 };
 
-// Relations
+// Relations (can work with both ID and slug)
 export const getParentKDom = async (
   idOrSlug: string
 ): Promise<KDomTagSearchResultDto | null> => {
@@ -103,7 +138,7 @@ export const createSubKDom = async (id: string, data: KDomSubCreateDto) => {
   await API.post(`/kdoms/${id}/sub`, data);
 };
 
-// Follow
+// Follow operations (using ID)
 export const followKDom = async (id: string) => {
   await API.post(`/kdoms/${id}/follow`);
 };
@@ -168,25 +203,3 @@ export const getThemes = async (): Promise<KDomTheme[]> => {
   const res = await API.get<KDomTheme[]>("/kdoms/themes");
   return res.data;
 };
-
-export const getKDomBySlug = async (slug: string): Promise<KDomReadDto> => {
-  const res = await API.get(`/kdoms/slug/${slug}`);
-  return res.data;
-};
-// Slug = async (slug: string): Promise<KDomReadDto> => {
-//   // Înainte de a implementa endpoint-ul specific pentru slug,
-//   // poți folosi o soluție temporară care caută prin toate K-Dom-urile
-//   // sau poți adăuga un endpoint nou în backend
-
-//   // Pentru moment, returnez un call la endpoint-ul existing
-//   // și voi căuta K-Dom-ul după slug
-//   try {
-//     // Dacă ai un endpoint specific pentru slug
-//     const res = await API.get(`/kdoms/by-slug/${slug}`);
-//     return res.data;
-//   } catch (error) {
-//     // Fallback: încearcă să găsești K-Dom-ul după ID dacă slug-ul e de fapt un ID
-//     const res = await API.get(`/kdoms/${slug}`);
-//     return res.data;
-//   }
-// };

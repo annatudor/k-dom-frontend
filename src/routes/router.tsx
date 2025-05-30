@@ -11,6 +11,8 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import StartKDom from "@/pages/StartKDom";
 import KDomPage from "@/pages/KDomPage";
+import KDomHistoryPage from "@/pages/KDomHistoryPage";
+import EditKDomPage from "@/pages/EditKDomPage";
 // import NotFound from "@/pages/NotFound";
 
 // import KDomPage from "@/pages/KDom";
@@ -24,7 +26,6 @@ export const router = createBrowserRouter([
       { path: "/register", element: <Register /> },
       { path: "/forgot-password", element: <ForgotPassword /> },
       { path: "/reset-password", element: <ResetPassword /> },
-      { path: "/kdom/:slug", element: <KDomPage /> },
     ],
   },
   {
@@ -33,6 +34,8 @@ export const router = createBrowserRouter([
       { path: "/", element: <Home /> },
       { path: "/start-kdom", element: <StartKDom /> }, // Placeholder for Start K-Dom page
       { path: "/kdoms/slug/:slug", element: <KDomPage /> },
+      { path: "/kdom/:slug/history", element: <KDomHistoryPage /> },
+      { path: "/kdom/:slug/edit", element: <EditKDomPage /> },
       // { path: "*", element: <NotFound /> },
     ],
   },

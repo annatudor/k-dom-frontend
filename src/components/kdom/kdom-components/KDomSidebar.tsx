@@ -34,9 +34,10 @@ import {
 
 interface KDomSidebarProps {
   kdomId: string;
+  kdomSlug: string; // Add slug prop
 }
 
-export function KDomSidebar({ kdomId }: KDomSidebarProps) {
+export function KDomSidebar({ kdomId, kdomSlug }: KDomSidebarProps) {
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const cardBg = useColorModeValue("white", "gray.700");
 
@@ -288,9 +289,10 @@ export function KDomSidebar({ kdomId }: KDomSidebarProps) {
         </CardHeader>
         <CardBody pt={3}>
           <VStack align="start" spacing={3}>
+            {/* Fixed: Use slug instead of ID */}
             <Button
               as={RouterLink}
-              to={`/kdom/${kdomId}/history`}
+              to={`/kdom/${kdomSlug}/history`}
               variant="ghost"
               size="md"
               leftIcon={<Icon as={FiClock} />}
@@ -304,9 +306,10 @@ export function KDomSidebar({ kdomId }: KDomSidebarProps) {
             >
               View History
             </Button>
+            {/* Fixed: Use slug for consistency */}
             <Button
               as={RouterLink}
-              to={`/kdom/${kdomId}/contributors`}
+              to={`/kdom/${kdomSlug}/contributors`}
               variant="ghost"
               size="md"
               leftIcon={<Icon as={FiUsers} />}
