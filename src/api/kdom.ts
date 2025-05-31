@@ -172,9 +172,11 @@ export const checkKDomTitleExists = async (
 };
 
 export const searchKDomTags = async (
-  q: string
+  query: string
 ): Promise<KDomTagSearchResultDto[]> => {
-  const res = await API.get(`/kdoms/search-tag-slug`, { params: { q } });
+  const res = await API.get(`/kdoms/search-tag-slug`, {
+    params: { query }, // Changed from 'q' to 'query' to match backend
+  });
   return res.data;
 };
 
@@ -213,10 +215,10 @@ export const searchKDomsForParent: (
   if (!query.trim()) return [];
 
   const res = await API.get(`/kdoms/search-tag-slug`, {
-    params: { q: query.trim() },
+    params: { query: query.trim() }, // Changed from 'q' to 'query'
   });
 
-  // Transformă rezultatele pentru a avea interfața corectă
+  // Transform results to have the correct interface
   return res.data.map((item: KDomSearchResult) => ({
     id: item.id,
     title: item.title,

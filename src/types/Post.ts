@@ -1,6 +1,7 @@
 export interface PostCreateDto {
   contentHtml: string;
   kdomId?: string;
+  tags?: string[];
 }
 
 export interface PostEditDto {

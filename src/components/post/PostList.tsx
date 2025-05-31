@@ -1,10 +1,10 @@
-import API from "./axios";
+import API from "@/api/axios";
 import type {
   PostCreateDto,
   PostEditDto,
   PostLikeResponseDto,
   PostReadDto,
-} from "../types/Post";
+} from "@/types/Post";
 
 //  Creează o postare (tags generate automat în backend)
 export const createPost = async (data: PostCreateDto): Promise<void> => {
@@ -17,6 +17,17 @@ export const updatePost = async (
   data: PostEditDto
 ): Promise<void> => {
   await API.put(`/posts/${postId}`, data);
+};
+
+//  Șterge o postare
+export const deletePost = async (postId: string): Promise<void> => {
+  await API.delete(`/posts/${postId}`);
+};
+
+//  Toate postările (pentru pagina principală de posts)
+export const getAllPosts = async (): Promise<PostReadDto[]> => {
+  const res = await API.get("/posts");
+  return res.data;
 };
 
 //  Feed personalizat pentru user logat
@@ -41,7 +52,7 @@ export const getPostById = async (id: string): Promise<PostReadDto> => {
 export const getPostsByUserId = async (
   userId: number
 ): Promise<PostReadDto[]> => {
-  const res = await API.get(`/posts/by-user/${userId}`);
+  const res = await API.get(`/posts/user/${userId}`);
   return res.data;
 };
 
@@ -57,10 +68,6 @@ export const getPostsByTag = async (tag: string): Promise<PostReadDto[]> => {
 export const toggleLikePost = async (
   postId: string
 ): Promise<PostLikeResponseDto> => {
-  const res = await API.post(`/posts/${postId}/like`);
+  const res = await API.put(`/posts/${postId}/like`);
   return res.data;
-};
-
-export const deletePost = async (postId: string): Promise<void> => {
-  await API.delete(`/posts/${postId}`);
 };
