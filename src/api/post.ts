@@ -27,7 +27,7 @@ export const getFeed = async (): Promise<PostReadDto[]> => {
 
 //  Feed public pentru guests
 export const getPublicFeed = async (): Promise<PostReadDto[]> => {
-  const res = await API.get("/posts/public");
+  const res = await API.get("/posts/guest-feed");
   return res.data;
 };
 
@@ -41,7 +41,7 @@ export const getPostById = async (id: string): Promise<PostReadDto> => {
 export const getPostsByUserId = async (
   userId: number
 ): Promise<PostReadDto[]> => {
-  const res = await API.get(`/posts/by-user/${userId}`);
+  const res = await API.get(`/posts/user/${userId}`);
   return res.data;
 };
 
@@ -53,6 +53,7 @@ export const getPostsByTag = async (tag: string): Promise<PostReadDto[]> => {
   return res.data;
 };
 
+// FIXED: Changed from PUT to POST to match backend
 // Toggle like/unlike
 export const toggleLikePost = async (
   postId: string

@@ -21,6 +21,7 @@ import {
   Divider,
   Collapse,
   useDisclosure,
+  Icon,
 } from "@chakra-ui/react";
 import {
   FiHeart,
@@ -33,12 +34,15 @@ import {
   FiBookmark,
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
+import { FiExternalLink } from "react-icons/fi";
 
 import { toggleLikePost, deletePost } from "@/api/post";
 import { useAuth } from "@/context/AuthContext";
 import { PostComments } from "@/components/post/PostComments";
 import { EditPostForm } from "@/components/post/EditPostForm";
 import type { PostReadDto } from "@/types/Post";
+import { FiHash, FiTag } from "react-icons/fi";
+import { Wrap, WrapItem } from "@chakra-ui/react";
 
 interface PostCardProps {
   post: PostReadDto;
@@ -235,28 +239,49 @@ export function PostCard({
 
           {/* Tags */}
           {post.tags && post.tags.length > 0 && (
-            <HStack spacing={2} flexWrap="wrap">
-              {post.tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  as={RouterLink}
-                  to={`/kdom/${tag}`}
-                  colorScheme="blue"
-                  variant="subtle"
-                  px={3}
-                  py={1}
-                  borderRadius="full"
-                  fontSize="xs"
-                  fontWeight="medium"
-                  _hover={{ bg: "blue.100", textDecoration: "none" }}
-                  cursor="pointer"
-                >
-                  #{tag}
-                </Badge>
-              ))}
-            </HStack>
+            <Box p={4} borderRadius="lg" borderWidth="1px">
+              <VStack spacing={3} align="stretch">
+                <HStack spacing={2} align="center">
+                  <Icon as={FiTag} color="blue.500" boxSize={4} />
+                  <Text fontSize="sm" fontWeight="semibold" color="blue.700">
+                    Tagged in {post.tags.length} K-Dom
+                    {post.tags.length > 1 ? "s" : ""}:
+                  </Text>
+                </HStack>
+                <Wrap spacing={2}>
+                  {post.tags.map((tag) => (
+                    <WrapItem key={tag}>
+                      <Badge
+                        as={RouterLink}
+                        to={`/kdoms/${tag}`}
+                        colorScheme="blue"
+                        variant="solid"
+                        px={4}
+                        py={2}
+                        borderRadius="full"
+                        fontSize="sm"
+                        fontWeight="semibold"
+                        _hover={{
+                          bg: "blue.600",
+                          textDecoration: "none",
+                          transform: "translateY(-1px)",
+                          boxShadow: "md",
+                        }}
+                        cursor="pointer"
+                        transition="all 0.2s"
+                        display="flex"
+                        alignItems="center"
+                        gap={2}
+                      >
+                        <Icon as={FiHash} boxSize={3} />
+                        {tag}
+                      </Badge>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </VStack>
+            </Box>
           )}
-
           {/* Content */}
           <Box color={textColor}>
             <Box
@@ -348,6 +373,18 @@ export function PostCard({
               _hover={{ bg: "blue.50", color: "blue.600" }}
             >
               Comments
+            </Button>
+
+            <Button
+              as={RouterLink}
+              to={`/post/${post.id}`}
+              leftIcon={<FiExternalLink />}
+              variant="ghost"
+              size="sm"
+              colorScheme="gray"
+              _hover={{ bg: "purple.50", color: "purple.600" }}
+            >
+              View Details
             </Button>
 
             <Button
