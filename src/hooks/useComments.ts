@@ -261,7 +261,6 @@ export function useComments({
   });
 
   // Mutation pentru like/unlike
-  // Mutation pentru like/unlike
   const likeMutation = useMutation({
     mutationFn: toggleLikeComment,
     onMutate: async (commentId) => {
@@ -343,6 +342,7 @@ export function useComments({
       console.log(`[DEBUG] Like mutation settled`);
     },
   });
+
   // Helper functions
   const findCommentReplies = (
     commentList: CommentWithReplies[],
@@ -405,11 +405,11 @@ export function useComments({
     [editMutation]
   );
 
+  // ← SOLUȚIA: Eliminăm window.confirm() din deleteCommentAction
   const deleteCommentAction = useCallback(
     async (commentId: string) => {
-      if (window.confirm("Are you sure you want to delete this comment?")) {
-        deleteMutation.mutate(commentId);
-      }
+      // ← STEP 1: Eliminăm window.confirm() și doar apelăm mutation-ul direct
+      deleteMutation.mutate(commentId);
     },
     [deleteMutation]
   );

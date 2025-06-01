@@ -1,4 +1,4 @@
-// src/components/post/PostCard.tsx - Versiunea actualizată
+// src/components/post/PostCard.tsx - Versiunea actualizată cu DeletePostDialog
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -22,6 +22,8 @@ import {
   Collapse,
   useDisclosure,
   Icon,
+  Wrap,
+  WrapItem,
 } from "@chakra-ui/react";
 import {
   FiHeart,
@@ -32,17 +34,18 @@ import {
   FiFlag,
   FiShare,
   FiBookmark,
+  FiExternalLink,
+  FiHash,
+  FiTag,
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
-import { FiExternalLink } from "react-icons/fi";
 
 import { toggleLikePost, deletePost } from "@/api/post";
 import { useAuth } from "@/context/AuthContext";
-import { UniversalComments } from "@/components/comments/UniversalComments"; // ← Import nou
+import { UniversalComments } from "@/components/comments/UniversalComments";
 import { EditPostForm } from "@/components/post/EditPostForm";
+import { DeletePostDialog } from "@/components/post/DeletePostDialog";
 import type { PostReadDto } from "@/types/Post";
-import { FiHash, FiTag } from "react-icons/fi";
-import { Wrap, WrapItem } from "@chakra-ui/react";
 
 interface PostCardProps {
   post: PostReadDto;
@@ -60,13 +63,20 @@ export function PostCard({
   const queryClient = useQueryClient();
 
   const [showCommentsSection, setShowCommentsSection] = useState(showComments);
-  const [isLiked, setIsLiked] = useState(false); // TODO: Get from user data
+  const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
 
   const {
     isOpen: isEditing,
     onOpen: startEditing,
     onClose: stopEditing,
+  } = useDisclosure();
+
+  const {
+    isOpen: isDeleteDialogOpen,
+    onOpen: openDeleteDialog,
+    onClose: closeDeleteDialog,
   } = useDisclosure();
 
   const cardBg = useColorModeValue("white", "gray.800");
@@ -130,13 +140,15 @@ export function PostCard({
     likeMutation.mutate();
   };
 
-  const handleDelete = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this post? This action cannot be undone."
-      )
-    ) {
-      deleteMutation.mutate();
+  // ← Funcție actualizată pentru delete cu dialog
+  const handleDeleteConfirm = async () => {
+    setIsDeletingPost(true);
+    try {
+      await deleteMutation.mutateAsync();
+    } catch (error) {
+      console.error("Failed to delete post:", error);
+    } finally {
+      setIsDeletingPost(false);
     }
   };
 
@@ -164,207 +176,244 @@ export function PostCard({
   }
 
   return (
-    <Card
-      bg={cardBg}
-      borderWidth="1px"
-      borderColor={borderColor}
-      borderRadius="xl"
-      boxShadow="sm"
-      _hover={{ boxShadow: "md" }}
-      transition="box-shadow 0.2s"
-    >
-      <CardBody p={6}>
-        <VStack spacing={4} align="stretch">
-          {/* Header */}
-          <HStack justify="space-between" align="start">
-            <HStack spacing={3} flex="1">
-              <Avatar size="md" name={post.username} />
-              <VStack align="start" spacing={1} flex="1">
-                <HStack spacing={2} align="center">
-                  <Text fontWeight="bold" fontSize="md">
-                    {post.username}
+    <>
+      <Card
+        bg={cardBg}
+        borderWidth="1px"
+        borderColor={borderColor}
+        borderRadius="xl"
+        boxShadow="sm"
+        _hover={{ boxShadow: "md" }}
+        transition="box-shadow 0.2s"
+      >
+        <CardBody p={6}>
+          <VStack spacing={4} align="stretch">
+            {/* Header */}
+            <HStack justify="space-between" align="start">
+              <HStack spacing={3} flex="1">
+                <Avatar size="md" name={post.username} />
+                <VStack align="start" spacing={1} flex="1">
+                  <HStack spacing={2} align="center">
+                    <Text fontWeight="bold" fontSize="md">
+                      {post.username}
+                    </Text>
+                    {post.isEdited && (
+                      <Badge colorScheme="gray" size="sm">
+                        edited
+                      </Badge>
+                    )}
+                  </HStack>
+                  <Text fontSize="sm" color="gray.500">
+                    {new Date(post.createdAt).toLocaleString()}
+                    {post.isEdited && post.editedAt && (
+                      <>
+                        {" "}
+                        • Last edited {new Date(post.editedAt).toLocaleString()}
+                      </>
+                    )}
                   </Text>
-                  {post.isEdited && (
-                    <Badge colorScheme="gray" size="sm">
-                      edited
-                    </Badge>
-                  )}
-                </HStack>
-                <Text fontSize="sm" color="gray.500">
-                  {new Date(post.createdAt).toLocaleString()}
-                  {post.isEdited && post.editedAt && (
+                </VStack>
+              </HStack>
+
+              {/* Actions Menu */}
+              <Menu>
+                <MenuButton
+                  as={IconButton}
+                  icon={<FiMoreVertical />}
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Post options"
+                />
+                <MenuList>
+                  {canModify && (
                     <>
-                      {" "}
-                      • Last edited {new Date(post.editedAt).toLocaleString()}
+                      <MenuItem icon={<FiEdit3 />} onClick={startEditing}>
+                        Edit Post
+                      </MenuItem>
+                      <MenuItem
+                        icon={<FiTrash2 />}
+                        onClick={openDeleteDialog} // ← Schimbat să deschidă dialog-ul
+                        color="red.500"
+                      >
+                        Delete Post
+                      </MenuItem>
+                      <Divider />
                     </>
                   )}
-                </Text>
-              </VStack>
+                  <MenuItem icon={<FiBookmark />}>Save Post</MenuItem>
+                  <MenuItem icon={<FiShare />} onClick={handleShare}>
+                    Share
+                  </MenuItem>
+                  <MenuItem icon={<FiFlag />} color="red.500">
+                    Report
+                  </MenuItem>
+                </MenuList>
+              </Menu>
             </HStack>
 
-            {/* Actions Menu */}
-            <Menu>
-              <MenuButton
-                as={IconButton}
-                icon={<FiMoreVertical />}
+            {/* Tags */}
+            {post.tags && post.tags.length > 0 && (
+              <Box p={4} borderRadius="lg" borderWidth="1px">
+                <VStack spacing={3} align="stretch">
+                  <HStack spacing={2} align="center">
+                    <Icon as={FiTag} color="blue.500" boxSize={4} />
+                    <Text fontSize="sm" fontWeight="semibold" color="blue.700">
+                      Tagged in {post.tags.length} K-Dom
+                      {post.tags.length > 1 ? "s" : ""}:
+                    </Text>
+                  </HStack>
+                  <Wrap spacing={2}>
+                    {post.tags.map((tag) => (
+                      <WrapItem key={tag}>
+                        <Badge
+                          as={RouterLink}
+                          to={`/kdoms/${tag}`}
+                          colorScheme="blue"
+                          variant="solid"
+                          px={4}
+                          py={2}
+                          borderRadius="full"
+                          fontSize="sm"
+                          fontWeight="semibold"
+                          _hover={{
+                            bg: "blue.600",
+                            textDecoration: "none",
+                            transform: "translateY(-1px)",
+                            boxShadow: "md",
+                          }}
+                          cursor="pointer"
+                          transition="all 0.2s"
+                          display="flex"
+                          alignItems="center"
+                          gap={2}
+                        >
+                          <Icon as={FiHash} boxSize={3} />
+                          {tag}
+                        </Badge>
+                      </WrapItem>
+                    ))}
+                  </Wrap>
+                </VStack>
+              </Box>
+            )}
+
+            {/* Content */}
+            <Box color={textColor}>
+              <Box
+                dangerouslySetInnerHTML={{ __html: post.contentHtml }}
+                sx={{
+                  "& h1, & h2, & h3, & h4, & h5, & h6": {
+                    fontWeight: "bold",
+                    mb: 3,
+                    mt: 4,
+                    _first: { mt: 0 },
+                  },
+                  "& p": {
+                    mb: 3,
+                    lineHeight: "1.6",
+                    _last: { mb: 0 },
+                  },
+                  "& ul, & ol": {
+                    mb: 4,
+                    pl: 6,
+                  },
+                  "& li": {
+                    mb: 2,
+                    lineHeight: "1.6",
+                  },
+                  "& blockquote": {
+                    borderLeft: "4px solid",
+                    borderColor: "blue.400",
+                    pl: 4,
+                    my: 4,
+                    fontStyle: "italic",
+                  },
+                  "& code": {
+                    bg: "gray.100",
+                    px: 2,
+                    py: 1,
+                    borderRadius: "md",
+                    fontSize: "sm",
+                  },
+                  "& pre": {
+                    bg: "gray.100",
+                    p: 4,
+                    borderRadius: "md",
+                    overflow: "auto",
+                    my: 4,
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Action Buttons */}
+            <HStack spacing={6} pt={2}>
+              <Button
+                leftIcon={<FiHeart />}
                 variant="ghost"
                 size="sm"
-                aria-label="Post options"
-              />
-              <MenuList>
-                {canModify && (
-                  <>
-                    <MenuItem icon={<FiEdit3 />} onClick={startEditing}>
-                      Edit Post
-                    </MenuItem>
-                    <MenuItem
-                      icon={<FiTrash2 />}
-                      onClick={handleDelete}
-                      color="red.500"
-                    >
-                      Delete Post
-                    </MenuItem>
-                    <Divider />
-                  </>
-                )}
-                <MenuItem icon={<FiBookmark />}>Save Post</MenuItem>
-                <MenuItem icon={<FiShare />} onClick={handleShare}>
-                  Share
-                </MenuItem>
-                <MenuItem icon={<FiFlag />} color="red.500">
-                  Report
-                </MenuItem>
-              </MenuList>
-            </Menu>
-          </HStack>
+                colorScheme={isLiked ? "red" : "gray"}
+                onClick={handleLike}
+                isLoading={likeMutation.isPending}
+                _hover={{
+                  bg: isLiked ? "red.50" : "gray.50",
+                  color: isLiked ? "red.600" : "gray.600",
+                }}
+              >
+                {likeCount}
+              </Button>
 
-          {/* Tags */}
-          {post.tags && post.tags.length > 0 && (
-            <Box p={4} borderRadius="lg" borderWidth="1px">
-              <VStack spacing={3} align="stretch">
-                <HStack spacing={2} align="center">
-                  <Icon as={FiTag} color="blue.500" boxSize={4} />
-                  <Text fontSize="sm" fontWeight="semibold" color="blue.700">
-                    Tagged in {post.tags.length} K-Dom
-                    {post.tags.length > 1 ? "s" : ""}:
-                  </Text>
-                </HStack>
-                <Wrap spacing={2}>
-                  {post.tags.map((tag) => (
-                    <WrapItem key={tag}>
-                      <Badge
-                        as={RouterLink}
-                        to={`/kdoms/${tag}`}
-                        colorScheme="blue"
-                        variant="solid"
-                        px={4}
-                        py={2}
-                        borderRadius="full"
-                        fontSize="sm"
-                        fontWeight="semibold"
-                        _hover={{
-                          bg: "blue.600",
-                          textDecoration: "none",
-                          transform: "translateY(-1px)",
-                          boxShadow: "md",
-                        }}
-                        cursor="pointer"
-                        transition="all 0.2s"
-                        display="flex"
-                        alignItems="center"
-                        gap={2}
-                      >
-                        <Icon as={FiHash} boxSize={3} />
-                        {tag}
-                      </Badge>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </VStack>
-            </Box>
-          )}
+              <Button
+                leftIcon={<FiMessageCircle />}
+                variant="ghost"
+                size="sm"
+                colorScheme="gray"
+                onClick={() => setShowCommentsSection(!showCommentsSection)}
+                _hover={{ bg: "blue.50", color: "blue.600" }}
+              >
+                Comments
+              </Button>
 
-          {/* Content */}
-          <Box color={textColor}>
-            <Box
-              dangerouslySetInnerHTML={{ __html: post.contentHtml }}
-              sx={{
-                "& h1, & h2, & h3, & h4, & h5, & h6": {
-                  fontWeight: "bold",
-                  mb: 3,
-                  mt: 4,
-                  _first: { mt: 0 },
-                },
-                "& p": {
-                  mb: 3,
-                  lineHeight: "1.6",
-                  _last: { mb: 0 },
-                },
-                // ... alte stiluri CSS ...
-              }}
-            />
-          </Box>
+              <Button
+                as={RouterLink}
+                to={`/post/${post.id}`}
+                leftIcon={<FiExternalLink />}
+                variant="ghost"
+                size="sm"
+                colorScheme="gray"
+                _hover={{ bg: "purple.50", color: "purple.600" }}
+              >
+                View Details
+              </Button>
 
-          {/* Action Buttons */}
-          <HStack spacing={6} pt={2}>
-            <Button
-              leftIcon={<FiHeart />}
-              variant="ghost"
-              size="sm"
-              colorScheme={isLiked ? "red" : "gray"}
-              onClick={handleLike}
-              isLoading={likeMutation.isPending}
-              _hover={{
-                bg: isLiked ? "red.50" : "gray.50",
-                color: isLiked ? "red.600" : "gray.600",
-              }}
-            >
-              {likeCount}
-            </Button>
+              <Button
+                leftIcon={<FiShare />}
+                variant="ghost"
+                size="sm"
+                colorScheme="gray"
+                onClick={handleShare}
+                _hover={{ bg: "green.50", color: "green.600" }}
+              >
+                Share
+              </Button>
+            </HStack>
 
-            <Button
-              leftIcon={<FiMessageCircle />}
-              variant="ghost"
-              size="sm"
-              colorScheme="gray"
-              onClick={() => setShowCommentsSection(!showCommentsSection)}
-              _hover={{ bg: "blue.50", color: "blue.600" }}
-            >
-              Comments
-            </Button>
+            <Collapse in={showCommentsSection} animateOpacity>
+              <Box pt={4} borderTop="1px solid" borderColor={borderColor}>
+                <UniversalComments targetType="Post" targetId={post.id} />
+              </Box>
+            </Collapse>
+          </VStack>
+        </CardBody>
+      </Card>
 
-            <Button
-              as={RouterLink}
-              to={`/post/${post.id}`}
-              leftIcon={<FiExternalLink />}
-              variant="ghost"
-              size="sm"
-              colorScheme="gray"
-              _hover={{ bg: "purple.50", color: "purple.600" }}
-            >
-              View Details
-            </Button>
-
-            <Button
-              leftIcon={<FiShare />}
-              variant="ghost"
-              size="sm"
-              colorScheme="gray"
-              onClick={handleShare}
-              _hover={{ bg: "green.50", color: "green.600" }}
-            >
-              Share
-            </Button>
-          </HStack>
-
-          {/* Comments Section - ÎNLOCUIT CU UniversalComments */}
-          <Collapse in={showCommentsSection} animateOpacity>
-            <Box pt={4} borderTop="1px solid" borderColor={borderColor}>
-              <UniversalComments targetType="Post" targetId={post.id} />
-            </Box>
-          </Collapse>
-        </VStack>
-      </CardBody>
-    </Card>
+      <DeletePostDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={closeDeleteDialog}
+        onConfirm={handleDeleteConfirm}
+        isLoading={isDeletingPost}
+        post={post}
+      />
+    </>
   );
 }
