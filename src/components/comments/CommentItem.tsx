@@ -27,7 +27,6 @@ import {
   FiCornerUpRight,
   FiEdit3,
   FiTrash2,
-  FiFlag,
   FiUser,
   FiCheck,
   FiClock,
@@ -37,6 +36,7 @@ import { useAuth } from "@/context/AuthContext";
 import { CommentForm } from "./CommentForm";
 import { DeleteCommentDialog } from "./DeleteCommentDialog"; // ← Import dialog-ul
 import { formatRelativeTime } from "@/utils/commentUtils";
+import { FlagMenuItem } from "@/components/flag/FlagButton";
 import type {
   CommentWithReplies,
   CommentPermissions,
@@ -234,9 +234,13 @@ export function CommentItem({
                       Delete
                     </MenuItem>
                   )}
-                  <MenuItem icon={<FiFlag />} color="orange.500">
-                    Report
-                  </MenuItem>
+                  <FlagMenuItem
+                    contentType="Comment"
+                    contentId={comment.id}
+                    contentTitle={`Comment by ${comment.username}`}
+                    contentOwnerId={comment.userId} // ← IMPORTANT: Adaugă ID-ul autorului
+                    onClose={() => {}} // Pentru a închide menu-ul
+                  />
                 </MenuList>
               </Menu>
             </HStack>

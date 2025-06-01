@@ -18,7 +18,6 @@ import {
   FiMessageCircle,
   FiShare2,
   FiBookmark,
-  FiFlag,
   FiEdit3,
   FiTrash2,
   FiCopy,
@@ -27,6 +26,7 @@ import {
 import { toggleLikePost, deletePost } from "@/api/post";
 import { useAuth } from "@/context/AuthContext";
 import type { PostReadDto } from "@/types/Post";
+import { FlagButton } from "@/components/flag/FlagButton";
 
 interface PostActionsProps {
   post: PostReadDto;
@@ -132,14 +132,6 @@ export function PostActions({ post, onEdit, onUpdate }: PostActionsProps) {
     });
   };
 
-  const handleReport = () => {
-    toast({
-      title: "Report functionality coming soon!",
-      status: "info",
-      duration: 3000,
-    });
-  };
-
   return (
     <Card
       bg={cardBg}
@@ -222,17 +214,15 @@ export function PostActions({ post, onEdit, onUpdate }: PostActionsProps) {
               Save Post
             </Button>
 
-            <Button
-              leftIcon={<FiFlag />}
+            <FlagButton
+              contentType="Post"
+              contentId={post.id}
+              contentTitle={`Post by ${post.username}`}
+              contentOwnerId={post.userId} // ← IMPORTANT: Adaugă ID-ul autorului
               variant="ghost"
               size="sm"
-              onClick={handleReport}
-              justifyContent="flex-start"
-              color="red.500"
-              _hover={{ bg: "red.50" }}
-            >
-              Report
-            </Button>
+              showLabel={true}
+            />
           </VStack>
 
           {/* Moderation Actions */}

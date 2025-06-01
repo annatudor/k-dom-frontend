@@ -31,7 +31,6 @@ import {
   FiMoreVertical,
   FiEdit3,
   FiTrash2,
-  FiFlag,
   FiShare,
   FiBookmark,
   FiExternalLink,
@@ -45,6 +44,7 @@ import { useAuth } from "@/context/AuthContext";
 import { UniversalComments } from "@/components/comments/UniversalComments";
 import { EditPostForm } from "@/components/post/EditPostForm";
 import { DeletePostDialog } from "@/components/post/DeletePostDialog";
+import { FlagMenuItem } from "@/components/flag/FlagButton";
 import type { PostReadDto } from "@/types/Post";
 
 interface PostCardProps {
@@ -244,9 +244,13 @@ export function PostCard({
                   <MenuItem icon={<FiShare />} onClick={handleShare}>
                     Share
                   </MenuItem>
-                  <MenuItem icon={<FiFlag />} color="red.500">
-                    Report
-                  </MenuItem>
+                  <FlagMenuItem
+                    contentType="Post"
+                    contentId={post.id}
+                    contentTitle={`Post by ${post.username}`}
+                    contentOwnerId={post.userId}
+                    onClose={() => {}}
+                  />
                 </MenuList>
               </Menu>
             </HStack>
