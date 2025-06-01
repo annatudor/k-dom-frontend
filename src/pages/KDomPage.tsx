@@ -23,8 +23,24 @@ import {
   CardBody,
   Grid,
   GridItem,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  useToast,
 } from "@chakra-ui/react";
-import { FiEdit3, FiUsers, FiHeart, FiClock, FiStar } from "react-icons/fi";
+import {
+  FiEdit3,
+  FiUsers,
+  FiHeart,
+  FiClock,
+  FiStar,
+  FiMoreVertical,
+  FiShare2,
+  FiBookmark,
+  FiSettings,
+} from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -35,6 +51,7 @@ import {
   unfollowKDom,
 } from "@/api/kdom";
 import { useAuth } from "@/context/AuthContext";
+import { FlagMenuItem } from "@/components/flag/FlagButton";
 
 // Componente care le vom crea separat
 import { KDomContent } from "@/components/kdom/kdom-components/KDomContent";
@@ -46,6 +63,7 @@ export default function KDomPage() {
   const { user, isAuthenticated } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const toast = useToast();
 
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const cardBg = useColorModeValue("white", "gray.800");
@@ -85,15 +103,65 @@ export default function KDomPage() {
       if (isFollowing) {
         await unfollowKDom(kdom.id);
         setIsFollowing(false);
+        toast({
+          title: "Unfollowed",
+          description: `You unfollowed ${kdom.title}`,
+          status: "info",
+          duration: 3000,
+        });
       } else {
         await followKDom(kdom.id);
         setIsFollowing(true);
+        toast({
+          title: "Following",
+          description: `You are now following ${kdom.title}`,
+          status: "success",
+          duration: 3000,
+        });
       }
     } catch (error) {
       console.error("Error toggling follow:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update follow status",
+        status: "error",
+        duration: 4000,
+      });
     } finally {
       setIsFollowLoading(false);
     }
+  };
+
+  // Handle share functionality
+  const handleShare = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: "Link copied!",
+        description: "K-Dom link copied to clipboard",
+        status: "success",
+        duration: 2000,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      toast({
+        title: "Failed to copy link",
+        description: "Please copy the URL manually",
+        status: "error",
+        duration: 3000,
+      });
+    }
+  };
+
+  // Handle flag success
+  const handleFlagSuccess = () => {
+    toast({
+      title: "Report submitted",
+      description:
+        "Thank you for helping us maintain quality content. Our moderation team will review this K-Dom.",
+      status: "success",
+      duration: 5000,
+    });
   };
 
   if (isLoading) {
@@ -143,6 +211,14 @@ export default function KDomPage() {
       </Box>
     );
   }
+
+  // Check permissions
+  const canEdit =
+    user &&
+    (user.id === kdom.userId ||
+      user.role === "admin" ||
+      user.role === "moderator");
+  const isOwnKDom = user?.id === kdom.userId;
 
   // Determinăm tema culorilor bazată pe tema K-Dom-ului
   const getThemeColors = () => {
@@ -284,9 +360,10 @@ export default function KDomPage() {
                 </VStack>
 
                 {/* Right side - Action Buttons */}
-                {isAuthenticated && (
-                  <VStack spacing={3} align="end" minW="200px">
-                    <HStack spacing={3}>
+                <VStack spacing={3} align="end" minW="250px">
+                  <HStack spacing={3}>
+                    {/* Follow Button - only if authenticated and not own K-Dom */}
+                    {isAuthenticated && !isOwnKDom && (
                       <Button
                         leftIcon={<Icon as={FiHeart} />}
                         colorScheme={isFollowing ? "red" : "whiteAlpha"}
@@ -303,25 +380,87 @@ export default function KDomPage() {
                       >
                         {isFollowing ? "Following" : "Follow"}
                       </Button>
+                    )}
+                    {/* Edit Button - only for owners/admins */}
+                    {canEdit && (
+                      <Button
+                        leftIcon={<Icon as={FiEdit3} />}
+                        variant="outline"
+                        size="lg"
+                        as={RouterLink}
+                        to={`/kdoms/${kdom.slug}/edit`}
+                        borderColor="white"
+                        color="white"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                        px={6}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    {/* Share Button */}
+                    <IconButton
+                      aria-label="Share K-Dom"
+                      icon={<FiShare2 />}
+                      variant="outline"
+                      size="lg"
+                      borderColor="white"
+                      color="white"
+                      _hover={{ bg: "whiteAlpha.200" }}
+                      onClick={handleShare}
+                    />
+                    More Options Menu
+                    <Menu>
+                      <MenuButton
+                        as={IconButton}
+                        aria-label="More options"
+                        icon={<FiMoreVertical />}
+                        variant="outline"
+                        size="lg"
+                        borderColor="white"
+                        color="white"
+                        _hover={{ bg: "whiteAlpha.200" }}
+                      />
+                      <MenuList>
+                        {/* Settings - only for owners */}
+                        {canEdit && (
+                          <MenuItem
+                            as={RouterLink}
+                            to={`/kdom/${kdom.slug}/settings`}
+                            icon={<FiSettings />}
+                          >
+                            K-Dom Settings
+                          </MenuItem>
+                        )}
 
-                      {(user?.id === kdom.userId || user?.role === "admin") && (
-                        <Button
-                          leftIcon={<Icon as={FiEdit3} />}
-                          variant="outline"
-                          size="lg"
-                          as={RouterLink}
-                          to={`/kdoms/${kdom.slug}/edit`}
-                          borderColor="white"
-                          color="white"
-                          _hover={{ bg: "whiteAlpha.200" }}
-                          px={6}
-                        >
-                          Edit
-                        </Button>
-                      )}
-                    </HStack>
-                  </VStack>
-                )}
+                        {/* Bookmark */}
+                        {isAuthenticated && !isOwnKDom && (
+                          <MenuItem
+                            icon={<FiBookmark />}
+                            onClick={handleFollowToggle}
+                            isDisabled={isFollowLoading}
+                            color={isFollowing ? "red.500" : "gray.600"}
+                          >
+                            {isFollowing ? "Remove Bookmark" : "Bookmark"}
+                          </MenuItem>
+                        )}
+
+                        {/* Report K-Dom - only if not own K-Dom */}
+                        {!isOwnKDom && (
+                          <>
+                            <Divider />
+                            <FlagMenuItem
+                              contentType="KDom"
+                              contentId={kdom.id}
+                              contentTitle={kdom.title}
+                              contentOwnerId={kdom.userId}
+                              onSuccess={handleFlagSuccess}
+                            />
+                          </>
+                        )}
+                      </MenuList>
+                    </Menu>
+                  </HStack>
+                </VStack>
               </Flex>
             </Box>
 
@@ -343,29 +482,39 @@ export default function KDomPage() {
                   color="gray.600"
                   fontSize="md"
                   w="full"
+                  justify="space-between"
+                  align={{ base: "start", md: "center" }}
                 >
-                  <HStack spacing={3}>
-                    <Icon as={FiUsers} boxSize={5} />
-                    <Text>Created by</Text>
-                    <Text fontWeight="bold" color="blue.600">
-                      {kdom.authorUsername}
-                    </Text>
-                  </HStack>
-                  <HStack spacing={3}>
-                    <Icon as={FiClock} boxSize={5} />
-                    <Text>Last updated</Text>
-                    <Text fontWeight="bold">
-                      {new Date(
-                        kdom.updatedAt || kdom.createdAt
-                      ).toLocaleDateString()}
-                    </Text>
-                  </HStack>
-                  <HStack spacing={3}>
-                    <Icon as={FiStar} boxSize={5} />
-                    <Text>Theme:</Text>
-                    <Text fontWeight="bold" color={themeColors.accent}>
-                      {kdom.theme}
-                    </Text>
+                  <HStack spacing={6} wrap="wrap">
+                    <HStack spacing={3}>
+                      <Icon as={FiUsers} boxSize={5} />
+                      <Text>Created by</Text>
+                      <Text
+                        as={RouterLink}
+                        to={`/profile/${kdom.userId}`}
+                        fontWeight="bold"
+                        color="blue.600"
+                        _hover={{ textDecoration: "underline" }}
+                      >
+                        {kdom.authorUsername}
+                      </Text>
+                    </HStack>
+                    <HStack spacing={3}>
+                      <Icon as={FiClock} boxSize={5} />
+                      <Text>Last updated</Text>
+                      <Text fontWeight="bold">
+                        {new Date(
+                          kdom.updatedAt || kdom.createdAt
+                        ).toLocaleDateString()}
+                      </Text>
+                    </HStack>
+                    <HStack spacing={3}>
+                      <Icon as={FiStar} boxSize={5} />
+                      <Text>Theme:</Text>
+                      <Text fontWeight="bold" color={themeColors.accent}>
+                        {kdom.theme}
+                      </Text>
+                    </HStack>
                   </HStack>
                 </Flex>
               </VStack>
@@ -386,7 +535,7 @@ export default function KDomPage() {
 
                 <Divider borderColor={borderColor} />
 
-                {/* ÎNLOCUIT KDomComments cu UniversalComments */}
+                {/* Comments Section */}
                 <UniversalComments targetType="KDom" targetId={kdom.id} />
               </VStack>
             </GridItem>

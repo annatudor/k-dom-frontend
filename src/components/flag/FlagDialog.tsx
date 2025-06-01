@@ -1,4 +1,4 @@
-// src/components/flag/FlagDialog.tsx - Dialog pentru flag
+// src/components/flag/FlagDialog.tsx - Updated for content-specific reasons
 import { useState } from "react";
 import {
   Modal,
@@ -29,7 +29,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { createFlag } from "@/api/flag";
 import { useAuth } from "@/context/AuthContext";
-import { FLAG_REASONS } from "@/types/Flag";
+import { getApplicableReasons } from "@/types/Flag"; // Updated import
 import type { FlagDialogProps } from "@/types/Flag";
 
 export function FlagDialog({
@@ -50,6 +50,9 @@ export function FlagDialog({
   const contentBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
+  // Get applicable reasons for this content type
+  const applicableReasons = getApplicableReasons(contentType);
+
   // Verifică dacă utilizatorul încearcă să-și raporteze propriul conținut
   const isOwnContent = user?.id === contentOwnerId;
 
@@ -65,7 +68,9 @@ export function FlagDialog({
     },
   });
 
-  const selectedReasonData = FLAG_REASONS.find((r) => r.id === selectedReason);
+  const selectedReasonData = applicableReasons.find(
+    (r) => r.id === selectedReason
+  );
   const finalReason =
     selectedReason === "other" ? customReason : selectedReasonData?.label || "";
 
@@ -96,6 +101,20 @@ export function FlagDialog({
   const canSubmit =
     selectedReason &&
     (selectedReason !== "other" || customReason.trim().length > 0);
+
+  // Helper function to get content type display name
+  const getContentTypeDisplayName = (type: string) => {
+    switch (type) {
+      case "KDom":
+        return "K-Dom";
+      case "Post":
+        return "Post";
+      case "Comment":
+        return "Comment";
+      default:
+        return type;
+    }
+  };
 
   if (!user) {
     return (
@@ -181,7 +200,9 @@ export function FlagDialog({
             />
             <VStack align="start" spacing={1}>
               <Text fontSize="lg" fontWeight="bold">
-                {step === "success" ? "Report Submitted" : "Report Content"}
+                {step === "success"
+                  ? "Report Submitted"
+                  : `Report ${getContentTypeDisplayName(contentType)}`}
               </Text>
               {contentTitle && step !== "success" && (
                 <Text fontSize="sm" color="gray.500" fontWeight="normal">
@@ -220,11 +241,20 @@ export function FlagDialog({
               >
                 <VStack align="start" spacing={2}>
                   <HStack spacing={2}>
-                    <Badge colorScheme="blue" variant="subtle">
-                      {contentType}
+                    <Badge
+                      colorScheme={
+                        contentType === "KDom"
+                          ? "purple"
+                          : contentType === "Post"
+                          ? "blue"
+                          : "green"
+                      }
+                      variant="subtle"
+                    >
+                      {getContentTypeDisplayName(contentType)}
                     </Badge>
                     <Text fontSize="sm" fontWeight="semibold">
-                      Content ID: {contentId}
+                      ID: {contentId}
                     </Text>
                   </HStack>
                   {contentTitle && (
@@ -238,12 +268,13 @@ export function FlagDialog({
               {/* Reason Selection */}
               <VStack align="stretch" spacing={4}>
                 <Text fontSize="md" fontWeight="semibold">
-                  Why are you reporting this content?
+                  Why are you reporting this{" "}
+                  {getContentTypeDisplayName(contentType).toLowerCase()}?
                 </Text>
 
                 <RadioGroup value={selectedReason} onChange={setSelectedReason}>
                   <VStack align="stretch" spacing={3}>
-                    {FLAG_REASONS.map((reason) => (
+                    {applicableReasons.map((reason) => (
                       <Box
                         key={reason.id}
                         p={3}
@@ -295,7 +326,9 @@ export function FlagDialog({
                     <Textarea
                       value={customReason}
                       onChange={(e) => setCustomReason(e.target.value)}
-                      placeholder="Describe why this content should be removed..."
+                      placeholder={`Describe why this ${getContentTypeDisplayName(
+                        contentType
+                      ).toLowerCase()} should be removed...`}
                       rows={3}
                       maxLength={500}
                     />
@@ -315,8 +348,9 @@ export function FlagDialog({
                 <VStack align="start" spacing={1}>
                   <AlertTitle>Confirm Report</AlertTitle>
                   <AlertDescription>
-                    Are you sure you want to report this content for: "
-                    {finalReason}"?
+                    Are you sure you want to report this{" "}
+                    {getContentTypeDisplayName(contentType).toLowerCase()} for:
+                    "{finalReason}"?
                   </AlertDescription>
                 </VStack>
               </Alert>
@@ -329,7 +363,9 @@ export function FlagDialog({
               >
                 <VStack align="start" spacing={2}>
                   <Text fontWeight="semibold">Report Summary:</Text>
-                  <Text fontSize="sm">Content Type: {contentType}</Text>
+                  <Text fontSize="sm">
+                    Content Type: {getContentTypeDisplayName(contentType)}
+                  </Text>
                   <Text fontSize="sm">Reason: {finalReason}</Text>
                   {contentTitle && (
                     <Text fontSize="sm">Content: "{contentTitle}"</Text>

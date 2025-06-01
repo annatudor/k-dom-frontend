@@ -1,4 +1,4 @@
-// src/components/flag/FlagButton.tsx - Button pentru deschiderea flag dialog
+// src/components/flag/FlagButton.tsx - Updated with onSuccess support
 
 import {
   Button,
@@ -21,6 +21,7 @@ export function FlagButton({
   variant = "ghost",
   size = "sm",
   showLabel = true,
+  onSuccess, // NEW: Accept onSuccess callback
 }: FlagButtonProps) {
   const { user, isAuthenticated } = useAuth();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -55,13 +56,19 @@ export function FlagButton({
   };
 
   const handleSuccess = () => {
-    toast({
-      title: "Report submitted",
-      description:
-        "Thank you for helping keep our community safe. We'll review this report.",
-      status: "success",
-      duration: 5000,
-    });
+    // Call the passed onSuccess callback if provided
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      // Default success message if no callback provided
+      toast({
+        title: "Report submitted",
+        description:
+          "Thank you for helping keep our community safe. We'll review this report.",
+        status: "success",
+        duration: 5000,
+      });
+    }
   };
 
   if (showLabel) {
@@ -121,6 +128,7 @@ export function FlagMenuItem({
   contentTitle,
   contentOwnerId,
   onClose,
+  onSuccess, // NEW: Accept onSuccess callback
 }: FlagButtonProps & { onClose?: () => void }) {
   const { user, isAuthenticated } = useAuth();
   const { isOpen, onOpen, onClose: onDialogClose } = useDisclosure();
@@ -156,13 +164,19 @@ export function FlagMenuItem({
   };
 
   const handleSuccess = () => {
-    toast({
-      title: "Report submitted",
-      description:
-        "Thank you for helping keep our community safe. We'll review this report.",
-      status: "success",
-      duration: 5000,
-    });
+    // Call the passed onSuccess callback if provided
+    if (onSuccess) {
+      onSuccess();
+    } else {
+      // Default success message if no callback provided
+      toast({
+        title: "Report submitted",
+        description:
+          "Thank you for helping keep our community safe. We'll review this report.",
+        status: "success",
+        duration: 5000,
+      });
+    }
   };
 
   return (
