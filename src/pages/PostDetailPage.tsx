@@ -25,7 +25,6 @@ import { FiArrowLeft, FiHome, FiMessageCircle } from "react-icons/fi";
 
 import { getPostById } from "@/api/post";
 import { PostCard } from "@/components/post/PostCard";
-import { PostComments } from "@/components/post/PostComments";
 import { PostHeader } from "@/components/post/PostHeader";
 import { PostTagsDisplay } from "@/components/post/PostTagsDisplay";
 
@@ -196,7 +195,7 @@ export default function PostDetailPage() {
                   <Divider />
 
                   {/* Comments Component */}
-                  <PostComments postId={post.id} />
+                  {/* <PostComments postId={post.id} /> */}
                 </VStack>
               </CardBody>
             </Card>

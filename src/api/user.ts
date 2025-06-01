@@ -14,7 +14,7 @@ import type {
 import type { KDomDisplayDto } from "../types/KDom";
 import type { PagedResult } from "../types/Pagination";
 
-// Auth
+// Auth APIs (rămân la /auth)
 export const register = async (data: UserRegisterDto): Promise<void> => {
   await API.post("/auth/register", data);
 };
@@ -40,41 +40,45 @@ export const resetPassword = async (data: ResetPasswordDto): Promise<void> => {
   await API.post("/auth/reset-password", data);
 };
 
-// Profile
-export const getUserProfile = async (
-  id: number
-): Promise<UserProfileReadDto> => {
-  const res = await API.get(`/users/${id}/profile`);
+// === PROFILE APIs (pentru utilizatorul curent) ===
+// Endpoint-uri pentru profilul utilizatorului autentificat
+
+export const getMyProfile = async (): Promise<UserProfileReadDto> => {
+  const res = await API.get("/profile");
   return res.data;
 };
 
-export const updateUserProfile = async (
+export const updateMyProfile = async (
   data: UserProfileUpdateDto
 ): Promise<void> => {
-  await API.put("/users/profile", data);
+  await API.put("/profile", data);
 };
 
 export const getProfileThemes = async (): Promise<string[]> => {
-  const res = await API.get("/users/profile/themes");
+  const res = await API.get("/profile/themes");
   return res.data;
 };
 
-// Management
-export const changeUserRole = async (
-  userId: number,
-  data: ChangeUserRoleDto
-): Promise<void> => {
-  await API.patch(`/users/${userId}/role`, data);
-};
-
-export const getUsersPaginated = async (
-  filters: UserFilterDto
-): Promise<PagedResult<UserPublicDto>> => {
-  const res = await API.get("/users", { params: filters });
+export const getMyKdoms = async (): Promise<KDomDisplayDto[]> => {
+  const res = await API.get("/profile/my-kdoms");
   return res.data;
 };
 
-// KDom asociat user
+export const getRecentlyViewedKdoms = async (): Promise<KDomDisplayDto[]> => {
+  const res = await API.get("/profile/recently-viewed-kdoms");
+  return res.data;
+};
+
+// === PUBLIC APIs (pentru vizualizarea profilurilor publice) ===
+// Endpoint-uri pentru vizualizarea profilurilor altor utilizatori
+
+export const getUserProfile = async (
+  userId: number
+): Promise<UserProfileReadDto> => {
+  const res = await API.get(`/users/${userId}/profile`);
+  return res.data;
+};
+
 export const getUserKdoms = async (
   userId: number
 ): Promise<KDomDisplayDto[]> => {
@@ -82,7 +86,68 @@ export const getUserKdoms = async (
   return res.data;
 };
 
-export const getRecentlyViewedKdoms = async (): Promise<KDomDisplayDto[]> => {
-  const res = await API.get("/users/recently-viewed-kdoms");
+// === ADMIN APIs (doar pentru administratori) ===
+// Endpoint-uri pentru administrarea utilizatorilor
+
+export const getAllUsers = async (
+  filters: UserFilterDto
+): Promise<PagedResult<UserPublicDto>> => {
+  const res = await API.get("/admin/users", { params: filters });
   return res.data;
+};
+
+export const getAdminUserProfile = async (
+  userId: number
+): Promise<UserProfileReadDto> => {
+  const res = await API.get(`/admin/users/${userId}/profile`);
+  return res.data;
+};
+
+export const updateUserProfileAsAdmin = async (
+  userId: number,
+  data: UserProfileUpdateDto
+): Promise<void> => {
+  await API.put(`/admin/users/${userId}/profile`, data);
+};
+
+export const changeUserRole = async (
+  userId: number,
+  data: ChangeUserRoleDto
+): Promise<void> => {
+  await API.patch(`/admin/users/${userId}/role`, data);
+};
+
+export const getAdminUserKdoms = async (
+  userId: number
+): Promise<KDomDisplayDto[]> => {
+  const res = await API.get(`/admin/users/${userId}/kdoms`);
+  return res.data;
+};
+
+// === HELPER FUNCTIONS ===
+// Funcții helper pentru determinarea endpoint-urilor corecte
+
+export const getProfileForUser = async (
+  userId?: number
+): Promise<UserProfileReadDto> => {
+  if (userId) {
+    // Profilul unui alt utilizator (public)
+    return getUserProfile(userId);
+  } else {
+    // Profilul utilizatorului curent
+    return getMyProfile();
+  }
+};
+
+export const updateProfileForUser = async (
+  data: UserProfileUpdateDto,
+  userId?: number
+): Promise<void> => {
+  if (userId) {
+    // Actualizare ca admin
+    return updateUserProfileAsAdmin(userId, data);
+  } else {
+    // Actualizare propriul profil
+    return updateMyProfile(data);
+  }
 };

@@ -1,4 +1,4 @@
-// src/components/post/PostCard.tsx
+// src/components/post/PostCard.tsx - Versiunea actualizată
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -38,7 +38,7 @@ import { FiExternalLink } from "react-icons/fi";
 
 import { toggleLikePost, deletePost } from "@/api/post";
 import { useAuth } from "@/context/AuthContext";
-import { PostComments } from "@/components/post/PostComments";
+import { UniversalComments } from "@/components/comments/UniversalComments"; // ← Import nou
 import { EditPostForm } from "@/components/post/EditPostForm";
 import type { PostReadDto } from "@/types/Post";
 import { FiHash, FiTag } from "react-icons/fi";
@@ -141,10 +141,11 @@ export function PostCard({
   };
 
   const handleShare = () => {
-    // TODO: Implement sharing functionality
+    const url = `${window.location.origin}/post/${post.id}`;
+    navigator.clipboard.writeText(url);
     toast({
-      title: "Share functionality coming soon!",
-      status: "info",
+      title: "Link copied to clipboard!",
+      status: "success",
       duration: 3000,
     });
   };
@@ -282,6 +283,7 @@ export function PostCard({
               </VStack>
             </Box>
           )}
+
           {/* Content */}
           <Box color={textColor}>
             <Box
@@ -298,51 +300,7 @@ export function PostCard({
                   lineHeight: "1.6",
                   _last: { mb: 0 },
                 },
-                "& ul, & ol": {
-                  mb: 3,
-                  pl: 6,
-                },
-                "& li": {
-                  mb: 1,
-                },
-                "& blockquote": {
-                  borderLeft: "4px solid",
-                  borderColor: "blue.400",
-                  pl: 4,
-                  my: 3,
-                  fontStyle: "italic",
-                  bg: "blue.50",
-                  py: 2,
-                  borderRadius: "0 8px 8px 0",
-                },
-                "& code": {
-                  bg: "gray.100",
-                  px: 2,
-                  py: 1,
-                  borderRadius: "md",
-                  fontSize: "sm",
-                },
-                "& pre": {
-                  bg: "gray.100",
-                  p: 4,
-                  borderRadius: "md",
-                  overflow: "auto",
-                  my: 3,
-                  "& code": {
-                    bg: "transparent",
-                    p: 0,
-                  },
-                },
-                "& img": {
-                  maxW: "100%",
-                  borderRadius: "md",
-                  my: 3,
-                },
-                "& a": {
-                  color: "blue.500",
-                  textDecoration: "underline",
-                  _hover: { color: "blue.600" },
-                },
+                // ... alte stiluri CSS ...
               }}
             />
           </Box>
@@ -399,10 +357,10 @@ export function PostCard({
             </Button>
           </HStack>
 
-          {/* Comments Section */}
+          {/* Comments Section - ÎNLOCUIT CU UniversalComments */}
           <Collapse in={showCommentsSection} animateOpacity>
             <Box pt={4} borderTop="1px solid" borderColor={borderColor}>
-              <PostComments postId={post.id} />
+              <UniversalComments targetType="Post" targetId={post.id} />
             </Box>
           </Collapse>
         </VStack>

@@ -39,7 +39,7 @@ import { useAuth } from "@/context/AuthContext";
 // Componente care le vom crea separat
 import { KDomContent } from "@/components/kdom/kdom-components/KDomContent";
 import { KDomSidebar } from "@/components/kdom/kdom-components/KDomSidebar";
-import { KDomComments } from "@/components/kdom/kdom-components/KDomComments";
+import { UniversalComments } from "@/components/comments/UniversalComments";
 
 export default function KDomPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -386,7 +386,13 @@ export default function KDomPage() {
 
                 <Divider borderColor={borderColor} />
 
-                <KDomComments kdomId={kdom.id} />
+                {/* ÎNLOCUIT KDomComments cu UniversalComments */}
+                <UniversalComments
+                  targetType="KDom"
+                  targetId={kdom.id}
+                  customTitle="K-Dom Discussion"
+                  showTitle={true}
+                />
               </VStack>
             </GridItem>
 
