@@ -25,6 +25,9 @@ export interface CommentReadDto {
   editedAt?: string;
   likeCount?: number;
   isLiked?: boolean;
+
+  likes: number[];
+  isLikedByUser: boolean;
 }
 
 export interface CommentLikeResponseDto {

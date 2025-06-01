@@ -261,16 +261,28 @@ export function useComments({
   });
 
   // Mutation pentru like/unlike
+  // Mutation pentru like/unlike
   const likeMutation = useMutation({
     mutationFn: toggleLikeComment,
     onMutate: async (commentId) => {
+      console.log(
+        `[DEBUG] Optimistically updating like for comment: ${commentId}`
+      );
+
       const comment = findCommentInTree(comments, commentId);
-      if (!comment) return;
+      if (!comment) {
+        console.log(`[DEBUG] Comment ${commentId} not found in tree`);
+        return;
+      }
 
       const isCurrentlyLiked = comment.isLikedByUser;
       const newLikeCount = isCurrentlyLiked
         ? comment.likeCount - 1
         : comment.likeCount + 1;
+
+      console.log(
+        `[DEBUG] Current like status: ${isCurrentlyLiked}, new count: ${newLikeCount}`
+      );
 
       setOptimisticComments((prev) =>
         updateCommentInTree(prev, commentId, {
@@ -278,24 +290,59 @@ export function useComments({
           likeCount: newLikeCount,
         })
       );
+
+      return {
+        commentId,
+        previousState: {
+          isLikedByUser: isCurrentlyLiked,
+          likeCount: comment.likeCount,
+        },
+      };
     },
-    onSuccess: () => {
+    onSuccess: (data, commentId) => {
+      console.log(
+        `[DEBUG] Like toggle successful for comment ${commentId}:`,
+        data
+      );
+
+      // Update with actual server response
+      setOptimisticComments((prev) =>
+        updateCommentInTree(prev, commentId, {
+          isLikedByUser: data.liked,
+          likeCount: data.likeCount,
+        })
+      );
+
+      // Invalidate and refetch to ensure consistency
       queryClient.invalidateQueries({
         queryKey: ["comments", targetType, targetId],
       });
     },
-    onError: () => {
+    onError: (error, commentId, context) => {
+      console.error(
+        `[ERROR] Like toggle failed for comment ${commentId}:`,
+        error
+      );
+
+      // Revert optimistic update
+      if (context?.previousState) {
+        setOptimisticComments((prev) =>
+          updateCommentInTree(prev, commentId, context.previousState)
+        );
+      }
+
       toast({
         title: "Failed to update like status",
+        description: error instanceof Error ? error.message : "Unknown error",
         status: "error",
         duration: 3000,
       });
     },
     onSettled: () => {
-      setOptimisticComments([]);
+      // Don't clear optimistic comments here since we want to keep the server response
+      console.log(`[DEBUG] Like mutation settled`);
     },
   });
-
   // Helper functions
   const findCommentReplies = (
     commentList: CommentWithReplies[],

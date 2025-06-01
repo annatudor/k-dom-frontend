@@ -387,12 +387,7 @@ export default function KDomPage() {
                 <Divider borderColor={borderColor} />
 
                 {/* ÎNLOCUIT KDomComments cu UniversalComments */}
-                <UniversalComments
-                  targetType="KDom"
-                  targetId={kdom.id}
-                  customTitle="K-Dom Discussion"
-                  showTitle={true}
-                />
+                <UniversalComments targetType="KDom" targetId={kdom.id} />
               </VStack>
             </GridItem>
 
