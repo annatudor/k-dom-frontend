@@ -1,4 +1,4 @@
-// src/components/kdom/KDomSidebar.tsx
+// src/components/kdom/kdom-components/KDomSidebar.tsx - Versiunea actualizată
 import {
   VStack,
   Heading,
@@ -23,28 +23,27 @@ import {
   FiExternalLink,
   FiSettings,
   FiPlus,
+  FiHeart,
 } from "react-icons/fi";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink } from "react-router-dom";
 
-import {
-  getParentKDom,
-  getChildKDoms,
-  getRelatedKDoms,
-  getKDomFollowersCount,
-} from "@/api/kdom";
+import { getParentKDom, getChildKDoms, getRelatedKDoms } from "@/api/kdom";
 import { useAuth } from "@/context/AuthContext";
 
+// ✅ INTERFAȚA ACTUALIZATĂ cu followersCount
 interface KDomSidebarProps {
   kdomId: string;
   kdomSlug: string;
-  kdomUserId?: number; // Add user ID to check permissions
+  kdomUserId?: number;
+  followersCount?: number; // ← ADĂUGAT
 }
 
 export function KDomSidebar({
   kdomId,
   kdomSlug,
   kdomUserId,
+  followersCount = 0, // ← ADĂUGAT cu valoare default
 }: KDomSidebarProps) {
   const { user } = useAuth();
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -76,15 +75,9 @@ export function KDomSidebar({
     queryFn: () => getRelatedKDoms(kdomId),
   });
 
-  // Query pentru numărul de urmăritori
-  const { data: followersCount = 0 } = useQuery({
-    queryKey: ["kdom-followers-count", kdomId],
-    queryFn: () => getKDomFollowersCount(kdomId),
-  });
-
   return (
     <VStack spacing={6} align="stretch" w="full">
-      {/* Statistici */}
+      {/* ✅ STATISTICI ACTUALIZATE cu followersCount */}
       <Card
         bg={cardBg}
         borderWidth="1px"
@@ -103,12 +96,16 @@ export function KDomSidebar({
         </CardHeader>
         <CardBody pt={3}>
           <VStack align="start" spacing={4}>
+            {/* ✅ FOLLOWERS COUNT ACTUALIZAT */}
             <HStack justify="space-between" w="full">
-              <Text fontSize="md" color="gray.600" fontWeight="medium">
-                Followers
-              </Text>
+              <HStack spacing={2}>
+                <Icon as={FiHeart} boxSize={4} color="red.500" />
+                <Text fontSize="md" color="gray.600" fontWeight="medium">
+                  Followers
+                </Text>
+              </HStack>
               <Badge
-                colorScheme="blue"
+                colorScheme="red"
                 borderRadius="full"
                 px={4}
                 py={1}
@@ -118,10 +115,14 @@ export function KDomSidebar({
                 {followersCount}
               </Badge>
             </HStack>
+
             <HStack justify="space-between" w="full">
-              <Text fontSize="md" color="gray.600" fontWeight="medium">
-                Last activity
-              </Text>
+              <HStack spacing={2}>
+                <Icon as={FiClock} boxSize={4} color="green.500" />
+                <Text fontSize="md" color="gray.600" fontWeight="medium">
+                  Last activity
+                </Text>
+              </HStack>
               <Text fontSize="md" fontWeight="bold" color="green.600">
                 Today
               </Text>

@@ -42,14 +42,8 @@ import {
   FiSettings,
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
-import { useState, useEffect } from "react";
 
-import {
-  getKDomBySlug,
-  isKDomFollowed,
-  followKDom,
-  unfollowKDom,
-} from "@/api/kdom";
+import { getKDomBySlug } from "@/api/kdom";
 import { useAuth } from "@/context/AuthContext";
 import { FlagMenuItem } from "@/components/flag/FlagButton";
 
@@ -57,12 +51,11 @@ import { FlagMenuItem } from "@/components/flag/FlagButton";
 import { KDomContent } from "@/components/kdom/kdom-components/KDomContent";
 import { KDomSidebar } from "@/components/kdom/kdom-components/KDomSidebar";
 import { UniversalComments } from "@/components/comments/UniversalComments";
+import { useKDomFollow } from "@/hooks/useKDomFollow";
 
 export default function KDomPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { user, isAuthenticated } = useAuth();
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const { user } = useAuth();
   const toast = useToast();
 
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -80,57 +73,13 @@ export default function KDomPage() {
     enabled: !!slug,
   });
 
-  // Query pentru a verifica dacă utilizatorul urmărește K-Dom-ul
-  const { data: followStatus } = useQuery({
-    queryKey: ["kdom-follow-status", kdom?.id],
-    queryFn: () => isKDomFollowed(kdom!.id),
-    enabled: !!kdom?.id && isAuthenticated,
-  });
-
-  // Effect pentru a seta starea de follow
-  useEffect(() => {
-    if (followStatus !== undefined) {
-      setIsFollowing(followStatus);
-    }
-  }, [followStatus]);
-
-  // Handler pentru follow/unfollow
-  const handleFollowToggle = async () => {
-    if (!kdom || !isAuthenticated) return;
-
-    setIsFollowLoading(true);
-    try {
-      if (isFollowing) {
-        await unfollowKDom(kdom.id);
-        setIsFollowing(false);
-        toast({
-          title: "Unfollowed",
-          description: `You unfollowed ${kdom.title}`,
-          status: "info",
-          duration: 3000,
-        });
-      } else {
-        await followKDom(kdom.id);
-        setIsFollowing(true);
-        toast({
-          title: "Following",
-          description: `You are now following ${kdom.title}`,
-          status: "success",
-          duration: 3000,
-        });
-      }
-    } catch (error) {
-      console.error("Error toggling follow:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update follow status",
-        status: "error",
-        duration: 4000,
-      });
-    } finally {
-      setIsFollowLoading(false);
-    }
-  };
+  const {
+    isFollowing,
+    followersCount,
+    handleToggleFollow,
+    isLoading: isFollowLoading,
+    canFollow,
+  } = useKDomFollow(kdom?.id || "");
 
   // Handle share functionality
   const handleShare = async () => {
@@ -362,13 +311,13 @@ export default function KDomPage() {
                 {/* Right side - Action Buttons */}
                 <VStack spacing={3} align="end" minW="250px">
                   <HStack spacing={3}>
-                    {/* Follow Button - only if authenticated and not own K-Dom */}
-                    {isAuthenticated && !isOwnKDom && (
+                    {/* ✅ FOLLOW BUTTON ACTUALIZAT - folosește hook-ul */}
+                    {canFollow && !isOwnKDom && (
                       <Button
                         leftIcon={<Icon as={FiHeart} />}
                         colorScheme={isFollowing ? "red" : "whiteAlpha"}
                         variant={isFollowing ? "solid" : "outline"}
-                        onClick={handleFollowToggle}
+                        onClick={handleToggleFollow}
                         isLoading={isFollowLoading}
                         size="lg"
                         borderColor="white"
@@ -433,10 +382,10 @@ export default function KDomPage() {
                         )}
 
                         {/* Bookmark */}
-                        {isAuthenticated && !isOwnKDom && (
+                        {canFollow && !isOwnKDom && (
                           <MenuItem
                             icon={<FiBookmark />}
-                            onClick={handleFollowToggle}
+                            onClick={handleToggleFollow}
                             isDisabled={isFollowLoading}
                             color={isFollowing ? "red.500" : "gray.600"}
                           >
@@ -515,13 +464,21 @@ export default function KDomPage() {
                         {kdom.theme}
                       </Text>
                     </HStack>
+                    {/* ✅ NOUĂ STATISTICĂ - Followers */}
+                    <HStack spacing={3}>
+                      <Icon as={FiHeart} boxSize={5} color="red.500" />
+                      <Text>Followers:</Text>
+                      <Text fontWeight="bold" color="red.500">
+                        {followersCount}
+                      </Text>
+                    </HStack>
                   </HStack>
                 </Flex>
               </VStack>
             </CardBody>
           </Card>
 
-          {/* Main Content Layout - FOARTE LARG */}
+          {/* Main Content Layout */}
           <Grid
             templateColumns={{ base: "1fr", lg: "1fr 300px" }}
             gap={12}
@@ -532,21 +489,19 @@ export default function KDomPage() {
             <GridItem>
               <VStack spacing={8} align="stretch">
                 <KDomContent content={kdom.contentHtml} theme={kdom.theme} />
-
                 <Divider borderColor={borderColor} />
-
-                {/* Comments Section */}
                 <UniversalComments targetType="KDom" targetId={kdom.id} />
               </VStack>
             </GridItem>
 
-            {/* Sidebar */}
+            {/* Sidebar - să treacă și followersCount */}
             <GridItem display={{ base: "none", lg: "block" }}>
               <Box position="sticky" top="20px">
                 <KDomSidebar
                   kdomId={kdom.id}
                   kdomSlug={kdom.slug}
                   kdomUserId={kdom.userId}
+                  followersCount={followersCount}
                 />
               </Box>
             </GridItem>
