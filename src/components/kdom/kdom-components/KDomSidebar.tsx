@@ -1,4 +1,4 @@
-// src/components/kdom/kdom-components/KDomSidebar.tsx - Versiunea actualizată
+// src/components/kdom/kdom-components/KDomSidebar.tsx - Reorganizat pentru sidebar
 import {
   VStack,
   Heading,
@@ -16,14 +16,13 @@ import {
 import {
   FiArrowUp,
   FiArrowRight,
-  FiUsers,
   FiClock,
   FiBookOpen,
   FiGitBranch,
   FiExternalLink,
   FiSettings,
   FiPlus,
-  FiHeart,
+  FiUsers,
 } from "react-icons/fi";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink } from "react-router-dom";
@@ -31,19 +30,17 @@ import { Link as RouterLink } from "react-router-dom";
 import { getParentKDom, getChildKDoms, getRelatedKDoms } from "@/api/kdom";
 import { useAuth } from "@/context/AuthContext";
 
-// ✅ INTERFAȚA ACTUALIZATĂ cu followersCount
 interface KDomSidebarProps {
   kdomId: string;
   kdomSlug: string;
   kdomUserId?: number;
-  followersCount?: number; // ← ADĂUGAT
+  followersCount?: number;
 }
 
 export function KDomSidebar({
   kdomId,
   kdomSlug,
   kdomUserId,
-  followersCount = 0, // ← ADĂUGAT cu valoare default
 }: KDomSidebarProps) {
   const { user } = useAuth();
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -77,61 +74,7 @@ export function KDomSidebar({
 
   return (
     <VStack spacing={6} align="stretch" w="full">
-      {/* ✅ STATISTICI ACTUALIZATE cu followersCount */}
-      <Card
-        bg={cardBg}
-        borderWidth="1px"
-        borderColor={borderColor}
-        borderRadius="xl"
-        boxShadow="md"
-        overflow="hidden"
-      >
-        <CardHeader pb={3}>
-          <HStack spacing={3}>
-            <Icon as={FiUsers} color="blue.500" boxSize={5} />
-            <Heading size="md" color="blue.600" fontWeight="bold">
-              Statistics
-            </Heading>
-          </HStack>
-        </CardHeader>
-        <CardBody pt={3}>
-          <VStack align="start" spacing={4}>
-            {/* ✅ FOLLOWERS COUNT ACTUALIZAT */}
-            <HStack justify="space-between" w="full">
-              <HStack spacing={2}>
-                <Icon as={FiHeart} boxSize={4} color="red.500" />
-                <Text fontSize="md" color="gray.600" fontWeight="medium">
-                  Followers
-                </Text>
-              </HStack>
-              <Badge
-                colorScheme="red"
-                borderRadius="full"
-                px={4}
-                py={1}
-                fontSize="sm"
-                fontWeight="bold"
-              >
-                {followersCount}
-              </Badge>
-            </HStack>
-
-            <HStack justify="space-between" w="full">
-              <HStack spacing={2}>
-                <Icon as={FiClock} boxSize={4} color="green.500" />
-                <Text fontSize="md" color="gray.600" fontWeight="medium">
-                  Last activity
-                </Text>
-              </HStack>
-              <Text fontSize="md" fontWeight="bold" color="green.600">
-                Today
-              </Text>
-            </HStack>
-          </VStack>
-        </CardBody>
-      </Card>
-
-      {/* Pagina Părinte */}
+      {/* ✅ 1. PARENT K-DOM (Navigation up) */}
       {parentKdom && (
         <Card
           bg={cardBg}
@@ -152,7 +95,7 @@ export function KDomSidebar({
           <CardBody pt={3}>
             <Link
               as={RouterLink}
-              to={`/kdom/${parentKdom.slug}`}
+              to={`/kdoms/slug/${parentKdom.slug}`}
               color="blue.500"
               fontWeight="semibold"
               fontSize="md"
@@ -174,7 +117,7 @@ export function KDomSidebar({
         </Card>
       )}
 
-      {/* Sub-pagini */}
+      {/* ✅ 2. SUB-PAGES (Children navigation) */}
       {(childKdoms.length > 0 || canEdit) && (
         <Card
           bg={cardBg}
@@ -226,7 +169,7 @@ export function KDomSidebar({
                     <Link
                       key={child.id}
                       as={RouterLink}
-                      to={`/kdoms/${child.slug}`}
+                      to={`/kdoms/slug/${child.slug}`}
                       color="blue.500"
                       fontSize="md"
                       fontWeight="semibold"
@@ -278,7 +221,7 @@ export function KDomSidebar({
         </Card>
       )}
 
-      {/* Pagini Înrudite */}
+      {/* ✅ 3. RELATED PAGES (Siblings) */}
       {relatedKdoms.length > 0 && (
         <Card
           bg={cardBg}
@@ -302,7 +245,7 @@ export function KDomSidebar({
                 <Link
                   key={related.id}
                   as={RouterLink}
-                  to={`/kdom/${related.slug}`}
+                  to={`/kdoms/slug/${related.slug}`}
                   color="blue.500"
                   fontSize="md"
                   fontWeight="semibold"
@@ -327,7 +270,7 @@ export function KDomSidebar({
         </Card>
       )}
 
-      {/* Quick Actions */}
+      {/* ✅ 4. QUICK ACTIONS */}
       <Card
         bg={cardBg}
         borderWidth="1px"
@@ -366,7 +309,7 @@ export function KDomSidebar({
             {canEdit && (
               <Button
                 as={RouterLink}
-                to={`/kdom/${kdomSlug}/metadata`}
+                to={`/kdoms/${kdomSlug}/metadata`}
                 variant="ghost"
                 size="md"
                 leftIcon={<Icon as={FiSettings} />}
@@ -384,7 +327,7 @@ export function KDomSidebar({
 
             <Button
               as={RouterLink}
-              to={`/kdom/${kdomSlug}/contributors`}
+              to={`/kdoms/${kdomSlug}/contributors`}
               variant="ghost"
               size="md"
               leftIcon={<Icon as={FiUsers} />}
@@ -398,6 +341,7 @@ export function KDomSidebar({
             >
               Contributors
             </Button>
+
             <Button
               as="a"
               href="#comments"
@@ -418,7 +362,7 @@ export function KDomSidebar({
         </CardBody>
       </Card>
 
-      {/* Info Box */}
+      {/* ✅ 5. HELP/CONTRIBUTE BOX */}
       <Card
         bg="blue.50"
         borderWidth="2px"
@@ -441,7 +385,7 @@ export function KDomSidebar({
             {canEdit ? (
               <Button
                 as={RouterLink}
-                to={`/kdom/${kdomSlug}/edit`}
+                to={`/kdoms/${kdomSlug}/edit`}
                 colorScheme="blue"
                 size="sm"
                 variant="solid"

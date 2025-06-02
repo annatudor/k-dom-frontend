@@ -1,4 +1,4 @@
-// src/pages/PostDetailPage.tsx - Actualizat cu view tracking
+// src/pages/PostDetailPage.tsx - Cu restricții pentru view stats
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -31,6 +31,7 @@ import {
 } from "react-icons/fi";
 
 import { getPostById } from "@/api/post";
+import { useAuth } from "@/context/AuthContext";
 import { PostCard } from "@/components/post/PostCard";
 import { PostHeader } from "@/components/post/PostHeader";
 import { PostTagsDisplay } from "@/components/post/PostTagsDisplay";
@@ -43,6 +44,7 @@ import { DetailedViewStats } from "@/components/view-tracking/ViewStats";
 export default function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth(); // ✅ ADĂUGAT pentru verificări de permisiuni
 
   const bgColor = useColorModeValue("gray.50", "gray.900");
   const cardBg = useColorModeValue("white", "gray.800");
@@ -59,6 +61,14 @@ export default function PostDetailPage() {
     enabled: !!postId,
     retry: false,
   });
+
+  // ✅ LOGICA DE PERMISIUNI pentru stats
+  const canViewStats =
+    user &&
+    post &&
+    (user.id === post.userId || // Owner-ul postării
+      user.role === "admin" ||
+      user.role === "moderator");
 
   // Loading state
   if (isLoading) {
@@ -117,7 +127,7 @@ export default function PostDetailPage() {
   return (
     <Box minH="100vh" bg={bgColor} pt="80px">
       <Container maxW="container.xl" py={6}>
-        {/* ✅ AUTO-TRACKING VIEW COUNTER */}
+        {/* ✅ AUTO-TRACKING VIEW COUNTER - doar tracking, nu și afișarea stats */}
         <AutoTrackingViewCounter
           contentType="Post"
           contentId={post.id}
@@ -168,7 +178,13 @@ export default function PostDetailPage() {
         </HStack>
 
         {/* Main Layout cu sidebar pentru analytics */}
-        <Grid templateColumns={{ base: "1fr", lg: "1fr 320px" }} gap={8}>
+        <Grid
+          templateColumns={{
+            base: "1fr",
+            lg: canViewStats ? "1fr 320px" : "1fr", // ✅ Sidebar doar dacă poate vedea stats
+          }}
+          gap={8}
+        >
           {/* Main Content */}
           <GridItem>
             <VStack spacing={8} align="stretch">
@@ -196,60 +212,35 @@ export default function PostDetailPage() {
                 />
               </Box>
 
-              {/* ✅ DETAILED VIEW ANALYTICS */}
-              <Card
-                bg={cardBg}
-                borderWidth="1px"
-                borderColor={borderColor}
-                borderRadius="xl"
-                boxShadow="sm"
-              >
-                <CardBody p={6}>
-                  <VStack spacing={6} align="stretch">
-                    <HStack spacing={3} align="center">
-                      <Icon as={FiBarChart2} color="purple.500" boxSize={6} />
-                      <Heading size="lg" color="purple.600">
-                        Post Analytics
-                      </Heading>
-                    </HStack>
+              {/* ✅ DETAILED VIEW ANALYTICS - doar pentru owner/admin */}
+              {canViewStats && (
+                <Card
+                  bg={cardBg}
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                  borderRadius="xl"
+                  boxShadow="sm"
+                >
+                  <CardBody p={6}>
+                    <VStack spacing={6} align="stretch">
+                      <HStack spacing={3} align="center">
+                        <Icon as={FiBarChart2} color="purple.500" boxSize={6} />
+                        <Heading size="lg" color="purple.600">
+                          Post Analytics
+                        </Heading>
+                      </HStack>
 
-                    <Divider />
+                      <Divider />
 
-                    <DetailedViewStats
-                      contentType="Post"
-                      contentId={post.id}
-                      showComparison={true}
-                    />
-                  </VStack>
-                </CardBody>
-              </Card>
-
-              {/* Comments Section */}
-              <Card
-                bg={cardBg}
-                borderWidth="1px"
-                borderColor={borderColor}
-                borderRadius="xl"
-                boxShadow="sm"
-              >
-                <CardBody p={6}>
-                  <VStack spacing={6} align="stretch">
-                    <HStack spacing={3} align="center">
-                      <Icon as={FiMessageCircle} color="blue.500" boxSize={6} />
-                      <Heading size="lg" color="blue.600">
-                        Discussion
-                      </Heading>
-                    </HStack>
-
-                    <Divider />
-
-                    {/* Comments Component placeholder */}
-                    <Text color="gray.500" textAlign="center" py={8}>
-                      Comments section will be implemented here
-                    </Text>
-                  </VStack>
-                </CardBody>
-              </Card>
+                      <DetailedViewStats
+                        contentType="Post"
+                        contentId={post.id}
+                        showComparison={true}
+                      />
+                    </VStack>
+                  </CardBody>
+                </Card>
+              )}
 
               {/* Related Posts or Actions */}
               <Card bg="blue.50" borderColor="blue.200" borderWidth="2px">
@@ -283,76 +274,90 @@ export default function PostDetailPage() {
             </VStack>
           </GridItem>
 
-          {/* ✅ SIDEBAR CU VIEW STATISTICS */}
-          <GridItem display={{ base: "none", lg: "block" }}>
-            <Box position="sticky" top="100px">
-              <VStack spacing={6} align="stretch">
-                {/* Quick View Stats */}
-                <ViewStats
-                  contentType="Post"
-                  contentId={post.id}
-                  variant="sidebar"
-                  refreshInterval={300000}
-                />
+          {/* ✅ SIDEBAR CU VIEW STATISTICS - doar pentru owner/admin */}
+          {canViewStats && (
+            <GridItem display={{ base: "none", lg: "block" }}>
+              <Box position="sticky" top="100px">
+                <VStack spacing={6} align="stretch">
+                  {/* Quick View Stats */}
+                  <ViewStats
+                    contentType="Post"
+                    contentId={post.id}
+                    variant="sidebar"
+                    refreshInterval={300000}
+                  />
 
-                {/* Performance Box */}
-                <Card bg="green.50" borderColor="green.200" borderWidth="2px">
-                  <CardBody py={6}>
-                    <VStack spacing={4} textAlign="center">
-                      <Icon as={FiBarChart2} color="green.500" fontSize="3xl" />
-                      <Text fontSize="md" fontWeight="bold" color="green.700">
-                        Post Performance
-                      </Text>
-                      <Text fontSize="sm" color="green.600" lineHeight="tall">
-                        Track how your post is performing with real-time
-                        analytics and engagement metrics.
-                      </Text>
-                      <AutoTrackingViewCounter
-                        contentType="Post"
-                        contentId={post.id}
-                        variant="detailed"
-                      />
-                    </VStack>
-                  </CardBody>
-                </Card>
+                  {/* Performance Box */}
+                  <Card bg="green.50" borderColor="green.200" borderWidth="2px">
+                    <CardBody py={6}>
+                      <VStack spacing={4} textAlign="center">
+                        <Icon
+                          as={FiBarChart2}
+                          color="green.500"
+                          fontSize="3xl"
+                        />
+                        <Text fontSize="md" fontWeight="bold" color="green.700">
+                          Post Performance
+                        </Text>
+                        <Text fontSize="sm" color="green.600" lineHeight="tall">
+                          Track how your post is performing with real-time
+                          analytics and engagement metrics.
+                        </Text>
+                        <AutoTrackingViewCounter
+                          contentType="Post"
+                          contentId={post.id}
+                          variant="detailed"
+                        />
+                      </VStack>
+                    </CardBody>
+                  </Card>
 
-                {/* Author Info Box */}
-                <Card bg="purple.50" borderColor="purple.200" borderWidth="2px">
-                  <CardBody py={6}>
-                    <VStack spacing={4} textAlign="center">
-                      <Text fontSize="md" fontWeight="bold" color="purple.700">
-                        About the Author
-                      </Text>
-                      <Text fontSize="sm" color="purple.600">
-                        Posted by{" "}
+                  {/* Author Info Box */}
+                  <Card
+                    bg="purple.50"
+                    borderColor="purple.200"
+                    borderWidth="2px"
+                  >
+                    <CardBody py={6}>
+                      <VStack spacing={4} textAlign="center">
                         <Text
+                          fontSize="md"
+                          fontWeight="bold"
+                          color="purple.700"
+                        >
+                          About the Author
+                        </Text>
+                        <Text fontSize="sm" color="purple.600">
+                          Posted by{" "}
+                          <Text
+                            as={RouterLink}
+                            to={`/profile/${post.userId}`}
+                            fontWeight="bold"
+                            textDecoration="underline"
+                          >
+                            {post.username}
+                          </Text>
+                        </Text>
+                        <Text fontSize="xs" color="purple.500">
+                          {new Date(post.createdAt).toLocaleDateString()}
+                          {post.isEdited && " (edited)"}
+                        </Text>
+                        <Button
                           as={RouterLink}
                           to={`/profile/${post.userId}`}
-                          fontWeight="bold"
-                          textDecoration="underline"
+                          size="sm"
+                          colorScheme="purple"
+                          variant="outline"
                         >
-                          {post.username}
-                        </Text>
-                      </Text>
-                      <Text fontSize="xs" color="purple.500">
-                        {new Date(post.createdAt).toLocaleDateString()}
-                        {post.isEdited && " (edited)"}
-                      </Text>
-                      <Button
-                        as={RouterLink}
-                        to={`/profile/${post.userId}`}
-                        size="sm"
-                        colorScheme="purple"
-                        variant="outline"
-                      >
-                        View Profile
-                      </Button>
-                    </VStack>
-                  </CardBody>
-                </Card>
-              </VStack>
-            </Box>
-          </GridItem>
+                          View Profile
+                        </Button>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+                </VStack>
+              </Box>
+            </GridItem>
+          )}
         </Grid>
       </Container>
     </Box>

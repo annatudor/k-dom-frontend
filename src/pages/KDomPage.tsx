@@ -1,4 +1,4 @@
-// src/pages/KDomPage.tsx - Actualizat cu view tracking
+// src/pages/KDomPage.tsx - Restructurat cu sidebar pe partea dreapta
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -84,6 +84,14 @@ export default function KDomPage() {
     isLoading: isFollowLoading,
     canFollow,
   } = useKDomFollow(kdom?.id || "");
+
+  // ✅ LOGICA DE PERMISIUNI pentru stats
+  const canViewStats =
+    user &&
+    kdom &&
+    (user.id === kdom.userId || // Owner-ul K-Dom-ului
+      user.role === "admin" ||
+      user.role === "moderator");
 
   // Handle share functionality
   const handleShare = async () => {
@@ -255,7 +263,7 @@ export default function KDomPage() {
 
         {/* Container pentru conținut */}
         <Box w="100%">
-          {/* Hero Header Section */}
+          {/* Hero Header Section - Simplificat fără stats */}
           <Card
             bg={cardBg}
             borderWidth="1px"
@@ -415,7 +423,7 @@ export default function KDomPage() {
               </Flex>
             </Box>
 
-            {/* Meta Information cu VIEW STATS */}
+            {/* ✅ Meta Information - Doar informații de bază */}
             <CardBody px={8} py={6}>
               <VStack align="start" spacing={6}>
                 {/* Description */}
@@ -425,70 +433,45 @@ export default function KDomPage() {
                   </Text>
                 )}
 
-                {/* Stats Row cu VIEW TRACKING */}
-                <Flex
-                  direction={{ base: "column", md: "row" }}
-                  wrap="wrap"
-                  gap={8}
-                  color="gray.600"
-                  fontSize="md"
-                  w="full"
-                  justify="space-between"
-                  align={{ base: "start", md: "center" }}
-                >
-                  <HStack spacing={6} wrap="wrap">
-                    <HStack spacing={3}>
-                      <Icon as={FiUsers} boxSize={5} />
-                      <Text>Created by</Text>
-                      <Text
-                        as={RouterLink}
-                        to={`/profile/${kdom.userId}`}
-                        fontWeight="bold"
-                        color="blue.600"
-                        _hover={{ textDecoration: "underline" }}
-                      >
-                        {kdom.authorUsername}
-                      </Text>
-                    </HStack>
-                    <HStack spacing={3}>
-                      <Icon as={FiClock} boxSize={5} />
-                      <Text>Last updated</Text>
-                      <Text fontWeight="bold">
-                        {new Date(
-                          kdom.updatedAt || kdom.createdAt
-                        ).toLocaleDateString()}
-                      </Text>
-                    </HStack>
-                    <HStack spacing={3}>
-                      <Icon as={FiStar} boxSize={5} />
-                      <Text>Theme:</Text>
-                      <Text fontWeight="bold" color={themeColors.accent}>
-                        {kdom.theme}
-                      </Text>
-                    </HStack>
-                    <HStack spacing={3}>
-                      <Icon as={FiHeart} boxSize={5} color="red.500" />
-                      <Text>Followers:</Text>
-                      <Text fontWeight="bold" color="red.500">
-                        {followersCount}
-                      </Text>
-                    </HStack>
-                    {/* ✅ VIEW STATS ADĂUGATE */}
-                    <ViewStats
-                      contentType="KDom"
-                      contentId={kdom.id}
-                      variant="minimal"
-                      refreshInterval={300000}
-                    />
+                {/* ✅ Basic Info Row - Fără stats complexe */}
+                <HStack spacing={6} wrap="wrap" fontSize="md" color="gray.600">
+                  <HStack spacing={3}>
+                    <Icon as={FiUsers} boxSize={5} />
+                    <Text>Created by</Text>
+                    <Text
+                      as={RouterLink}
+                      to={`/profile/${kdom.userId}`}
+                      fontWeight="bold"
+                      color="blue.600"
+                      _hover={{ textDecoration: "underline" }}
+                    >
+                      {kdom.authorUsername}
+                    </Text>
                   </HStack>
-                </Flex>
+                  <HStack spacing={3}>
+                    <Icon as={FiClock} boxSize={5} />
+                    <Text>Last updated</Text>
+                    <Text fontWeight="bold">
+                      {new Date(
+                        kdom.updatedAt || kdom.createdAt
+                      ).toLocaleDateString()}
+                    </Text>
+                  </HStack>
+                  <HStack spacing={3}>
+                    <Icon as={FiStar} boxSize={5} />
+                    <Text>Theme:</Text>
+                    <Text fontWeight="bold" color={themeColors.accent}>
+                      {kdom.theme}
+                    </Text>
+                  </HStack>
+                </HStack>
               </VStack>
             </CardBody>
           </Card>
 
-          {/* Main Content Layout */}
+          {/* ✅ Main Content Layout - Întotdeauna cu sidebar */}
           <Grid
-            templateColumns={{ base: "1fr", lg: "1fr 300px" }}
+            templateColumns={{ base: "1fr", lg: "1fr 320px" }}
             gap={12}
             alignItems="start"
             w="100%"
@@ -498,42 +481,125 @@ export default function KDomPage() {
               <VStack spacing={8} align="stretch">
                 <KDomContent content={kdom.contentHtml} theme={kdom.theme} />
 
-                {/* ✅ DETAILED VIEW STATS SECTION */}
-                <Card
-                  bg={cardBg}
-                  borderWidth="1px"
-                  borderColor={borderColor}
-                  borderRadius="xl"
-                  boxShadow="sm"
-                >
-                  <CardBody p={6}>
-                    <ViewStats
-                      contentType="KDom"
-                      contentId={kdom.id}
-                      variant="card"
-                      refreshInterval={300000}
-                      showComparison={true}
-                    />
-                  </CardBody>
-                </Card>
+                {/* ✅ DETAILED VIEW STATS doar pentru owner/admin în main content */}
+                {canViewStats && (
+                  <Card
+                    bg={cardBg}
+                    borderWidth="1px"
+                    borderColor={borderColor}
+                    borderRadius="xl"
+                    boxShadow="sm"
+                  >
+                    <CardBody p={6}>
+                      <ViewStats
+                        contentType="KDom"
+                        contentId={kdom.id}
+                        variant="detailed"
+                        refreshInterval={300000}
+                        showComparison={true}
+                      />
+                    </CardBody>
+                  </Card>
+                )}
 
                 <Divider borderColor={borderColor} />
                 <UniversalComments targetType="KDom" targetId={kdom.id} />
               </VStack>
             </GridItem>
 
-            {/* Sidebar cu VIEW STATS */}
+            {/* ✅ RIGHT SIDEBAR - Întotdeauna prezent */}
             <GridItem display={{ base: "none", lg: "block" }}>
               <Box position="sticky" top="20px">
                 <VStack spacing={6} align="stretch">
-                  {/* ✅ SIDEBAR VIEW STATS */}
-                  <ViewStats
-                    contentType="KDom"
-                    contentId={kdom.id}
-                    variant="sidebar"
-                    refreshInterval={300000}
-                  />
+                  {/* ✅ 1. STATISTICS - Prima secțiune */}
+                  {canViewStats ? (
+                    <ViewStats
+                      contentType="KDom"
+                      contentId={kdom.id}
+                      variant="sidebar"
+                      refreshInterval={300000}
+                    />
+                  ) : (
+                    // ✅ Basic stats pentru toți utilizatorii
+                    <Card
+                      bg={cardBg}
+                      borderWidth="1px"
+                      borderColor={borderColor}
+                      borderRadius="xl"
+                      boxShadow="md"
+                      overflow="hidden"
+                    >
+                      <CardBody p={5}>
+                        <VStack spacing={4} align="stretch">
+                          <HStack spacing={3}>
+                            <Icon as={FiUsers} color="blue.500" boxSize={5} />
+                            <Heading
+                              size="md"
+                              color="blue.600"
+                              fontWeight="bold"
+                            >
+                              Community
+                            </Heading>
+                          </HStack>
 
+                          <VStack align="start" spacing={3}>
+                            <HStack justify="space-between" w="full">
+                              <HStack spacing={2}>
+                                <Icon
+                                  as={FiHeart}
+                                  boxSize={4}
+                                  color="red.500"
+                                />
+                                <Text
+                                  fontSize="md"
+                                  color="gray.600"
+                                  fontWeight="medium"
+                                >
+                                  Followers
+                                </Text>
+                              </HStack>
+                              <Badge
+                                colorScheme="red"
+                                borderRadius="full"
+                                px={4}
+                                py={1}
+                                fontSize="sm"
+                                fontWeight="bold"
+                              >
+                                {followersCount}
+                              </Badge>
+                            </HStack>
+
+                            <HStack justify="space-between" w="full">
+                              <HStack spacing={2}>
+                                <Icon
+                                  as={FiClock}
+                                  boxSize={4}
+                                  color="green.500"
+                                />
+                                <Text
+                                  fontSize="md"
+                                  color="gray.600"
+                                  fontWeight="medium"
+                                >
+                                  Last activity
+                                </Text>
+                              </HStack>
+                              <Text
+                                fontSize="md"
+                                fontWeight="bold"
+                                color="green.600"
+                              >
+                                Today
+                              </Text>
+                            </HStack>
+                          </VStack>
+                        </VStack>
+                      </CardBody>
+                    </Card>
+                  )}
+
+                  {/* ✅ 2. SUB-PAGES & NAVIGATION */}
                   <KDomSidebar
                     kdomId={kdom.id}
                     kdomSlug={kdom.slug}

@@ -1,4 +1,4 @@
-// src/components/post/PostCard.tsx - Actualizat cu view tracking
+// src/components/post/PostCard.tsx - Cu restricții pentru view tracking
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -85,6 +85,13 @@ export function PostCard({
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const textColor = useColorModeValue("gray.700", "gray.200");
+
+  // ✅ LOGICA DE PERMISIUNI pentru stats
+  const canViewStats =
+    user &&
+    (user.id === post.userId || // Owner-ul postării
+      user.role === "admin" ||
+      user.role === "moderator");
 
   // Check if current user can edit/delete this post
   const canModify =
@@ -216,8 +223,8 @@ export function PostCard({
                         </>
                       )}
                     </Text>
-                    {/* ✅ VIEW COUNTER ADĂUGAT */}
-                    {enableViewTracking && (
+                    {/* ✅ VIEW COUNTER doar pentru owner/admin */}
+                    {enableViewTracking && canViewStats && (
                       <ViewCounter
                         contentType="Post"
                         contentId={post.id}
