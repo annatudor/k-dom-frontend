@@ -1,4 +1,4 @@
-// src/pages/KDomPage.tsx
+// src/pages/KDomPage.tsx - Actualizat cu view tracking
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -47,11 +47,15 @@ import { getKDomBySlug } from "@/api/kdom";
 import { useAuth } from "@/context/AuthContext";
 import { FlagMenuItem } from "@/components/flag/FlagButton";
 
-// Componente care le vom crea separat
+// Componente pentru K-Dom
 import { KDomContent } from "@/components/kdom/kdom-components/KDomContent";
 import { KDomSidebar } from "@/components/kdom/kdom-components/KDomSidebar";
 import { UniversalComments } from "@/components/comments/UniversalComments";
 import { useKDomFollow } from "@/hooks/useKDomFollow";
+
+// ✅ VIEW TRACKING COMPONENTS
+import { AutoTrackingViewCounter } from "@/components/view-tracking/ViewCounter";
+import { ViewStats } from "@/components/view-tracking/ViewStats";
 
 export default function KDomPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -62,7 +66,7 @@ export default function KDomPage() {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
-  // Query pentru detaliile K-Dom-ului (folosim ID în loc de slug pentru acum)
+  // Query pentru detaliile K-Dom-ului
   const {
     data: kdom,
     isLoading,
@@ -91,7 +95,6 @@ export default function KDomPage() {
         status: "success",
         duration: 2000,
       });
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       toast({
         title: "Failed to copy link",
@@ -206,7 +209,6 @@ export default function KDomPage() {
   const themeColors = getThemeColors();
 
   return (
-    // PAGINA COMPLETĂ - ieșim din orice container
     <Box
       position="fixed"
       top="0"
@@ -217,7 +219,14 @@ export default function KDomPage() {
       overflowY="auto"
       zIndex={1}
     >
-      {/* Layout fără margini - folosește TOATĂ lățimea */}
+      {/* ✅ AUTO-TRACKING VIEW COUNTER PENTRU TOATĂ PAGINA */}
+      <AutoTrackingViewCounter
+        contentType="KDom"
+        contentId={kdom.id}
+        variant="minimal"
+        showDebugInfo={import.meta.env.DEV}
+      />
+
       <Box w="100vw" px={8} py={6}>
         {/* Breadcrumb Navigation */}
         <Breadcrumb mb={6} fontSize="sm" color="gray.600">
@@ -244,7 +253,7 @@ export default function KDomPage() {
           </BreadcrumbItem>
         </Breadcrumb>
 
-        {/* Container pentru conținut - FOARTE LARG */}
+        {/* Container pentru conținut */}
         <Box w="100%">
           {/* Hero Header Section */}
           <Card
@@ -311,7 +320,6 @@ export default function KDomPage() {
                 {/* Right side - Action Buttons */}
                 <VStack spacing={3} align="end" minW="250px">
                   <HStack spacing={3}>
-                    {/* ✅ FOLLOW BUTTON ACTUALIZAT - folosește hook-ul */}
                     {canFollow && !isOwnKDom && (
                       <Button
                         leftIcon={<Icon as={FiHeart} />}
@@ -330,7 +338,6 @@ export default function KDomPage() {
                         {isFollowing ? "Following" : "Follow"}
                       </Button>
                     )}
-                    {/* Edit Button - only for owners/admins */}
                     {canEdit && (
                       <Button
                         leftIcon={<Icon as={FiEdit3} />}
@@ -346,7 +353,6 @@ export default function KDomPage() {
                         Edit
                       </Button>
                     )}
-                    {/* Share Button */}
                     <IconButton
                       aria-label="Share K-Dom"
                       icon={<FiShare2 />}
@@ -357,7 +363,6 @@ export default function KDomPage() {
                       _hover={{ bg: "whiteAlpha.200" }}
                       onClick={handleShare}
                     />
-                    More Options Menu
                     <Menu>
                       <MenuButton
                         as={IconButton}
@@ -370,7 +375,6 @@ export default function KDomPage() {
                         _hover={{ bg: "whiteAlpha.200" }}
                       />
                       <MenuList>
-                        {/* Settings - only for owners */}
                         {canEdit && (
                           <MenuItem
                             as={RouterLink}
@@ -381,7 +385,6 @@ export default function KDomPage() {
                           </MenuItem>
                         )}
 
-                        {/* Bookmark */}
                         {canFollow && !isOwnKDom && (
                           <MenuItem
                             icon={<FiBookmark />}
@@ -393,7 +396,6 @@ export default function KDomPage() {
                           </MenuItem>
                         )}
 
-                        {/* Report K-Dom - only if not own K-Dom */}
                         {!isOwnKDom && (
                           <>
                             <Divider />
@@ -413,7 +415,7 @@ export default function KDomPage() {
               </Flex>
             </Box>
 
-            {/* Meta Information */}
+            {/* Meta Information cu VIEW STATS */}
             <CardBody px={8} py={6}>
               <VStack align="start" spacing={6}>
                 {/* Description */}
@@ -423,7 +425,7 @@ export default function KDomPage() {
                   </Text>
                 )}
 
-                {/* Stats Row */}
+                {/* Stats Row cu VIEW TRACKING */}
                 <Flex
                   direction={{ base: "column", md: "row" }}
                   wrap="wrap"
@@ -464,7 +466,6 @@ export default function KDomPage() {
                         {kdom.theme}
                       </Text>
                     </HStack>
-                    {/* ✅ NOUĂ STATISTICĂ - Followers */}
                     <HStack spacing={3}>
                       <Icon as={FiHeart} boxSize={5} color="red.500" />
                       <Text>Followers:</Text>
@@ -472,6 +473,13 @@ export default function KDomPage() {
                         {followersCount}
                       </Text>
                     </HStack>
+                    {/* ✅ VIEW STATS ADĂUGATE */}
+                    <ViewStats
+                      contentType="KDom"
+                      contentId={kdom.id}
+                      variant="minimal"
+                      refreshInterval={300000}
+                    />
                   </HStack>
                 </Flex>
               </VStack>
@@ -489,20 +497,50 @@ export default function KDomPage() {
             <GridItem>
               <VStack spacing={8} align="stretch">
                 <KDomContent content={kdom.contentHtml} theme={kdom.theme} />
+
+                {/* ✅ DETAILED VIEW STATS SECTION */}
+                <Card
+                  bg={cardBg}
+                  borderWidth="1px"
+                  borderColor={borderColor}
+                  borderRadius="xl"
+                  boxShadow="sm"
+                >
+                  <CardBody p={6}>
+                    <ViewStats
+                      contentType="KDom"
+                      contentId={kdom.id}
+                      variant="card"
+                      refreshInterval={300000}
+                      showComparison={true}
+                    />
+                  </CardBody>
+                </Card>
+
                 <Divider borderColor={borderColor} />
                 <UniversalComments targetType="KDom" targetId={kdom.id} />
               </VStack>
             </GridItem>
 
-            {/* Sidebar - să treacă și followersCount */}
+            {/* Sidebar cu VIEW STATS */}
             <GridItem display={{ base: "none", lg: "block" }}>
               <Box position="sticky" top="20px">
-                <KDomSidebar
-                  kdomId={kdom.id}
-                  kdomSlug={kdom.slug}
-                  kdomUserId={kdom.userId}
-                  followersCount={followersCount}
-                />
+                <VStack spacing={6} align="stretch">
+                  {/* ✅ SIDEBAR VIEW STATS */}
+                  <ViewStats
+                    contentType="KDom"
+                    contentId={kdom.id}
+                    variant="sidebar"
+                    refreshInterval={300000}
+                  />
+
+                  <KDomSidebar
+                    kdomId={kdom.id}
+                    kdomSlug={kdom.slug}
+                    kdomUserId={kdom.userId}
+                    followersCount={followersCount}
+                  />
+                </VStack>
               </Box>
             </GridItem>
           </Grid>

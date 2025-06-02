@@ -1,4 +1,4 @@
-// src/pages/PostDetailPage.tsx
+// src/pages/PostDetailPage.tsx - Actualizat cu view tracking
 import { useParams, useNavigate, Link as RouterLink } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -20,13 +20,25 @@ import {
   AlertIcon,
   Icon,
   Divider,
+  Grid,
+  GridItem,
 } from "@chakra-ui/react";
-import { FiArrowLeft, FiHome, FiMessageCircle } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiHome,
+  FiMessageCircle,
+  FiBarChart2,
+} from "react-icons/fi";
 
 import { getPostById } from "@/api/post";
 import { PostCard } from "@/components/post/PostCard";
 import { PostHeader } from "@/components/post/PostHeader";
 import { PostTagsDisplay } from "@/components/post/PostTagsDisplay";
+
+// ✅ VIEW TRACKING COMPONENTS
+import { AutoTrackingViewCounter } from "@/components/view-tracking/ViewCounter";
+import { ViewStats } from "@/components/view-tracking/ViewStats";
+import { DetailedViewStats } from "@/components/view-tracking/ViewStats";
 
 export default function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>();
@@ -104,7 +116,15 @@ export default function PostDetailPage() {
 
   return (
     <Box minH="100vh" bg={bgColor} pt="80px">
-      <Container maxW="container.lg" py={6}>
+      <Container maxW="container.xl" py={6}>
+        {/* ✅ AUTO-TRACKING VIEW COUNTER */}
+        <AutoTrackingViewCounter
+          contentType="Post"
+          contentId={post.id}
+          variant="minimal"
+          showDebugInfo={import.meta.env.DEV}
+        />
+
         {/* Breadcrumb */}
         <Breadcrumb mb={6} fontSize="sm">
           <BreadcrumbItem>
@@ -147,86 +167,193 @@ export default function PostDetailPage() {
           </HStack>
         </HStack>
 
-        <HStack spacing={8} align="start">
+        {/* Main Layout cu sidebar pentru analytics */}
+        <Grid templateColumns={{ base: "1fr", lg: "1fr 320px" }} gap={8}>
           {/* Main Content */}
-          <VStack spacing={8} align="stretch" flex="1">
-            {/* Post Header with Author Info */}
-            <PostHeader post={post} />
+          <GridItem>
+            <VStack spacing={8} align="stretch">
+              {/* Post Header with Author Info */}
+              <PostHeader post={post} />
 
-            {/* Tags Section */}
-            {post.tags && post.tags.length > 0 && (
-              <PostTagsDisplay
-                tags={post.tags}
-                variant="detailed"
-                showStats={true}
-              />
-            )}
+              {/* Tags Section */}
+              {post.tags && post.tags.length > 0 && (
+                <PostTagsDisplay
+                  tags={post.tags}
+                  variant="detailed"
+                  showStats={true}
+                />
+              )}
 
-            {/* Main Post */}
-            <Box>
-              <PostCard
-                post={post}
-                showComments={false}
-                onUpdate={() => {
-                  // Refresh post data
-                  window.location.reload();
-                }}
-              />
+              {/* Main Post - disable tracking aici pentru că tracking-ul principal e pe pagină */}
+              <Box>
+                <PostCard
+                  post={post}
+                  showComments={false}
+                  enableViewTracking={false} // Dezactivat aici
+                  onUpdate={() => {
+                    window.location.reload();
+                  }}
+                />
+              </Box>
+
+              {/* ✅ DETAILED VIEW ANALYTICS */}
+              <Card
+                bg={cardBg}
+                borderWidth="1px"
+                borderColor={borderColor}
+                borderRadius="xl"
+                boxShadow="sm"
+              >
+                <CardBody p={6}>
+                  <VStack spacing={6} align="stretch">
+                    <HStack spacing={3} align="center">
+                      <Icon as={FiBarChart2} color="purple.500" boxSize={6} />
+                      <Heading size="lg" color="purple.600">
+                        Post Analytics
+                      </Heading>
+                    </HStack>
+
+                    <Divider />
+
+                    <DetailedViewStats
+                      contentType="Post"
+                      contentId={post.id}
+                      showComparison={true}
+                    />
+                  </VStack>
+                </CardBody>
+              </Card>
+
+              {/* Comments Section */}
+              <Card
+                bg={cardBg}
+                borderWidth="1px"
+                borderColor={borderColor}
+                borderRadius="xl"
+                boxShadow="sm"
+              >
+                <CardBody p={6}>
+                  <VStack spacing={6} align="stretch">
+                    <HStack spacing={3} align="center">
+                      <Icon as={FiMessageCircle} color="blue.500" boxSize={6} />
+                      <Heading size="lg" color="blue.600">
+                        Discussion
+                      </Heading>
+                    </HStack>
+
+                    <Divider />
+
+                    {/* Comments Component placeholder */}
+                    <Text color="gray.500" textAlign="center" py={8}>
+                      Comments section will be implemented here
+                    </Text>
+                  </VStack>
+                </CardBody>
+              </Card>
+
+              {/* Related Posts or Actions */}
+              <Card bg="blue.50" borderColor="blue.200" borderWidth="2px">
+                <CardBody py={6}>
+                  <VStack spacing={4} textAlign="center">
+                    <Icon
+                      as={FiMessageCircle}
+                      color="blue.500"
+                      fontSize="3xl"
+                    />
+                    <Text fontSize="md" fontWeight="bold" color="blue.700">
+                      Join the conversation
+                    </Text>
+                    <Text fontSize="sm" color="blue.600" lineHeight="tall">
+                      Share your thoughts, ask questions, or add to the
+                      discussion. Your voice matters in our community!
+                    </Text>
+                    <Button
+                      as={RouterLink}
+                      to="/create-post"
+                      colorScheme="blue"
+                      size="sm"
+                      borderRadius="full"
+                      px={6}
+                    >
+                      Create Your Own Post
+                    </Button>
+                  </VStack>
+                </CardBody>
+              </Card>
+            </VStack>
+          </GridItem>
+
+          {/* ✅ SIDEBAR CU VIEW STATISTICS */}
+          <GridItem display={{ base: "none", lg: "block" }}>
+            <Box position="sticky" top="100px">
+              <VStack spacing={6} align="stretch">
+                {/* Quick View Stats */}
+                <ViewStats
+                  contentType="Post"
+                  contentId={post.id}
+                  variant="sidebar"
+                  refreshInterval={300000}
+                />
+
+                {/* Performance Box */}
+                <Card bg="green.50" borderColor="green.200" borderWidth="2px">
+                  <CardBody py={6}>
+                    <VStack spacing={4} textAlign="center">
+                      <Icon as={FiBarChart2} color="green.500" fontSize="3xl" />
+                      <Text fontSize="md" fontWeight="bold" color="green.700">
+                        Post Performance
+                      </Text>
+                      <Text fontSize="sm" color="green.600" lineHeight="tall">
+                        Track how your post is performing with real-time
+                        analytics and engagement metrics.
+                      </Text>
+                      <AutoTrackingViewCounter
+                        contentType="Post"
+                        contentId={post.id}
+                        variant="detailed"
+                      />
+                    </VStack>
+                  </CardBody>
+                </Card>
+
+                {/* Author Info Box */}
+                <Card bg="purple.50" borderColor="purple.200" borderWidth="2px">
+                  <CardBody py={6}>
+                    <VStack spacing={4} textAlign="center">
+                      <Text fontSize="md" fontWeight="bold" color="purple.700">
+                        About the Author
+                      </Text>
+                      <Text fontSize="sm" color="purple.600">
+                        Posted by{" "}
+                        <Text
+                          as={RouterLink}
+                          to={`/profile/${post.userId}`}
+                          fontWeight="bold"
+                          textDecoration="underline"
+                        >
+                          {post.username}
+                        </Text>
+                      </Text>
+                      <Text fontSize="xs" color="purple.500">
+                        {new Date(post.createdAt).toLocaleDateString()}
+                        {post.isEdited && " (edited)"}
+                      </Text>
+                      <Button
+                        as={RouterLink}
+                        to={`/profile/${post.userId}`}
+                        size="sm"
+                        colorScheme="purple"
+                        variant="outline"
+                      >
+                        View Profile
+                      </Button>
+                    </VStack>
+                  </CardBody>
+                </Card>
+              </VStack>
             </Box>
-
-            {/* Comments Section */}
-            <Card
-              bg={cardBg}
-              borderWidth="1px"
-              borderColor={borderColor}
-              borderRadius="xl"
-              boxShadow="sm"
-            >
-              <CardBody p={6}>
-                <VStack spacing={6} align="stretch">
-                  {/* Comments Header */}
-                  <HStack spacing={3} align="center">
-                    <Icon as={FiMessageCircle} color="blue.500" boxSize={6} />
-                    <Heading size="lg" color="blue.600">
-                      Discussion
-                    </Heading>
-                  </HStack>
-
-                  <Divider />
-
-                  {/* Comments Component */}
-                  {/* <PostComments postId={post.id} /> */}
-                </VStack>
-              </CardBody>
-            </Card>
-
-            {/* Related Posts or Actions */}
-            <Card bg="blue.50" borderColor="blue.200" borderWidth="2px">
-              <CardBody py={6}>
-                <VStack spacing={4} textAlign="center">
-                  <Icon as={FiMessageCircle} color="blue.500" fontSize="3xl" />
-                  <Text fontSize="md" fontWeight="bold" color="blue.700">
-                    Join the conversation
-                  </Text>
-                  <Text fontSize="sm" color="blue.600" lineHeight="tall">
-                    Share your thoughts, ask questions, or add to the
-                    discussion. Your voice matters in our community!
-                  </Text>
-                  <Button
-                    as={RouterLink}
-                    to="/create-post"
-                    colorScheme="blue"
-                    size="sm"
-                    borderRadius="full"
-                    px={6}
-                  >
-                    Create Your Own Post
-                  </Button>
-                </VStack>
-              </CardBody>
-            </Card>
-          </VStack>
-        </HStack>
+          </GridItem>
+        </Grid>
       </Container>
     </Box>
   );

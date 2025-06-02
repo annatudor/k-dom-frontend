@@ -1,4 +1,4 @@
-// src/components/post/PostCard.tsx - Versiunea actualizată cu DeletePostDialog
+// src/components/post/PostCard.tsx - Actualizat cu view tracking
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -45,18 +45,21 @@ import { UniversalComments } from "@/components/comments/UniversalComments";
 import { EditPostForm } from "@/components/post/EditPostForm";
 import { DeletePostDialog } from "@/components/post/DeletePostDialog";
 import { FlagMenuItem } from "@/components/flag/FlagButton";
+import { ViewCounter } from "@/components/view-tracking/ViewCounter";
 import type { PostReadDto } from "@/types/Post";
 
 interface PostCardProps {
   post: PostReadDto;
   showComments?: boolean;
   onUpdate?: () => void;
+  enableViewTracking?: boolean;
 }
 
 export function PostCard({
   post,
   showComments = false,
   onUpdate,
+  enableViewTracking = true,
 }: PostCardProps) {
   const { user } = useAuth();
   const toast = useToast();
@@ -140,7 +143,6 @@ export function PostCard({
     likeMutation.mutate();
   };
 
-  // ← Funcție actualizată pentru delete cu dialog
   const handleDeleteConfirm = async () => {
     setIsDeletingPost(true);
     try {
@@ -203,15 +205,28 @@ export function PostCard({
                       </Badge>
                     )}
                   </HStack>
-                  <Text fontSize="sm" color="gray.500">
-                    {new Date(post.createdAt).toLocaleString()}
-                    {post.isEdited && post.editedAt && (
-                      <>
-                        {" "}
-                        • Last edited {new Date(post.editedAt).toLocaleString()}
-                      </>
+                  <HStack spacing={3} fontSize="sm" color="gray.500">
+                    <Text>
+                      {new Date(post.createdAt).toLocaleString()}
+                      {post.isEdited && post.editedAt && (
+                        <>
+                          {" "}
+                          • Last edited{" "}
+                          {new Date(post.editedAt).toLocaleString()}
+                        </>
+                      )}
+                    </Text>
+                    {/* ✅ VIEW COUNTER ADĂUGAT */}
+                    {enableViewTracking && (
+                      <ViewCounter
+                        contentType="Post"
+                        contentId={post.id}
+                        variant="minimal"
+                        size="sm"
+                        enableTracking={true}
+                      />
                     )}
-                  </Text>
+                  </HStack>
                 </VStack>
               </HStack>
 
@@ -232,7 +247,7 @@ export function PostCard({
                       </MenuItem>
                       <MenuItem
                         icon={<FiTrash2 />}
-                        onClick={openDeleteDialog} // ← Schimbat să deschidă dialog-ul
+                        onClick={openDeleteDialog}
                         color="red.500"
                       >
                         Delete Post
