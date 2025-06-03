@@ -1,4 +1,4 @@
-// src/components/community/CustomizeFeedSection.tsx - Compact fandom-style
+// src/components/community/CustomizeFeedSection.tsx - Compact fandom-style with login redirect
 import {
   Card,
   CardBody,
@@ -15,10 +15,14 @@ import { FiHeart, FiPlus, FiStar } from "react-icons/fi";
 
 interface CustomizeFeedSectionProps {
   isAuthenticated: boolean;
+  onAddFandoms?: () => void;
+  onExplore?: () => void;
 }
 
 export function CustomizeFeedSection({
   isAuthenticated,
+  onAddFandoms,
+  onExplore,
 }: CustomizeFeedSectionProps) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -27,6 +31,24 @@ export function CustomizeFeedSection({
   if (isAuthenticated) {
     return null;
   }
+
+  const handleAddFandoms = () => {
+    if (onAddFandoms) {
+      onAddFandoms();
+    } else {
+      // Default behavior - redirect to login
+      window.location.href = "/login";
+    }
+  };
+
+  const handleExplore = () => {
+    if (onExplore) {
+      onExplore();
+    } else {
+      // Default behavior - redirect to login
+      window.location.href = "/login";
+    }
+  };
 
   return (
     <Card
@@ -90,6 +112,7 @@ export function CustomizeFeedSection({
                 border="1px solid"
                 borderColor="whiteAlpha.300"
                 transition="all 0.2s"
+                onClick={handleAddFandoms}
               >
                 ADD FANDOMS
               </Button>
@@ -111,6 +134,7 @@ export function CustomizeFeedSection({
                 border="1px solid"
                 borderColor="whiteAlpha.400"
                 transition="all 0.2s"
+                onClick={handleExplore}
               >
                 EXPLORE
               </Button>

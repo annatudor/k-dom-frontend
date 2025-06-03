@@ -1,4 +1,4 @@
-// src/components/community/WelcomeSection.tsx - Compact fandom-style
+// src/components/community/WelcomeSection.tsx - Compact fandom-style with login redirect
 import {
   Card,
   CardBody,
@@ -13,17 +13,56 @@ import {
   Heading,
 } from "@chakra-ui/react";
 import { FiUser } from "react-icons/fi";
-import { Link as RouterLink } from "react-router-dom";
-import type { AuthUser } from "@/context/AuthContext";
+
+interface AuthUser {
+  id: number;
+  username: string;
+  role: string;
+  avatarUrl?: string;
+  email?: string;
+}
 
 interface WelcomeSectionProps {
   user?: AuthUser | null;
   isAuthenticated: boolean;
+  onRegister?: () => void;
+  onLogin?: () => void;
+  onViewProfile?: () => void;
 }
 
-export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
+export function WelcomeSection({
+  user,
+  isAuthenticated,
+  onRegister,
+  onLogin,
+  onViewProfile,
+}: WelcomeSectionProps) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
+
+  const handleRegister = () => {
+    if (onRegister) {
+      onRegister();
+    } else {
+      window.location.href = "/register";
+    }
+  };
+
+  const handleLogin = () => {
+    if (onLogin) {
+      onLogin();
+    } else {
+      window.location.href = "/login";
+    }
+  };
+
+  const handleViewProfile = () => {
+    if (onViewProfile) {
+      onViewProfile();
+    } else {
+      window.location.href = "/profile/my-profile";
+    }
+  };
 
   if (!isAuthenticated) {
     // Guest state - compact design
@@ -71,8 +110,7 @@ export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
             {/* Auth buttons */}
             <VStack spacing={2} w="full">
               <Button
-                as={RouterLink}
-                to="/register"
+                onClick={handleRegister}
                 colorScheme="purple"
                 size="sm"
                 w="full"
@@ -83,8 +121,7 @@ export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
               </Button>
 
               <Button
-                as={RouterLink}
-                to="/login"
+                onClick={handleLogin}
                 variant="outline"
                 colorScheme="purple"
                 size="sm"
@@ -127,8 +164,7 @@ export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
 
           {/* Profile button */}
           <Button
-            as={RouterLink}
-            to="/profile/my-profile"
+            onClick={handleViewProfile}
             variant="outline"
             colorScheme="purple"
             size="sm"
@@ -141,4 +177,4 @@ export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
       </CardBody>
     </Card>
   );
-}
+} // src/components/community/WelcomeSection.tsx - Compact fandom-style with
