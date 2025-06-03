@@ -17,6 +17,7 @@ import EditKDomMetadataPage from "@/pages/EditKDomMetadataPage";
 import CreateSubKDomPage from "@/pages/CreateSubKDomPage";
 import CreatePostPage from "@/pages/CreatePostPage";
 import PostDetailPage from "@/pages/PostDetailPage";
+import KDomDiscussionPage from "@/pages/KDomDiscussionPage";
 // import ProfilePage from "@/pages/ProfilePage";
 // import EditProfilePage from "@/pages/EditProfilePage";
 
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       { path: "/kdoms/:slug/create-sub", element: <CreateSubKDomPage /> },
       { path: "/create-post", element: <CreatePostPage /> }, // Add this line
       { path: "/posts/:postId", element: <PostDetailPage /> },
+      { path: "/kdoms/slug/:slug/discussion", element: <KDomDiscussionPage /> },
       // {
       //   path: "/profile/my-profile",
       //   element: <ProfilePage />,
