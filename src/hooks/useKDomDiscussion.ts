@@ -1,5 +1,5 @@
-// src/hooks/useKDomDiscussion.ts
-import { useState, useCallback } from "react";
+// src/hooks/useKDomDiscussion.ts - FIXED VERSION
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@chakra-ui/react";
 import {
@@ -22,6 +22,11 @@ export function useKDomDiscussion(
     initialFilter || { page: 1, pageSize: 20 }
   );
 
+  console.log(
+    `[useKDomDiscussion] Called with slug: "${slug}", filter:`,
+    filter
+  );
+
   const {
     data: discussion,
     isLoading,
@@ -34,13 +39,44 @@ export function useKDomDiscussion(
     staleTime: 60000, // 1 minute
   });
 
+  // ✅ DEBUG: Log detailed data structure
+  useEffect(() => {
+    if (discussion) {
+      console.log(`[useKDomDiscussion] Full discussion data:`, discussion);
+      console.log(`[useKDomDiscussion] discussion.kdom:`, discussion.kdom);
+      console.log(`[useKDomDiscussion] discussion.posts:`, discussion.posts);
+      console.log(`[useKDomDiscussion] discussion.stats:`, discussion.stats);
+    }
+  }, [discussion]);
+
   const changePage = useCallback((newPage: number) => {
+    console.log(`[useKDomDiscussion] Changing page to: ${newPage}`);
     setFilter((prev) => ({ ...prev, page: newPage }));
   }, []);
 
   const changePageSize = useCallback((newPageSize: number) => {
+    console.log(`[useKDomDiscussion] Changing page size to: ${newPageSize}`);
     setFilter((prev) => ({ ...prev, page: 1, pageSize: newPageSize }));
   }, []);
+
+  // ✅ FIX: Extrage datele cu verificări defensive
+  const kdom = discussion?.kdom || null;
+  const posts = useMemo(
+    () => discussion?.posts?.items || [],
+    [discussion?.posts?.items]
+  );
+  const pagination = discussion?.posts || null;
+  const stats = discussion?.stats || null;
+
+  // ✅ DEBUG: Log extracted values
+  useEffect(() => {
+    console.log(`[useKDomDiscussion] Extracted values:`, {
+      kdom,
+      posts: posts.length,
+      pagination: !!pagination,
+      stats: !!stats,
+    });
+  }, [kdom, posts, pagination, stats]);
 
   return {
     discussion,
@@ -50,16 +86,18 @@ export function useKDomDiscussion(
     filter,
     changePage,
     changePageSize,
-    // Helper computed properties
-    posts: discussion?.posts.items || [],
-    pagination: discussion?.posts || null,
-    kdom: discussion?.kdom || null,
-    stats: discussion?.stats || null,
+    // ✅ FIX: Returnează valorile extrase explicit
+    posts,
+    pagination,
+    kdom,
+    stats,
   };
 }
 
 // Hook pentru statistici rapide
 export function useKDomDiscussionStats(slug: string) {
+  console.log(`[useKDomDiscussionStats] Called with slug: "${slug}"`);
+
   const {
     data: stats,
     isLoading,
@@ -71,11 +109,15 @@ export function useKDomDiscussionStats(slug: string) {
     staleTime: 300000, // 5 minutes
   });
 
+  console.log(`[useKDomDiscussionStats] Result:`, { stats, isLoading, error });
+
   return { stats, isLoading, error };
 }
 
 // Hook pentru verificarea dacă are discussion activ
 export function useHasActiveDiscussion(slug: string) {
+  console.log(`[useHasActiveDiscussion] Called with slug: "${slug}"`);
+
   const {
     data: result,
     isLoading,
@@ -86,6 +128,8 @@ export function useHasActiveDiscussion(slug: string) {
     enabled: !!slug,
     staleTime: 300000, // 5 minutes
   });
+
+  console.log(`[useHasActiveDiscussion] Result:`, { result, isLoading, error });
 
   return {
     hasActiveDiscussion: result?.hasActiveDiscussion || false,
@@ -98,10 +142,18 @@ export function useHasActiveDiscussion(slug: string) {
 export function useKDomDiscussionSearch(slug: string) {
   const toast = useToast();
 
+  console.log(`[useKDomDiscussionSearch] Called with slug: "${slug}"`);
+
   const searchMutation = useMutation({
-    mutationFn: (params: KDomDiscussionSearchDto) =>
-      searchKDomDiscussion(slug, params),
-    onError: () => {
+    mutationFn: (params: KDomDiscussionSearchDto) => {
+      console.log(`[useKDomDiscussionSearch] Searching with params:`, params);
+      return searchKDomDiscussion(slug, params);
+    },
+    onSuccess: (data) => {
+      console.log(`[useKDomDiscussionSearch] Search successful:`, data);
+    },
+    onError: (error) => {
+      console.error(`[useKDomDiscussionSearch] Search failed:`, error);
       toast({
         title: "Search failed",
         description: "Failed to search discussions. Please try again.",
@@ -129,8 +181,15 @@ export function useKDomDiscussionSearch(slug: string) {
 
 // Hook pentru integrarea cu pagina K-Dom-ului
 export function useKDomWithDiscussion(slug: string) {
+  console.log(`[useKDomWithDiscussion] Called with slug: "${slug}"`);
+
   const { hasActiveDiscussion } = useHasActiveDiscussion(slug);
   const { stats } = useKDomDiscussionStats(slug);
+
+  console.log(`[useKDomWithDiscussion] Combined result:`, {
+    hasActiveDiscussion,
+    stats,
+  });
 
   return {
     hasActiveDiscussion,

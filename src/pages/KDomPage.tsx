@@ -40,6 +40,7 @@ import {
   FiShare2,
   FiBookmark,
   FiSettings,
+  FiMessageCircle,
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -51,6 +52,7 @@ import { FlagMenuItem } from "@/components/flag/FlagButton";
 import { KDomContent } from "@/components/kdom/kdom-components/KDomContent";
 import { KDomSidebar } from "@/components/kdom/kdom-components/KDomSidebar";
 import { UniversalComments } from "@/components/comments/UniversalComments";
+import { KDomDiscussionWidget } from "@/components/kdom/kdom-components/KDomDiscussionWidget";
 import { useKDomFollow } from "@/hooks/useKDomFollow";
 
 // ✅ VIEW TRACKING COMPONENTS
@@ -361,6 +363,19 @@ export default function KDomPage() {
                         Edit
                       </Button>
                     )}
+                    <Button
+                      leftIcon={<Icon as={FiMessageCircle} />}
+                      variant="outline"
+                      size="lg"
+                      as={RouterLink}
+                      to={`/kdoms/slug/${kdom.slug}/discussion`}
+                      borderColor="white"
+                      color="white"
+                      _hover={{ bg: "whiteAlpha.200" }}
+                      px={6}
+                    >
+                      Discussion
+                    </Button>
                     <IconButton
                       aria-label="Share K-Dom"
                       icon={<FiShare2 />}
@@ -423,7 +438,7 @@ export default function KDomPage() {
               </Flex>
             </Box>
 
-            {/* ✅ Meta Information - Doar informații de bază */}
+            {/*  Meta Information - Doar informații de bază */}
             <CardBody px={8} py={6}>
               <VStack align="start" spacing={6}>
                 {/* Description */}
@@ -433,7 +448,7 @@ export default function KDomPage() {
                   </Text>
                 )}
 
-                {/* ✅ Basic Info Row - Fără stats complexe */}
+                {/*  Basic Info Row - Fără stats complexe */}
                 <HStack spacing={6} wrap="wrap" fontSize="md" color="gray.600">
                   <HStack spacing={3}>
                     <Icon as={FiUsers} boxSize={5} />
@@ -469,7 +484,7 @@ export default function KDomPage() {
             </CardBody>
           </Card>
 
-          {/* ✅ Main Content Layout - Întotdeauna cu sidebar */}
+          {/*  Main Content Layout - Întotdeauna cu sidebar */}
           <Grid
             templateColumns={{ base: "1fr", lg: "1fr 320px" }}
             gap={12}
@@ -481,7 +496,7 @@ export default function KDomPage() {
               <VStack spacing={8} align="stretch">
                 <KDomContent content={kdom.contentHtml} theme={kdom.theme} />
 
-                {/* ✅ DETAILED VIEW STATS doar pentru owner/admin în main content */}
+                {/* DETAILED VIEW STATS doar pentru owner/admin în main content */}
                 {canViewStats && (
                   <Card
                     bg={cardBg}
@@ -501,17 +516,21 @@ export default function KDomPage() {
                     </CardBody>
                   </Card>
                 )}
-
+                <KDomDiscussionWidget
+                  slug={kdom.slug}
+                  variant="card"
+                  showViewAllButton={true}
+                />
                 <Divider borderColor={borderColor} />
                 <UniversalComments targetType="KDom" targetId={kdom.id} />
               </VStack>
             </GridItem>
 
-            {/* ✅ RIGHT SIDEBAR - Întotdeauna prezent */}
+            {/* RIGHT SIDEBAR - Întotdeauna prezent */}
             <GridItem display={{ base: "none", lg: "block" }}>
               <Box position="sticky" top="20px">
                 <VStack spacing={6} align="stretch">
-                  {/* ✅ 1. STATISTICS - Prima secțiune */}
+                  {/*  1. STATISTICS - Prima secțiune */}
                   {canViewStats ? (
                     <ViewStats
                       contentType="KDom"
