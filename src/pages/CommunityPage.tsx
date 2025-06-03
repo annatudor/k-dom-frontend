@@ -52,6 +52,8 @@ export default function CommunityPage() {
             top="80px"
             alignSelf="start"
             gridColumn={{ lg: "1" }}
+            overflow="visible"
+            zIndex={10}
           >
             {/* Welcome Section - Compact */}
             <WelcomeSection user={user} isAuthenticated={isAuthenticated} />
