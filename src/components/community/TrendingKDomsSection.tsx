@@ -1,4 +1,4 @@
-// src/components/community/TrendingKDomsSection.tsx
+// src/components/community/TrendingKDomsSection.tsx - Compact fandom-style
 import { useState } from "react";
 import {
   Card,
@@ -12,8 +12,8 @@ import {
   useColorModeValue,
   Icon,
   Heading,
-  Collapse,
   Badge,
+  Box,
 } from "@chakra-ui/react";
 import {
   FiHeart,
@@ -49,16 +49,18 @@ export function TrendingKDomsSection({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["followed-kdoms"] });
       toast({
-        title: "K-Dom followed!",
+        title: "Fandom followed!",
         status: "success",
-        duration: 3000,
+        duration: 2000,
+        size: "sm",
       });
     },
     onError: () => {
       toast({
-        title: "Failed to follow K-Dom",
+        title: "Failed to follow fandom",
         status: "error",
-        duration: 3000,
+        duration: 2000,
+        size: "sm",
       });
     },
   });
@@ -72,29 +74,30 @@ export function TrendingKDomsSection({
     return (
       <Card
         bg={cardBg}
-        borderWidth="2px"
+        borderWidth="1px"
         borderColor={borderColor}
-        borderRadius="xl"
-        boxShadow="lg"
+        borderRadius="lg"
+        boxShadow="sm"
+        w="full"
       >
-        <CardBody p={6}>
-          <VStack spacing={4}>
+        <CardBody p={4}>
+          <VStack spacing={3}>
             <HStack spacing={2}>
-              <Icon as={FiTrendingUp} color="orange.500" boxSize={5} />
-              <Heading size="md" color={textColor}>
-                Trending K-Doms
+              <Icon as={FiTrendingUp} color="orange.500" boxSize={4} />
+              <Heading size="sm" color={textColor}>
+                Trending Fandoms
               </Heading>
             </HStack>
 
-            <VStack spacing={3} w="full">
+            <VStack spacing={2} w="full">
               {[1, 2, 3, 4, 5].map((i) => (
-                <HStack key={i} w="full" p={3}>
-                  <Avatar size="sm" />
-                  <VStack align="start" spacing={1} flex="1">
-                    <div className="h-3 bg-gray-200 rounded w-24"></div>
-                    <div className="h-2 bg-gray-100 rounded w-16"></div>
+                <HStack key={i} w="full" p={2}>
+                  <Avatar size="xs" />
+                  <VStack align="start" spacing={0} flex="1">
+                    <Box h={3} bg="gray.200" borderRadius="sm" w="60%" />
+                    <Box h={2} bg="gray.100" borderRadius="sm" w="40%" />
                   </VStack>
-                  <div className="w-8 h-8 bg-purple-200 rounded"></div>
+                  <Box w={6} h={6} bg="orange.200" borderRadius="sm" />
                 </HStack>
               ))}
             </VStack>
@@ -109,38 +112,40 @@ export function TrendingKDomsSection({
   return (
     <Card
       bg={cardBg}
-      borderWidth="2px"
+      borderWidth="1px"
       borderColor={borderColor}
-      borderRadius="xl"
-      boxShadow="lg"
+      borderRadius="lg"
+      boxShadow="sm"
+      w="full"
     >
-      <CardBody p={6}>
-        <VStack spacing={4}>
+      <CardBody p={4}>
+        <VStack spacing={3}>
           <HStack spacing={2}>
-            <Icon as={FiTrendingUp} color="orange.500" boxSize={5} />
-            <Heading size="md" color={textColor}>
-              Trending K-Doms
+            <Icon as={FiTrendingUp} color="orange.500" boxSize={4} />
+            <Heading size="sm" color={textColor}>
+              Trending Fandoms
             </Heading>
           </HStack>
 
           {/* K-Doms list */}
-          <VStack spacing={3} w="full">
+          <VStack spacing={2} w="full">
             {displayedKdoms.map((kdom, index) => (
               <HStack
                 key={kdom.id}
                 w="full"
-                p={3}
-                borderRadius="lg"
-                _hover={{ bg: "gray.50" }}
+                p={2}
+                borderRadius="md"
+                _hover={{ bg: "gray.50", _dark: { bg: "gray.700" } }}
               >
-                <HStack spacing={3} flex="1">
-                  <Avatar size="sm" name={kdom.title} />
-                  <VStack align="start" spacing={1} flex="1">
-                    <HStack spacing={2}>
+                <HStack spacing={2} flex="1">
+                  <Avatar size="xs" name={kdom.title} />
+                  <VStack align="start" spacing={0} flex="1">
+                    <HStack spacing={1}>
                       <Text
+                        fontSize="xs"
                         fontWeight="semibold"
-                        fontSize="sm"
                         color={textColor}
+                        noOfLines={1}
                       >
                         {kdom.title}
                       </Text>
@@ -153,25 +158,27 @@ export function TrendingKDomsSection({
                               ? "yellow"
                               : "green"
                           }
-                          size="sm"
+                          size="xs"
                           borderRadius="full"
+                          fontSize="9px"
+                          px={1}
                         >
                           #{index + 1}
                         </Badge>
                       )}
                     </HStack>
-                    <Text fontSize="xs" color="gray.500">
+                    <Text fontSize="10px" color="gray.500">
                       {(kdom.TotalScore * 1000).toFixed(0)}K Followers
                     </Text>
                   </VStack>
                 </HStack>
                 <IconButton
                   icon={<Icon as={FiHeart} />}
-                  colorScheme="purple"
+                  colorScheme="orange"
                   variant="solid"
-                  size="sm"
-                  borderRadius="md"
-                  aria-label="Follow K-Dom"
+                  size="xs"
+                  borderRadius="sm"
+                  aria-label="Follow Fandom"
                   onClick={() => handleFollow(kdom.id)}
                   isLoading={followMutation.isPending}
                 />
@@ -184,41 +191,13 @@ export function TrendingKDomsSection({
             <Button
               leftIcon={<Icon as={showMore ? FiChevronUp : FiChevronDown} />}
               variant="ghost"
-              size="sm"
+              size="xs"
               onClick={() => setShowMore(!showMore)}
               color="orange.600"
+              fontSize="xs"
+              fontWeight="bold"
             >
               {showMore ? "SEE LESS" : "SEE MORE"}
-            </Button>
-          )}
-
-          {/* Collapsed additional content */}
-          <Collapse in={showMore} animateOpacity>
-            <VStack spacing={4} pt={4}>
-              <Button
-                leftIcon={<Icon as={FiHeart} />}
-                variant="outline"
-                colorScheme="orange"
-                borderRadius="xl"
-                px={6}
-                w="full"
-              >
-                ADD K-DOMS
-              </Button>
-            </VStack>
-          </Collapse>
-
-          {/* Add K-Doms button (always visible when not expanded) */}
-          {!showMore && (
-            <Button
-              leftIcon={<Icon as={FiHeart} />}
-              variant="outline"
-              colorScheme="orange"
-              borderRadius="xl"
-              px={6}
-              w="full"
-            >
-              ADD K-DOMS
             </Button>
           )}
         </VStack>

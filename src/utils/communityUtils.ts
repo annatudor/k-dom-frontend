@@ -1,14 +1,15 @@
-// src/utils/communityUtils.ts
+// src/utils/communityUtils.ts - SIMPLIFIED pentru rollback
 
 import type { PostReadDto } from "@/types/Post";
 import type { KDomTagSearchResultDto } from "@/types/KDom";
 
 /**
- * Sortează postările după criterii specifice
+ * ✅ PĂSTRĂM - Sortare locală pentru postări (când backend nu oferă sorting)
+ * Backend-ul nostru are sorting limitat, deci frontend-ul trebuie să facă sorting local
  */
 export function sortPosts(
   posts: PostReadDto[],
-  sortBy: "newest" | "trending" | "popular"
+  sortBy: "newest" | "popular" | "trending"
 ): PostReadDto[] {
   switch (sortBy) {
     case "newest":
@@ -17,12 +18,13 @@ export function sortPosts(
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
     case "popular":
+      // Sortare după likeCount (avem asta în PostReadDto)
       return [...posts].sort((a, b) => b.likeCount - a.likeCount);
     case "trending":
-      // Combinăm like-uri cu recentitatea pentru trending
+      // Algoritm simplu de trending bazat pe like-uri și recency
       return [...posts].sort((a, b) => {
-        const scoreA = calculateTrendingScore(a);
-        const scoreB = calculateTrendingScore(b);
+        const scoreA = calculateBasicTrendingScore(a);
+        const scoreB = calculateBasicTrendingScore(b);
         return scoreB - scoreA;
       });
     default:
@@ -31,22 +33,26 @@ export function sortPosts(
 }
 
 /**
- * Calculează scorul de trending pentru o postare
+ * ✅ PĂSTRĂM - Algoritm simplu de trending (frontend-only)
+ * Calculează scor de trending local când backend-ul nu oferă asta
  */
-function calculateTrendingScore(post: PostReadDto): number {
+function calculateBasicTrendingScore(post: PostReadDto): number {
   const now = Date.now();
   const postTime = new Date(post.createdAt).getTime();
   const ageInHours = (now - postTime) / (1000 * 60 * 60);
 
   // Scor bazat pe engagement și recency
   const engagementScore = post.likeCount;
-  const recencyBoost = Math.max(0, 48 - ageInHours) / 48; // Boost pentru postări sub 48h
 
-  return engagementScore * (1 + recencyBoost);
+  // Boost pentru postări noi (scade exponențial)
+  const recencyBoost = Math.max(0, 1 / (1 + ageInHours / 24)); // Scade treptat peste 24h
+
+  // Score final: like-uri + boost temporal
+  return engagementScore * (1 + recencyBoost * 2);
 }
 
 /**
- * Filtrează K-Dom-urile după hub
+ * ✅ PĂSTRĂM - Filtrare locală (util pentru sidebar-uri)
  */
 export function filterKDomsByHub(
   kdoms: KDomTagSearchResultDto[],
@@ -54,12 +60,13 @@ export function filterKDomsByHub(
 ): KDomTagSearchResultDto[] {
   if (!hub) return kdoms;
 
-  // Această funcție ar trebui extinsă când avem informații despre hub în data
-  return kdoms; // Placeholder
+  // Pentru moment returnăm toate - nu avem info despre hub în TagSearchResult
+  // Poate fi extins când backend-ul oferă mai multe detalii
+  return kdoms;
 }
 
 /**
- * Formatează numărul de followeri
+ * ✅ PĂSTRĂM - Formatare numere (util pentru UI)
  */
 export function formatFollowerCount(count: number): string {
   if (count >= 1000000) {
@@ -72,7 +79,7 @@ export function formatFollowerCount(count: number): string {
 }
 
 /**
- * Generează culori pentru avataruri bazate pe nume
+ * ✅ PĂSTRĂM - Culori pentru avataruri (util pentru UI)
  */
 export function getAvatarColor(name: string): string {
   const colors = [
@@ -95,7 +102,7 @@ export function getAvatarColor(name: string): string {
 }
 
 /**
- * Verifică dacă un K-Dom este urmărit
+ * ✅ PĂSTRĂM - Verificare follow status local
  */
 export function isKDomFollowed(
   kdomId: string,
@@ -105,7 +112,7 @@ export function isKDomFollowed(
 }
 
 /**
- * Creează un placeholder text pentru empty states
+ * ✅ PĂSTRĂM - Empty state messages (util pentru UI)
  */
 export function getEmptyStateMessage(
   type: "posts" | "kdoms" | "suggestions",
@@ -143,7 +150,7 @@ export function getEmptyStateMessage(
 }
 
 /**
- * Grupează K-Dom-urile după prima literă pentru organizare
+ * ✅ PĂSTRĂM - Grupare alfabetică (util pentru organizare)
  */
 export function groupKDomsByLetter(
   kdoms: KDomTagSearchResultDto[]
@@ -159,19 +166,57 @@ export function groupKDomsByLetter(
 }
 
 /**
- * Extrage hashtag-urile din textul unei postări
+ * ❌ ELIMINĂM - extractHashtags (nu e relevant pentru sistemul nostru de tags)
+ * ❌ ELIMINĂM - isRecentPost (simplu de verificat inline)
  */
-export function extractHashtags(text: string): string[] {
-  const hashtagRegex = /#[\w]+/g;
-  return text.match(hashtagRegex) || [];
+
+/**
+ * ✅ ADĂUGĂM - Helper pentru API sorting
+ * Convertește opțiuni frontend în parametri pentru backend
+ */
+export function getApiSortParam(
+  sortBy: "newest" | "popular" | "trending"
+): "newest" | "oldest" | "most-liked" {
+  switch (sortBy) {
+    case "newest":
+    case "trending": // Trending maps to newest la backend
+      return "newest";
+    case "popular":
+      return "most-liked";
+    default:
+      return "newest";
+  }
 }
 
 /**
- * Verifică dacă o postare este recentă (sub 24h)
+ * ✅ ADĂUGĂM - Verificare dacă backend suportă sorting
  */
-export function isRecentPost(post: PostReadDto): boolean {
-  const now = Date.now();
-  const postTime = new Date(post.createdAt).getTime();
-  const hoursDiff = (now - postTime) / (1000 * 60 * 60);
-  return hoursDiff < 24;
+export function supportsBackendSorting(endpoint: string): boolean {
+  // Doar endpoint-ul by-tag suportă sorting în backend
+  return endpoint.includes("/posts/by-tag");
+}
+
+/**
+ * ✅ ADĂUGĂM - Helper pentru cache keys
+ */
+export function getCacheKey(
+  type: string, // Accepts any string
+  sortBy?: string,
+  filters?: Record<string, unknown>
+): string {
+  const parts = [type];
+  if (sortBy) parts.push(sortBy);
+  if (filters) parts.push(JSON.stringify(filters));
+  return parts.join("-");
+}
+
+/**
+ * ✅ ADĂUGĂM - Type-safe version pentru use cases comune
+ */
+export function getTypedCacheKey(
+  type: "posts" | "kdoms" | "comments" | "notifications",
+  sortBy?: string,
+  filters?: Record<string, unknown>
+): string {
+  return getCacheKey(type, sortBy, filters);
 }

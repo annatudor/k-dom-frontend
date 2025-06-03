@@ -1,4 +1,4 @@
-// src/pages/CommunityPage.tsx
+// src/pages/CommunityPage.tsx - Fandom-style layout
 import {
   Box,
   Container,
@@ -16,7 +16,7 @@ import { CommunityFeed } from "@/components/community/CommunityFeed";
 import { useCommunityData } from "@/hooks/useCommunityData";
 
 export default function CommunityPage() {
-  const bgColor = useColorModeValue("gray.50", "gray.900");
+  const bgColor = useColorModeValue("white.100", "purple.900");
 
   const {
     followedKdoms,
@@ -37,18 +37,26 @@ export default function CommunityPage() {
       {/* Header */}
       <CommunityHeader />
 
-      {/* Main content */}
-      <Container maxW="container.xl" py={8}>
-        <SimpleGrid columns={{ base: 1, lg: 3 }} spacing={8} alignItems="start">
-          {/* Left Sidebar - Sticky sections */}
-          <VStack spacing={6} position="sticky" top="120px" alignSelf="start">
-            {/* Welcome Section */}
+      {/* Main content with fandom-style layout */}
+      <Container maxW="1400px" py={4} px={6}>
+        <SimpleGrid
+          columns={{ base: 1, lg: 12 }}
+          spacing={4}
+          alignItems="start"
+          templateColumns={{ lg: "300px 1fr 280px" }}
+        >
+          {/* Left Sidebar - Fixed width like fandom layout */}
+          <VStack
+            spacing={4}
+            position="sticky"
+            top="80px"
+            alignSelf="start"
+            gridColumn={{ lg: "1" }}
+          >
+            {/* Welcome Section - Compact */}
             <WelcomeSection user={user} isAuthenticated={isAuthenticated} />
 
-            {/* Customize Feed Section - Only for guests */}
-            <CustomizeFeedSection isAuthenticated={isAuthenticated} />
-
-            {/* My K-Doms Section */}
+            {/* My K-Doms Section - Always show */}
             <MyKDomsSection
               isAuthenticated={isAuthenticated}
               followedKdoms={followedKdoms}
@@ -56,8 +64,14 @@ export default function CommunityPage() {
             />
           </VStack>
 
-          {/* Center - Main Feed */}
-          <VStack spacing={6}>
+          {/* Center - Main Feed - Flexible width */}
+          <VStack spacing={4} gridColumn={{ lg: "2" }} w="full">
+            {/* Customize Feed Section - Only for guests, positioned above feed */}
+            {!isAuthenticated && (
+              <CustomizeFeedSection isAuthenticated={isAuthenticated} />
+            )}
+
+            {/* Main Feed */}
             <CommunityFeed
               posts={posts}
               isLoading={isLoadingFeed}
@@ -66,16 +80,24 @@ export default function CommunityPage() {
             />
           </VStack>
 
-          {/* Right Sidebar - Sticky sections */}
-          <VStack spacing={6} position="sticky" top="120px" alignSelf="start">
-            {/* Suggested K-Doms Section */}
-            <SuggestedKDomsSection
-              isAuthenticated={isAuthenticated}
-              suggestedKdoms={suggestedKdoms}
-              isLoading={isLoadingSuggested}
-            />
+          {/* Right Sidebar - Fixed width like fandom layout */}
+          <VStack
+            spacing={4}
+            position="sticky"
+            top="80px"
+            alignSelf="start"
+            gridColumn={{ lg: "3" }}
+          >
+            {/* Suggested K-Doms Section - Show for authenticated users */}
+            {isAuthenticated && (
+              <SuggestedKDomsSection
+                isAuthenticated={isAuthenticated}
+                suggestedKdoms={suggestedKdoms}
+                isLoading={isLoadingSuggested}
+              />
+            )}
 
-            {/* Trending K-Doms Section */}
+            {/* Trending K-Doms Section - Always show */}
             <TrendingKDomsSection
               trendingKdoms={trendingKdoms}
               isLoading={isLoadingTrending}

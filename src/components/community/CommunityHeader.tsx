@@ -1,19 +1,10 @@
-// src/components/community/CommunityHeader.tsx
-import {
-  Box,
-  Container,
-  Heading,
-  HStack,
-  useColorModeValue,
-  Icon,
-} from "@chakra-ui/react";
+// src/components/community/CommunityHeader.tsx - Simple header without navigation
+import { Box, Container, HStack, Heading, Icon } from "@chakra-ui/react";
 import { FiHeart } from "react-icons/fi";
 
 export function CommunityHeader() {
-  const headerBg = useColorModeValue("purple.600", "purple.700");
-
   return (
-    <Box bg={headerBg} py={6} top={0} zIndex={100} boxShadow="md">
+    <Box bg="purple.600" py={6} top={0} zIndex={100} boxShadow="md">
       <Container maxW="container.xl">
         <HStack justify="center">
           <HStack spacing={3} align="center">

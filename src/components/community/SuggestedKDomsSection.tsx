@@ -1,4 +1,4 @@
-// src/components/community/SuggestedKDomsSection.tsx
+// src/components/community/SuggestedKDomsSection.tsx - Compact fandom-style
 import { useState } from "react";
 import {
   Card,
@@ -12,7 +12,7 @@ import {
   useColorModeValue,
   Icon,
   Heading,
-  Collapse,
+  Box,
 } from "@chakra-ui/react";
 import { FiHeart, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -45,16 +45,18 @@ export function SuggestedKDomsSection({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["followed-kdoms"] });
       toast({
-        title: "K-Dom followed!",
+        title: "Fandom followed!",
         status: "success",
-        duration: 3000,
+        duration: 2000,
+        size: "sm",
       });
     },
     onError: () => {
       toast({
-        title: "Failed to follow K-Dom",
+        title: "Failed to follow fandom",
         status: "error",
-        duration: 3000,
+        duration: 2000,
+        size: "sm",
       });
     },
   });
@@ -63,34 +65,9 @@ export function SuggestedKDomsSection({
     followMutation.mutate(kdomId);
   };
 
+  // Don't show for non-authenticated users
   if (!isAuthenticated) {
-    // Guest state
-    return (
-      <Card
-        bg={cardBg}
-        borderWidth="2px"
-        borderColor={borderColor}
-        borderRadius="xl"
-        boxShadow="lg"
-      >
-        <CardBody p={6}>
-          <VStack spacing={4}>
-            <Heading size="md" color={textColor}>
-              Suggested K-Doms
-            </Heading>
-
-            <VStack spacing={4} textAlign="center" py={8}>
-              <Text color="gray.600" fontSize="md" lineHeight="tall">
-                Please sign in to get the full K-Dom experience.
-              </Text>
-              <Text color="gray.500" fontSize="sm">
-                (more detailed and styled)
-              </Text>
-            </VStack>
-          </VStack>
-        </CardBody>
-      </Card>
-    );
+    return null;
   }
 
   // Loading state
@@ -98,26 +75,27 @@ export function SuggestedKDomsSection({
     return (
       <Card
         bg={cardBg}
-        borderWidth="2px"
+        borderWidth="1px"
         borderColor={borderColor}
-        borderRadius="xl"
-        boxShadow="lg"
+        borderRadius="lg"
+        boxShadow="sm"
+        w="full"
       >
-        <CardBody p={6}>
-          <VStack spacing={4}>
-            <Heading size="md" color={textColor}>
-              Suggested K-Doms
+        <CardBody p={4}>
+          <VStack spacing={3}>
+            <Heading size="sm" color={textColor}>
+              Suggested Fandoms
             </Heading>
 
-            <VStack spacing={3} w="full">
+            <VStack spacing={2} w="full">
               {[1, 2, 3, 4, 5].map((i) => (
-                <HStack key={i} w="full" p={3}>
-                  <Avatar size="sm" />
-                  <VStack align="start" spacing={1} flex="1">
-                    <div className="h-3 bg-gray-200 rounded w-24"></div>
-                    <div className="h-2 bg-gray-100 rounded w-16"></div>
+                <HStack key={i} w="full" p={2}>
+                  <Avatar size="xs" />
+                  <VStack align="start" spacing={0} flex="1">
+                    <Box h={3} bg="gray.200" borderRadius="sm" w="60%" />
+                    <Box h={2} bg="gray.100" borderRadius="sm" w="40%" />
                   </VStack>
-                  <div className="w-8 h-8 bg-purple-200 rounded"></div>
+                  <Box w={6} h={6} bg="purple.200" borderRadius="sm" />
                 </HStack>
               ))}
             </VStack>
@@ -132,43 +110,49 @@ export function SuggestedKDomsSection({
   return (
     <Card
       bg={cardBg}
-      borderWidth="2px"
+      borderWidth="1px"
       borderColor={borderColor}
-      borderRadius="xl"
-      boxShadow="lg"
+      borderRadius="lg"
+      boxShadow="sm"
+      w="full"
     >
-      <CardBody p={6}>
-        <VStack spacing={4}>
-          <Heading size="md" color={textColor}>
-            Suggested K-Doms
+      <CardBody p={4}>
+        <VStack spacing={3}>
+          <Heading size="sm" color={textColor}>
+            Suggested Fandoms
           </Heading>
 
           {/* K-Doms list */}
-          <VStack spacing={3} w="full">
+          <VStack spacing={2} w="full">
             {displayedKdoms.map((kdom) => (
               <HStack
                 key={kdom.id}
                 w="full"
-                p={3}
-                borderRadius="lg"
-                _hover={{ bg: "gray.50" }}
+                p={2}
+                borderRadius="md"
+                _hover={{ bg: "gray.50", _dark: { bg: "gray.700" } }}
               >
-                <Avatar size="sm" name={kdom.title} />
-                <VStack align="start" spacing={1} flex="1">
-                  <Text fontWeight="semibold" fontSize="sm" color={textColor}>
+                <Avatar size="xs" name={kdom.title} />
+                <VStack align="start" spacing={0} flex="1">
+                  <Text
+                    fontSize="xs"
+                    fontWeight="semibold"
+                    color={textColor}
+                    noOfLines={1}
+                  >
                     {kdom.title}
                   </Text>
-                  <Text fontSize="xs" color="gray.500">
+                  <Text fontSize="10px" color="gray.500">
                     760K Followers
                   </Text>
                 </VStack>
                 <IconButton
                   icon={<Icon as={FiHeart} />}
-                  aria-label="Follow K-Dom"
+                  aria-label="Follow Fandom"
                   colorScheme="purple"
                   variant="solid"
-                  size="sm"
-                  borderRadius="md"
+                  size="xs"
+                  borderRadius="sm"
                   onClick={() => handleFollow(kdom.id)}
                   isLoading={followMutation.isPending}
                 />
@@ -181,41 +165,13 @@ export function SuggestedKDomsSection({
             <Button
               leftIcon={<Icon as={showMore ? FiChevronUp : FiChevronDown} />}
               variant="ghost"
-              size="sm"
+              size="xs"
               onClick={() => setShowMore(!showMore)}
               color="purple.600"
+              fontSize="xs"
+              fontWeight="bold"
             >
               {showMore ? "SEE LESS" : "SEE MORE"}
-            </Button>
-          )}
-
-          {/* Collapsed additional content */}
-          <Collapse in={showMore} animateOpacity>
-            <VStack spacing={4} pt={4}>
-              <Button
-                leftIcon={<Icon as={FiHeart} />}
-                variant="outline"
-                colorScheme="purple"
-                borderRadius="xl"
-                px={6}
-                w="full"
-              >
-                ADD K-DOMS
-              </Button>
-            </VStack>
-          </Collapse>
-
-          {/* Add K-Doms button (always visible) */}
-          {!showMore && (
-            <Button
-              leftIcon={<Icon as={FiHeart} />}
-              variant="outline"
-              colorScheme="purple"
-              borderRadius="xl"
-              px={6}
-              w="full"
-            >
-              ADD K-DOMS
             </Button>
           )}
         </VStack>

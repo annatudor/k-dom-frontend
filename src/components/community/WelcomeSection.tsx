@@ -1,4 +1,4 @@
-// src/components/community/WelcomeSection.tsx
+// src/components/community/WelcomeSection.tsx - Compact fandom-style
 import {
   Card,
   CardBody,
@@ -12,7 +12,7 @@ import {
   Icon,
   Heading,
 } from "@chakra-ui/react";
-import { FiUser, FiHeart } from "react-icons/fi";
+import { FiUser } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import type { AuthUser } from "@/context/AuthContext";
 
@@ -26,93 +26,73 @@ export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
   if (!isAuthenticated) {
-    // Guest state
+    // Guest state - compact design
     return (
       <Card
         bg={cardBg}
-        borderWidth="2px"
+        borderWidth="1px"
         borderColor={borderColor}
-        borderRadius="xl"
-        boxShadow="lg"
-        overflow="hidden"
-        position="relative"
-        bgGradient="linear(135deg, purple.600, purple.700)"
-        color="white"
+        borderRadius="lg"
+        boxShadow="sm"
+        w="full"
       >
-        <CardBody p={6}>
-          <VStack spacing={6} textAlign="center">
+        <CardBody p={4}>
+          <VStack spacing={4} textAlign="center">
             {/* Header with icon */}
-            <VStack spacing={3}>
+            <VStack spacing={2}>
               <HStack spacing={2} align="center">
                 <Avatar
-                  size="lg"
-                  bg="whiteAlpha.200"
-                  icon={<Icon as={FiUser} color="white" boxSize={8} />}
+                  size="md"
+                  bg="purple.500"
+                  icon={<Icon as={FiUser} color="white" boxSize={5} />}
                 />
                 <Badge
-                  colorScheme="pink"
+                  colorScheme="purple"
                   variant="solid"
-                  px={3}
+                  px={2}
                   py={1}
                   borderRadius="full"
-                  fontSize="sm"
+                  fontSize="xs"
                 >
                   BETA
                 </Badge>
               </HStack>
 
-              <VStack spacing={2}>
-                <HStack spacing={2} align="center">
-                  <Icon as={FiHeart} color="orange.300" boxSize={6} />
-                  <Heading size="lg" fontWeight="bold">
-                    Welcome
-                  </Heading>
-                </HStack>
-
-                <Text fontSize="md" opacity={0.9} maxW="sm" lineHeight="tall">
-                  This is your home for the latest content and fan discussions
-                  around your favorite pop culture K-Doms.
+              <VStack spacing={1}>
+                <Heading size="md" fontWeight="bold" color="purple.600">
+                  Welcome
+                </Heading>
+                <Text fontSize="sm" color="gray.600" lineHeight="short">
+                  Join the K-Dom community
                 </Text>
               </VStack>
             </VStack>
 
             {/* Auth buttons */}
             <VStack spacing={2} w="full">
-              <Text fontSize="sm" opacity={0.8}>
-                Don't have an account?
-              </Text>
+              <Button
+                as={RouterLink}
+                to="/register"
+                colorScheme="purple"
+                size="sm"
+                w="full"
+                borderRadius="md"
+                fontWeight="bold"
+              >
+                REGISTER
+              </Button>
 
-              <HStack spacing={3} w="full">
-                <Button
-                  as={RouterLink}
-                  to="/login"
-                  variant="outline"
-                  borderColor="whiteAlpha.400"
-                  color="white"
-                  _hover={{
-                    bg: "whiteAlpha.200",
-                    borderColor: "whiteAlpha.600",
-                  }}
-                  size="md"
-                  flex="1"
-                >
-                  SIGN IN
-                </Button>
-
-                <Button
-                  as={RouterLink}
-                  to="/register"
-                  bg="whiteAlpha.200"
-                  color="white"
-                  _hover={{ bg: "whiteAlpha.300" }}
-                  _active={{ bg: "whiteAlpha.400" }}
-                  size="md"
-                  flex="1"
-                  fontWeight="bold"
-                >
-                  REGISTER
-                </Button>
-              </HStack>
+              <Button
+                as={RouterLink}
+                to="/login"
+                variant="outline"
+                colorScheme="purple"
+                size="sm"
+                w="full"
+                borderRadius="md"
+              >
+                SIGN IN
+              </Button>
             </VStack>
           </VStack>
         </CardBody>
@@ -120,36 +100,28 @@ export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
     );
   }
 
-  // Authenticated user state
+  // Authenticated user state - compact design
   return (
     <Card
       bg={cardBg}
-      borderWidth="2px"
+      borderWidth="1px"
       borderColor={borderColor}
-      borderRadius="xl"
-      boxShadow="lg"
-      overflow="hidden"
-      bgGradient="linear(135deg, purple.600, purple.700)"
-      color="white"
+      borderRadius="lg"
+      boxShadow="sm"
+      w="full"
     >
-      <CardBody p={6}>
-        <VStack spacing={6} textAlign="center">
+      <CardBody p={4}>
+        <VStack spacing={3} textAlign="center">
           {/* User info */}
-          <VStack spacing={3}>
-            <HStack spacing={2} align="center">
-              <Avatar size="lg" name={user?.username} src={user?.avatarUrl} />
-            </HStack>
-
-            <VStack spacing={2}>
-              <HStack spacing={2} align="center">
-                <Heading size="lg" fontWeight="bold">
-                  Welcome
-                </Heading>
-              </HStack>
-
-              <Heading size="lg" fontWeight="bold">
-                {user?.username}!
+          <VStack spacing={2}>
+            <Avatar size="md" name={user?.username} src={user?.avatarUrl} />
+            <VStack spacing={1}>
+              <Heading size="sm" fontWeight="bold">
+                Welcome
               </Heading>
+              <Text fontSize="md" fontWeight="semibold" color="purple.600">
+                {user?.username}!
+              </Text>
             </VStack>
           </VStack>
 
@@ -158,15 +130,10 @@ export function WelcomeSection({ user, isAuthenticated }: WelcomeSectionProps) {
             as={RouterLink}
             to="/profile/my-profile"
             variant="outline"
-            borderColor="whiteAlpha.400"
-            color="white"
-            _hover={{
-              bg: "whiteAlpha.200",
-              borderColor: "whiteAlpha.600",
-            }}
-            size="lg"
-            borderRadius="xl"
-            px={8}
+            colorScheme="purple"
+            size="sm"
+            w="full"
+            borderRadius="md"
           >
             VIEW PROFILE
           </Button>

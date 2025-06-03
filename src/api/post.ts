@@ -1,3 +1,4 @@
+// src/api/post.ts - Updated for rollback
 import API from "./axios";
 import type {
   PostCreateDto,
@@ -19,13 +20,24 @@ export const updatePost = async (
   await API.put(`/posts/${postId}`, data);
 };
 
+//  Șterge o postare
+export const deletePost = async (postId: string): Promise<void> => {
+  await API.delete(`/posts/${postId}`);
+};
+
+//  Toate postările (pentru pagina principală de posts)
+export const getAllPosts = async (): Promise<PostReadDto[]> => {
+  const res = await API.get("/posts");
+  return res.data;
+};
+
 //  Feed personalizat pentru user logat
 export const getFeed = async (): Promise<PostReadDto[]> => {
   const res = await API.get("/posts/feed");
   return res.data;
 };
 
-//  Feed public pentru guests
+//  Feed public pentru guests - FIXED endpoint name
 export const getPublicFeed = async (): Promise<PostReadDto[]> => {
   const res = await API.get("/posts/guest-feed");
   return res.data;
@@ -53,15 +65,10 @@ export const getPostsByTag = async (tag: string): Promise<PostReadDto[]> => {
   return res.data;
 };
 
-// FIXED: Changed from PUT to POST to match backend
-// Toggle like/unlike
+// Toggle like/unlike - FIXED: Use POST method
 export const toggleLikePost = async (
   postId: string
 ): Promise<PostLikeResponseDto> => {
   const res = await API.post(`/posts/${postId}/like`);
   return res.data;
-};
-
-export const deletePost = async (postId: string): Promise<void> => {
-  await API.delete(`/posts/${postId}`);
 };

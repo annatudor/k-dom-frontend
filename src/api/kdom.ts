@@ -190,8 +190,23 @@ export const getTrendingKdoms = async (
 export const getTrendingKdomsForGuests = async (
   limit: number = 15
 ): Promise<KDomTagSearchResultDto[]> => {
-  const res = await API.get(`/kdoms/trending-guest?limit=${limit}`);
-  return res.data.kdoms;
+  try {
+    // Try the trending endpoint first
+    const trendingKdoms = await getTrendingKdoms(7);
+
+    // Transform to TagSearchResult format
+    const transformed = trendingKdoms.slice(0, limit).map((kdom) => ({
+      id: kdom.id,
+      title: kdom.title,
+      slug: kdom.slug,
+      description: `Trending with ${kdom.TotalScore} points`,
+    }));
+
+    return transformed;
+  } catch (error) {
+    console.error("Error fetching trending K-Doms for guests:", error);
+    return [];
+  }
 };
 
 export const getSuggestedKdoms = async (): Promise<
