@@ -14,7 +14,7 @@ import type {
   Language,
   Hub,
   KDomTheme,
-  KDomSearchResult, // <-- Add this import
+  KDomSearchResult,
 } from "../types/KDom";
 
 // CRUD
@@ -180,9 +180,18 @@ export const searchKDomTags = async (
   return res.data;
 };
 
-export const getTrendingKdoms = async (): Promise<KDomTrendingDto[]> => {
-  const res = await API.get("/kdoms/trending");
+export const getTrendingKdoms = async (
+  days: number = 7
+): Promise<KDomTrendingDto[]> => {
+  const res = await API.get(`/kdoms/trending?days=${days}`);
   return res.data;
+};
+
+export const getTrendingKdomsForGuests = async (
+  limit: number = 15
+): Promise<KDomTagSearchResultDto[]> => {
+  const res = await API.get(`/kdoms/trending-guest?limit=${limit}`);
+  return res.data.kdoms;
 };
 
 export const getSuggestedKdoms = async (): Promise<

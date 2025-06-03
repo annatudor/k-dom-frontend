@@ -18,6 +18,7 @@ import CreateSubKDomPage from "@/pages/CreateSubKDomPage";
 import CreatePostPage from "@/pages/CreatePostPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import KDomDiscussionPage from "@/pages/KDomDiscussionPage";
+import CommunityPage from "@/pages/CommunityPage";
 // import ProfilePage from "@/pages/ProfilePage";
 // import EditProfilePage from "@/pages/EditProfilePage";
 
@@ -49,6 +50,8 @@ export const router = createBrowserRouter([
       { path: "/create-post", element: <CreatePostPage /> }, // Add this line
       { path: "/posts/:postId", element: <PostDetailPage /> },
       { path: "/kdoms/slug/:slug/discussion", element: <KDomDiscussionPage /> },
+      { path: "/community", element: <CommunityPage /> },
+
       // {
       //   path: "/profile/my-profile",
       //   element: <ProfilePage />,

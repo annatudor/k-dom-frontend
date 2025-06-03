@@ -97,13 +97,18 @@ export interface KDomTagSearchResultDto {
   id: string;
   title: string;
   slug: string;
+  description: string;
 }
 
 export interface KDomTrendingDto {
   id: string;
   title: string;
   slug: string;
-  score: number;
+  postScore: number;
+  commentScore: number;
+  followScore: number;
+  editScore: number;
+  TotalScore: number; // Calculat: (PostScore * 3) + (CommentScore * 2) + (FollowScore * 2) + (EditScore * 1)
 }
 
 export interface KDomSubCreateDto {
