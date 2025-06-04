@@ -97,7 +97,6 @@ export interface KDomTagSearchResultDto {
   id: string;
   title: string;
   slug: string;
-  description: string;
 }
 
 export interface KDomTrendingDto {

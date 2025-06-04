@@ -1,12 +1,3 @@
-// src/pages/EditKDomMetadataPage.tsx - Complete version
-//
-// Step-by-step implementation:
-// 1. Import all necessary dependencies and types
-// 2. Set up form state management with proper typing
-// 3. Create queries for K-Dom data and dropdown options
-// 4. Implement form validation and submission logic
-// 5. Handle parent K-Dom selection functionality
-// 6. Create responsive UI with proper loading and error states
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

@@ -1,6 +1,6 @@
-// src/pages/EditKDomPage.tsx
+// src/pages/EditKDomPage.tsx - Actualizat cu useKDomPermissions
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom"; // Removed useNavigate import
+import { useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Box,
@@ -44,11 +44,13 @@ import {
   FiAlertCircle,
   FiCheck,
   FiSettings,
+  FiLock,
+  FiShield,
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 
 import { getKDomBySlug, editKDomBySlug } from "@/api/kdom";
-import { useAuth } from "@/context/AuthContext";
+import { useKDomPermissions } from "@/hooks/useKDomPermissions";
 import { TiptapEditor } from "@/components/editor/TipTapEditor";
 import { useAutosave } from "@/hooks/useAutosave";
 import { KDomContent } from "@/components/kdom/kdom-components/KDomContent";
@@ -56,8 +58,6 @@ import type { KDomEditDto } from "@/types/KDom";
 
 export default function EditKDomPage() {
   const { slug } = useParams<{ slug: string }>();
-  // Removed: const navigate = useNavigate();
-  const { user } = useAuth();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -75,7 +75,7 @@ export default function EditKDomPage() {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
-  // Query pentru detaliile K-Dom-ului (folosind slug)
+  // Query pentru detaliile K-Dom-ului
   const {
     data: kdom,
     isLoading,
@@ -86,7 +86,10 @@ export default function EditKDomPage() {
     enabled: !!slug,
   });
 
-  // Mutation pentru editarea K-Dom-ului (folosind slug)
+  // ✅ FOLOSIM NOUL HOOK PENTRU PERMISIUNI
+  const permissions = useKDomPermissions(kdom);
+
+  // Mutation pentru editarea K-Dom-ului
   const editMutation = useMutation({
     mutationFn: (data: KDomEditDto) => editKDomBySlug(slug!, data),
     onSuccess: () => {
@@ -120,7 +123,7 @@ export default function EditKDomPage() {
     content,
     initialContent: kdom?.contentHtml || "",
     onSave: editMutation.mutateAsync,
-    enabled: !!kdom,
+    enabled: !!kdom && permissions.canEdit,
   });
 
   // Funcția pentru salvarea manuală
@@ -151,7 +154,7 @@ export default function EditKDomPage() {
     }
   };
 
-  // Verificări de securitate
+  // ✅ VERIFICĂRI DE SECURITATE CU NOUL HOOK
   if (isLoading) {
     return (
       <Box minH="100vh" bg={bgColor} pt="80px">
@@ -178,25 +181,52 @@ export default function EditKDomPage() {
     );
   }
 
-  if (
-    kdom.userId !== user?.id &&
-    user?.role !== "admin" &&
-    user?.role !== "moderator"
-  ) {
+  // ✅ VERIFICARE PERMISIUNI CENTRALIZATĂ
+  if (!permissions.canEdit) {
     return (
       <Box minH="100vh" bg={bgColor} pt="80px">
         <Container maxW="container.xl">
-          <Alert status="error" mt={8}>
+          <Alert status="error" mt={8} borderRadius="lg">
             <AlertIcon />
-            You don't have permission to edit this K-Dom.
+            <VStack align="start" spacing={2}>
+              <Text fontWeight="bold">Access Denied</Text>
+              <Text>{permissions.reason}</Text>
+              <Text fontSize="sm" color="gray.600">
+                Current role: {permissions.role}
+              </Text>
+              <Button
+                as={RouterLink}
+                to={`/kdoms/slug/${slug}`}
+                colorScheme="blue"
+                size="sm"
+                mt={2}
+              >
+                Return to K-Dom
+              </Button>
+            </VStack>
           </Alert>
         </Container>
       </Box>
     );
   }
 
+  // ✅ HELPER PENTRU CULOAREA ROLULUI
+  const getRoleColor = () => {
+    switch (permissions.role) {
+      case "owner":
+        return "gold";
+      case "collaborator":
+        return "purple";
+      case "admin":
+        return "red";
+      case "moderator":
+        return "blue";
+      default:
+        return "gray";
+    }
+  };
+
   return (
-    // PAGINA COMPLETĂ - ieșim din orice container - similar cu KDomPage
     <Box
       position="fixed"
       top="0"
@@ -206,9 +236,8 @@ export default function EditKDomPage() {
       bg={bgColor}
       overflowY="auto"
       zIndex={1}
-      pt="80px" // Spațiu pentru navbar
+      pt="80px"
     >
-      {/* Layout fără margini - folosește TOATĂ lățimea */}
       <Box w="100vw" px={8} py={6}>
         {/* Breadcrumb */}
         <Breadcrumb mb={6} fontSize="sm" flexShrink={0}>
@@ -218,7 +247,7 @@ export default function EditKDomPage() {
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbItem>
-            <BreadcrumbLink as={RouterLink} to={`/kdom/${kdom.slug}`}>
+            <BreadcrumbLink as={RouterLink} to={`/kdom/slug/${kdom.slug}`}>
               {kdom.title}
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -227,9 +256,9 @@ export default function EditKDomPage() {
           </BreadcrumbItem>
         </Breadcrumb>
 
-        {/* Container pentru conținut - FOARTE LARG */}
+        {/* Container pentru conținut */}
         <Box w="100%">
-          {/* Header */}
+          {/* Header cu informații despre permisiuni */}
           <Box
             bg={cardBg}
             borderRadius="lg"
@@ -240,15 +269,30 @@ export default function EditKDomPage() {
             flexShrink={0}
           >
             <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
-              <VStack align="start" spacing={2}>
+              <VStack align="start" spacing={3}>
                 <Heading size="lg">Edit: {kdom.title}</Heading>
-                <HStack spacing={4}>
+                <HStack spacing={4} flexWrap="wrap">
                   <Badge colorScheme="blue">{kdom.hub}</Badge>
                   <Badge colorScheme="green">{kdom.language}</Badge>
                   {kdom.isForKids && (
                     <Badge colorScheme="orange">Child-friendly</Badge>
                   )}
+                  {/* ✅ BADGE PENTRU ROL */}
+                  <Badge colorScheme={getRoleColor()}>
+                    {permissions.role === "owner" ? (
+                      <FiShield style={{ marginRight: "0.25em" }} />
+                    ) : permissions.role === "admin" ||
+                      permissions.role === "moderator" ? (
+                      <FiLock style={{ marginRight: "0.25em" }} />
+                    ) : null}
+                    {permissions.role.charAt(0).toUpperCase() +
+                      permissions.role.slice(1)}
+                  </Badge>
                 </HStack>
+                {/* ✅ AFIȘĂM MOTIVUL PERMISIUNII */}
+                <Text fontSize="sm" color="gray.600">
+                  {permissions.reason}
+                </Text>
               </VStack>
 
               {/* Status și acțiuni */}
@@ -294,15 +338,30 @@ export default function EditKDomPage() {
                   >
                     {previewMode ? "Edit" : "Preview"}
                   </Button>
-                  <Button
-                    leftIcon={<FiClock />}
-                    variant="outline"
-                    size="sm"
-                    as={RouterLink}
-                    to={`/kdom/${slug}/history`}
-                  >
-                    History
-                  </Button>
+                  {/* ✅ AFIȘĂM BUTONUL DOAR DACĂ POATE VEDEA ISTORICUL */}
+                  {permissions.canViewEditHistory && (
+                    <Button
+                      leftIcon={<FiClock />}
+                      variant="outline"
+                      size="sm"
+                      as={RouterLink}
+                      to={`/kdom/${slug}/history`}
+                    >
+                      History
+                    </Button>
+                  )}
+                  {/* ✅ AFIȘĂM BUTONUL DOAR DACĂ POATE EDITA METADATA */}
+                  {permissions.canEditMetadata && (
+                    <Button
+                      leftIcon={<FiSettings />}
+                      variant="outline"
+                      size="sm"
+                      as={RouterLink}
+                      to={`/kdom/${slug}/metadata`}
+                    >
+                      Settings
+                    </Button>
+                  )}
                   <Button
                     leftIcon={<FiSave />}
                     colorScheme="green"
@@ -317,13 +376,13 @@ export default function EditKDomPage() {
             </Flex>
           </Box>
 
-          {/* Conținutul principal - cu înălțime completă */}
+          {/* Conținutul principal */}
           <Box
             bg={cardBg}
             borderRadius="lg"
             borderWidth="1px"
             borderColor={borderColor}
-            height="calc(100vh - 280px)" // Înălțime calculată: viewport - header - padding
+            height="calc(100vh - 280px)"
             display="flex"
             flexDirection="column"
           >
@@ -382,7 +441,7 @@ export default function EditKDomPage() {
                     />
                   </Box>
 
-                  {/* Form pentru descrierea schimbărilor - afișat doar în modul Edit */}
+                  {/* Form pentru descrierea schimbărilor */}
                   {!previewMode && (
                     <Box
                       p={6}
@@ -497,10 +556,23 @@ export default function EditKDomPage() {
                   <strong>Created:</strong>{" "}
                   {new Date(kdom.createdAt).toLocaleString()}
                 </Text>
+                {/* ✅ AFIȘĂM INFORMAȚII DESPRE PERMISIUNI */}
+                <Text fontSize="sm" color="gray.600">
+                  <strong>Your permissions:</strong> {permissions.role} (
+                  {permissions.canEditMetadata ? "full access" : "content only"}
+                  )
+                </Text>
               </VStack>
-              <Text fontSize="xs" color="gray.500">
-                Changes are automatically saved as you type
-              </Text>
+              <VStack align="end" spacing={1}>
+                <Text fontSize="xs" color="gray.500">
+                  Changes are automatically saved as you type
+                </Text>
+                {!permissions.canEditMetadata && (
+                  <Text fontSize="xs" color="orange.600">
+                    Note: You can edit content but not K-Dom settings
+                  </Text>
+                )}
+              </VStack>
             </HStack>
           </Box>
         </Box>

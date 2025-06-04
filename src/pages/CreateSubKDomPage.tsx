@@ -143,6 +143,7 @@ export default function CreateSubKDomPage() {
   // Permission check
   if (
     parentKdom.userId !== user?.id &&
+    !parentKdom.collaborators?.includes(user?.id || 0) &&
     user?.role !== "admin" &&
     user?.role !== "moderator"
   ) {

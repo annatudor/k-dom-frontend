@@ -1,4 +1,4 @@
-// src/pages/KDomPage.tsx - Restructurat cu sidebar pe partea dreapta
+// src/pages/KDomPage.tsx - Actualizat cu useKDomPermissions
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -45,7 +45,7 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 
 import { getKDomBySlug } from "@/api/kdom";
-import { useAuth } from "@/context/AuthContext";
+import { useKDomPermissions } from "@/hooks/useKDomPermissions";
 import { FlagMenuItem } from "@/components/flag/FlagButton";
 
 // Componente pentru K-Dom
@@ -61,7 +61,6 @@ import { ViewStats } from "@/components/view-tracking/ViewStats";
 
 export default function KDomPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { user } = useAuth();
   const toast = useToast();
 
   const bgColor = useColorModeValue("gray.50", "gray.900");
@@ -79,6 +78,9 @@ export default function KDomPage() {
     enabled: !!slug,
   });
 
+  // ✅ FOLOSIM NOUL HOOK PENTRU PERMISIUNI
+  const permissions = useKDomPermissions(kdom);
+
   const {
     isFollowing,
     followersCount,
@@ -86,14 +88,6 @@ export default function KDomPage() {
     isLoading: isFollowLoading,
     canFollow,
   } = useKDomFollow(kdom?.id || "");
-
-  // ✅ LOGICA DE PERMISIUNI pentru stats
-  const canViewStats =
-    user &&
-    kdom &&
-    (user.id === kdom.userId || // Owner-ul K-Dom-ului
-      user.role === "admin" ||
-      user.role === "moderator");
 
   // Handle share functionality
   const handleShare = async () => {
@@ -174,13 +168,8 @@ export default function KDomPage() {
     );
   }
 
-  // Check permissions
-  const isOwnKDom = user?.id === kdom.userId;
-  const isCollaborator =
-    user && kdom.collaborators && kdom.collaborators.includes(user.id);
-  const isAdminOrMod =
-    user && (user.role === "admin" || user.role === "moderator");
-  const canEdit = user && (isOwnKDom || isCollaborator || isAdminOrMod);
+  // ✅ FOLOSIM PERMISIUNILE DIN HOOK
+  const { canEdit, canViewSensitive, role } = permissions;
 
   // Determinăm tema culorilor bazată pe tema K-Dom-ului
   const getThemeColors = () => {
@@ -265,7 +254,7 @@ export default function KDomPage() {
 
         {/* Container pentru conținut */}
         <Box w="100%">
-          {/* Hero Header Section - Simplificat fără stats */}
+          {/* Hero Header Section */}
           <Card
             bg={cardBg}
             borderWidth="1px"
@@ -324,13 +313,35 @@ export default function KDomPage() {
                         Child-friendly
                       </Badge>
                     )}
+                    {/* ✅ ADĂUGĂM BADGE PENTRU ROL */}
+                    {role !== "user" && role !== "guest" && (
+                      <Badge
+                        colorScheme={
+                          role === "owner"
+                            ? "gold"
+                            : role === "collaborator"
+                            ? "purple"
+                            : role === "admin"
+                            ? "red"
+                            : "blue"
+                        }
+                        variant="solid"
+                        px={4}
+                        py={2}
+                        borderRadius="full"
+                        fontSize="md"
+                        fontWeight="bold"
+                      >
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </Badge>
+                    )}
                   </HStack>
                 </VStack>
 
                 {/* Right side - Action Buttons */}
                 <VStack spacing={3} align="end" minW="250px">
                   <HStack spacing={3}>
-                    {canFollow && !isOwnKDom && (
+                    {canFollow && role !== "owner" && (
                       <Button
                         leftIcon={<Icon as={FiHeart} />}
                         colorScheme={isFollowing ? "red" : "whiteAlpha"}
@@ -348,6 +359,7 @@ export default function KDomPage() {
                         {isFollowing ? "Following" : "Follow"}
                       </Button>
                     )}
+                    {/* ✅ FOLOSIM canEdit DIN PERMISIUNI */}
                     {canEdit && (
                       <Button
                         leftIcon={<Icon as={FiEdit3} />}
@@ -398,7 +410,8 @@ export default function KDomPage() {
                         _hover={{ bg: "whiteAlpha.200" }}
                       />
                       <MenuList>
-                        {canEdit && (
+                        {/* ✅ FOLOSIM permissions.canEditMetadata */}
+                        {permissions.canEditMetadata && (
                           <MenuItem
                             as={RouterLink}
                             to={`/kdom/${kdom.slug}/settings`}
@@ -408,7 +421,7 @@ export default function KDomPage() {
                           </MenuItem>
                         )}
 
-                        {canFollow && !isOwnKDom && (
+                        {canFollow && role !== "owner" && (
                           <MenuItem
                             icon={<FiBookmark />}
                             onClick={handleToggleFollow}
@@ -419,7 +432,7 @@ export default function KDomPage() {
                           </MenuItem>
                         )}
 
-                        {!isOwnKDom && (
+                        {role !== "owner" && (
                           <>
                             <Divider />
                             <FlagMenuItem
@@ -438,7 +451,7 @@ export default function KDomPage() {
               </Flex>
             </Box>
 
-            {/*  Meta Information - Doar informații de bază */}
+            {/* Meta Information */}
             <CardBody px={8} py={6}>
               <VStack align="start" spacing={6}>
                 {/* Description */}
@@ -448,7 +461,7 @@ export default function KDomPage() {
                   </Text>
                 )}
 
-                {/*  Basic Info Row - Fără stats complexe */}
+                {/* Basic Info Row */}
                 <HStack spacing={6} wrap="wrap" fontSize="md" color="gray.600">
                   <HStack spacing={3}>
                     <Icon as={FiUsers} boxSize={5} />
@@ -479,12 +492,22 @@ export default function KDomPage() {
                       {kdom.theme}
                     </Text>
                   </HStack>
+                  {/* ✅ AFIȘĂM ROLUL UTILIZATORULUI */}
+                  {role !== "user" && role !== "guest" && (
+                    <HStack spacing={3}>
+                      <Icon as={FiUsers} boxSize={5} />
+                      <Text>Your role:</Text>
+                      <Text fontWeight="bold" color={themeColors.accent}>
+                        {role.charAt(0).toUpperCase() + role.slice(1)}
+                      </Text>
+                    </HStack>
+                  )}
                 </HStack>
               </VStack>
             </CardBody>
           </Card>
 
-          {/*  Main Content Layout - Întotdeauna cu sidebar */}
+          {/* Main Content Layout - Întotdeauna cu sidebar */}
           <Grid
             templateColumns={{ base: "1fr", lg: "1fr 320px" }}
             gap={12}
@@ -496,8 +519,8 @@ export default function KDomPage() {
               <VStack spacing={8} align="stretch">
                 <KDomContent content={kdom.contentHtml} theme={kdom.theme} />
 
-                {/* DETAILED VIEW STATS doar pentru owner/admin în main content */}
-                {canViewStats && (
+                {/* ✅ DETAILED VIEW STATS doar pentru utilizatorii cu permisiuni */}
+                {canViewSensitive && (
                   <Card
                     bg={cardBg}
                     borderWidth="1px"
@@ -530,8 +553,8 @@ export default function KDomPage() {
             <GridItem display={{ base: "none", lg: "block" }}>
               <Box position="sticky" top="20px">
                 <VStack spacing={6} align="stretch">
-                  {/*  1. STATISTICS - Prima secțiune */}
-                  {canViewStats ? (
+                  {/* ✅ STATISTICS - Prima secțiune */}
+                  {canViewSensitive ? (
                     <ViewStats
                       contentType="KDom"
                       contentId={kdom.id}
@@ -539,7 +562,7 @@ export default function KDomPage() {
                       refreshInterval={300000}
                     />
                   ) : (
-                    //  Basic stats pentru toți utilizatorii
+                    // Basic stats pentru toți utilizatorii
                     <Card
                       bg={cardBg}
                       borderWidth="1px"
@@ -618,14 +641,15 @@ export default function KDomPage() {
                     </Card>
                   )}
 
-                  {/*  2. SUB-PAGES & NAVIGATION */}
+                  {/* ✅ SUB-PAGES & NAVIGATION - TRANSMITEM PERMISIUNILE */}
                   <KDomSidebar
                     kdomId={kdom.id}
                     kdomSlug={kdom.slug}
                     kdomUserId={kdom.userId}
-                    kdomTitle={kdom.title} //
+                    kdomTitle={kdom.title}
                     kdomCollaborators={kdom.collaborators || []}
                     followersCount={followersCount}
+                    permissions={permissions} // ✅ TRANSMITEM PERMISIUNILE
                   />
                 </VStack>
               </Box>
