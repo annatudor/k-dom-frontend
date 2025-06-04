@@ -19,6 +19,8 @@ import CreatePostPage from "@/pages/CreatePostPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import KDomDiscussionPage from "@/pages/KDomDiscussionPage";
 import CommunityPage from "@/pages/CommunityPage";
+import KDomCollaborationPage from "@/pages/KDomCollaborationPage";
+import CollaborationPage from "@/pages/CollaborationPage";
 // import ProfilePage from "@/pages/ProfilePage";
 // import EditProfilePage from "@/pages/EditProfilePage";
 
@@ -51,7 +53,11 @@ export const router = createBrowserRouter([
       { path: "/posts/:postId", element: <PostDetailPage /> },
       { path: "/kdoms/slug/:slug/discussion", element: <KDomDiscussionPage /> },
       { path: "/community", element: <CommunityPage /> },
-
+      { path: "/collaboration", element: <CollaborationPage /> },
+      {
+        path: "/kdoms/:slug/collaboration",
+        element: <KDomCollaborationPage />,
+      },
       // {
       //   path: "/profile/my-profile",
       //   element: <ProfilePage />,

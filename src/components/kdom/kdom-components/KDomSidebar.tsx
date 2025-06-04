@@ -1,4 +1,4 @@
-// src/components/kdom/kdom-components/KDomSidebar.tsx - Reorganizat pentru sidebar
+// src/components/kdom/kdom-components/KDomSidebar.tsx - Actualizat cu CollaborationButton
 import {
   VStack,
   Heading,
@@ -23,17 +23,22 @@ import {
   FiSettings,
   FiPlus,
   FiUsers,
+  FiUserPlus,
+  FiEdit3,
 } from "react-icons/fi";
 import { useQuery } from "@tanstack/react-query";
 import { Link as RouterLink } from "react-router-dom";
 
 import { getParentKDom, getChildKDoms, getRelatedKDoms } from "@/api/kdom";
 import { useAuth } from "@/context/AuthContext";
+import { CollaborationButton } from "@/components/collaboration/CollaborationButton";
 
 interface KDomSidebarProps {
   kdomId: string;
   kdomSlug: string;
   kdomUserId?: number;
+  kdomTitle: string; // Adăugat pentru CollaborationButton
+  kdomCollaborators?: number[]; // Adăugat pentru CollaborationButton
   followersCount?: number;
 }
 
@@ -41,17 +46,19 @@ export function KDomSidebar({
   kdomId,
   kdomSlug,
   kdomUserId,
+  kdomTitle,
+  kdomCollaborators = [],
 }: KDomSidebarProps) {
   const { user } = useAuth();
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const cardBg = useColorModeValue("white", "gray.700");
 
-  // Check if user can edit this K-Dom
-  const canEdit =
-    user &&
-    (user.id === kdomUserId ||
-      user.role === "admin" ||
-      user.role === "moderator");
+  const isOwnKDom = user?.id === kdomUserId;
+  const isCollaborator = user && kdomCollaborators.includes(user.id);
+  const isAdminOrMod =
+    user && (user.role === "admin" || user.role === "moderator");
+
+  const canEdit = user && (isOwnKDom || isCollaborator || isAdminOrMod);
 
   // Query pentru pagina părinte
   const { data: parentKdom } = useQuery({
@@ -362,7 +369,7 @@ export function KDomSidebar({
         </CardBody>
       </Card>
 
-      {/* ✅ 5. HELP/CONTRIBUTE BOX */}
+      {/* ✅ 5. CONTRIBUTE BOX - ACTUALIZAT CU COLLABORATION BUTTON */}
       <Card
         bg="blue.50"
         borderWidth="2px"
@@ -382,29 +389,96 @@ export function KDomSidebar({
               Add content, fix errors, or suggest improvements to make this page
               better for everyone
             </Text>
-            {canEdit ? (
-              <Button
-                as={RouterLink}
-                to={`/kdoms/${kdomSlug}/edit`}
-                colorScheme="blue"
-                size="sm"
-                variant="solid"
-                borderRadius="full"
-                px={6}
-              >
-                Edit Content
-              </Button>
-            ) : (
-              <Button
-                colorScheme="blue"
-                size="sm"
-                variant="solid"
-                borderRadius="full"
-                px={6}
-                isDisabled
-              >
-                Contribute
-              </Button>
+
+            {/* STATUS INDICATOR */}
+            {isOwnKDom && (
+              <Badge colorScheme="green" borderRadius="full" px={3} py={1}>
+                You own this K-Dom
+              </Badge>
+            )}
+            {isCollaborator && !isOwnKDom && (
+              <Badge colorScheme="purple" borderRadius="full" px={3} py={1}>
+                You're a collaborator
+              </Badge>
+            )}
+
+            {/* ACTION BUTTONS */}
+            <VStack spacing={3} w="full">
+              {canEdit ? (
+                <Button
+                  as={RouterLink}
+                  to={`/kdoms/${kdomSlug}/edit`}
+                  colorScheme="blue"
+                  size="md"
+                  borderRadius="full"
+                  px={6}
+                  leftIcon={<Icon as={FiEdit3} />}
+                  w="full"
+                >
+                  Edit Content
+                </Button>
+              ) : (
+                /* COLLABORATION BUTTON - INTEGRAT ÎN SIDEBAR */
+                <CollaborationButton
+                  kdomId={kdomId}
+                  kdomTitle={kdomTitle}
+                  kdomUserId={kdomUserId || 0}
+                  kdomCollaborators={kdomCollaborators}
+                  variant="button"
+                  size="md"
+                  colorScheme="purple"
+                />
+              )}
+
+              {/* COLLABORATION MANAGEMENT pentru owner */}
+              {isOwnKDom && (
+                <Button
+                  as={RouterLink}
+                  to={`/kdoms/${kdomSlug}/collaboration`}
+                  variant="outline"
+                  colorScheme="purple"
+                  size="sm"
+                  borderRadius="full"
+                  px={6}
+                  leftIcon={<Icon as={FiUserPlus} />}
+                  w="full"
+                >
+                  Manage Collaborators
+                </Button>
+              )}
+
+              {/* COLLABORATION INFO pentru collaboratori */}
+              {isCollaborator && !isOwnKDom && (
+                <Button
+                  as={RouterLink}
+                  to={`/kdoms/${kdomSlug}/collaborators`}
+                  variant="outline"
+                  colorScheme="blue"
+                  size="sm"
+                  borderRadius="full"
+                  px={6}
+                  leftIcon={<Icon as={FiUsers} />}
+                  w="full"
+                >
+                  View Collaborators
+                </Button>
+              )}
+            </VStack>
+
+            {/* COLLABORATION STATS PREVIEW */}
+            {kdomCollaborators.length > 0 && (
+              <VStack spacing={2} pt={2}>
+                <HStack spacing={2}>
+                  <Icon as={FiUsers} color="purple.500" boxSize={4} />
+                  <Text fontSize="sm" color="purple.600" fontWeight="semibold">
+                    {kdomCollaborators.length} collaborator
+                    {kdomCollaborators.length !== 1 ? "s" : ""}
+                  </Text>
+                </HStack>
+                <Text fontSize="xs" color="purple.500">
+                  This K-Dom is collaboratively maintained
+                </Text>
+              </VStack>
             )}
           </VStack>
         </CardBody>

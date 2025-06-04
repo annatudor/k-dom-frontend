@@ -175,12 +175,12 @@ export default function KDomPage() {
   }
 
   // Check permissions
-  const canEdit =
-    user &&
-    (user.id === kdom.userId ||
-      user.role === "admin" ||
-      user.role === "moderator");
   const isOwnKDom = user?.id === kdom.userId;
+  const isCollaborator =
+    user && kdom.collaborators && kdom.collaborators.includes(user.id);
+  const isAdminOrMod =
+    user && (user.role === "admin" || user.role === "moderator");
+  const canEdit = user && (isOwnKDom || isCollaborator || isAdminOrMod);
 
   // Determinăm tema culorilor bazată pe tema K-Dom-ului
   const getThemeColors = () => {
@@ -539,7 +539,7 @@ export default function KDomPage() {
                       refreshInterval={300000}
                     />
                   ) : (
-                    // ✅ Basic stats pentru toți utilizatorii
+                    //  Basic stats pentru toți utilizatorii
                     <Card
                       bg={cardBg}
                       borderWidth="1px"
@@ -618,11 +618,13 @@ export default function KDomPage() {
                     </Card>
                   )}
 
-                  {/* ✅ 2. SUB-PAGES & NAVIGATION */}
+                  {/*  2. SUB-PAGES & NAVIGATION */}
                   <KDomSidebar
                     kdomId={kdom.id}
                     kdomSlug={kdom.slug}
                     kdomUserId={kdom.userId}
+                    kdomTitle={kdom.title} //
+                    kdomCollaborators={kdom.collaborators || []}
                     followersCount={followersCount}
                   />
                 </VStack>
