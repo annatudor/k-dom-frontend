@@ -1,4 +1,4 @@
-// src/components/collaboration/CollaboratorsManager.tsx
+// src/components/collaboration/CollaboratorsManager.tsx - Updated with proper TypeScript types
 import { useState } from "react";
 import {
   Box,
@@ -39,10 +39,12 @@ import {
   FiUsers,
   FiActivity,
   FiCalendar,
+  FiRefreshCw,
 } from "react-icons/fi";
 import {
   useCollaborators,
   useKDomCollaborationStats,
+  useCollaborationPermissions,
 } from "@/hooks/useCollaboration";
 import type { CollaboratorReadDto } from "@/types/Collaboration";
 
@@ -50,6 +52,15 @@ interface CollaboratorsManagerProps {
   kdomId: string;
   kdomTitle: string;
   showStats?: boolean;
+}
+
+// Define error type for better type safety
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
 }
 
 export function CollaboratorsManager({
@@ -61,10 +72,12 @@ export function CollaboratorsManager({
     useState<CollaboratorReadDto | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const { collaborators, isLoading, removeCollaborator, isRemoving } =
+  const { collaborators, isLoading, removeCollaborator, isRemoving, error } =
     useCollaborators(kdomId);
 
-  const { data: statsData } = useKDomCollaborationStats(kdomId);
+  const { data: statsData, error: statsError } =
+    useKDomCollaborationStats(kdomId);
+  const { data: permissions } = useCollaborationPermissions(kdomId);
 
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -109,6 +122,14 @@ export function CollaboratorsManager({
     }
   };
 
+  const getErrorMessage = (error: unknown): string => {
+    const apiError = error as ApiError;
+    return (
+      apiError?.response?.data?.error ||
+      "There was an error loading the collaborators. Please try again."
+    );
+  };
+
   const CollaboratorCard = ({
     collaborator,
   }: {
@@ -141,17 +162,19 @@ export function CollaboratorsManager({
               </VStack>
             </HStack>
 
-            <Tooltip label="Remove collaborator" hasArrow>
-              <IconButton
-                aria-label="Remove collaborator"
-                icon={<FiTrash2 />}
-                colorScheme="red"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleRemoveClick(collaborator)}
-                isLoading={isRemoving}
-              />
-            </Tooltip>
+            {permissions?.canManage && (
+              <Tooltip label="Remove collaborator" hasArrow>
+                <IconButton
+                  aria-label="Remove collaborator"
+                  icon={<FiTrash2 />}
+                  colorScheme="red"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveClick(collaborator)}
+                  isLoading={isRemoving}
+                />
+              </Tooltip>
+            )}
           </HStack>
 
           <SimpleGrid columns={3} spacing={4}>
@@ -196,12 +219,52 @@ export function CollaboratorsManager({
     </Card>
   );
 
+  // Permission check
+  if (permissions && !permissions.canView) {
+    return (
+      <Alert status="warning" borderRadius="lg">
+        <AlertIcon />
+        <VStack align="start" spacing={1}>
+          <Text fontWeight="semibold">Access denied</Text>
+          <Text fontSize="sm">
+            You don't have permission to view collaborators for this K-Dom.
+          </Text>
+        </VStack>
+      </Alert>
+    );
+  }
+
+  // Loading state
   if (isLoading) {
     return (
       <VStack spacing={4} py={8}>
         <Spinner size="lg" color="blue.500" />
         <Text>Loading collaborators...</Text>
       </VStack>
+    );
+  }
+
+  // Error state with retry option
+  if (error) {
+    return (
+      <Alert status="error" borderRadius="lg">
+        <AlertIcon />
+        <VStack align="start" spacing={3} flex="1">
+          <VStack align="start" spacing={1}>
+            <Text fontWeight="semibold">Failed to load collaborators</Text>
+            <Text fontSize="sm">{getErrorMessage(error)}</Text>
+          </VStack>
+          <Button
+            leftIcon={<Icon as={FiRefreshCw} />}
+            size="sm"
+            colorScheme="red"
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
+        </VStack>
+      </Alert>
     );
   }
 
@@ -215,7 +278,7 @@ export function CollaboratorsManager({
       </Box>
 
       {/* Stats Overview */}
-      {showStats && statsData?.stats && (
+      {showStats && statsData?.stats && !statsError && (
         <Card
           bg={cardBg}
           borderWidth="1px"
@@ -315,6 +378,20 @@ export function CollaboratorsManager({
             </VStack>
           </CardBody>
         </Card>
+      )}
+
+      {/* Stats Error Alert */}
+      {showStats && statsError && (
+        <Alert status="warning" borderRadius="lg">
+          <AlertIcon />
+          <VStack align="start" spacing={1}>
+            <Text fontWeight="semibold">Collaboration stats unavailable</Text>
+            <Text fontSize="sm">
+              Statistics could not be loaded, but collaborator list is available
+              below.
+            </Text>
+          </VStack>
+        </Alert>
       )}
 
       {/* Collaborators List */}

@@ -1,4 +1,4 @@
-// src/hooks/useCollaboration.ts
+// src/hooks/useCollaboration.ts - Final version with proper TypeScript types
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@chakra-ui/react";
@@ -7,7 +7,7 @@ import {
   getCollaborationRequests,
   approveRequest,
   rejectRequest,
-  getCollaborators,
+  getCollaboratorsWithFallback,
   removeCollaborator,
   getSentRequests,
   getReceivedRequests,
@@ -20,6 +20,17 @@ import type {
   CollaborationRequestCreateDto,
   CollaborationRequestActionDto,
 } from "@/types/Collaboration";
+
+// Define proper error types for better type safety
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      error?: string;
+    };
+  };
+  message?: string;
+}
 
 // Hook pentru a trimite cerere de colaborare
 export const useRequestCollaboration = () => {
@@ -71,6 +82,13 @@ export const useCollaborationRequests = (kdomId: string) => {
     queryKey: ["collaboration", "requests", kdomId],
     queryFn: () => getCollaborationRequests(kdomId),
     enabled: !!kdomId,
+    retry: (failureCount: number, error: ApiError) => {
+      // Don't retry on 403/401 errors
+      if (error?.response?.status === 403 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 
   const approveMutation = useMutation({
@@ -140,7 +158,7 @@ export const useCollaborationRequests = (kdomId: string) => {
   };
 };
 
-// Hook pentru gestionarea colaboratorilor
+// Hook pentru gestionarea colaboratorilor cu fallback strategy
 export const useCollaborators = (kdomId: string) => {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -151,8 +169,16 @@ export const useCollaborators = (kdomId: string) => {
     error,
   } = useQuery({
     queryKey: ["collaboration", "collaborators", kdomId],
-    queryFn: () => getCollaborators(kdomId),
+    queryFn: () => getCollaboratorsWithFallback(kdomId),
     enabled: !!kdomId,
+    retry: (failureCount: number, error: ApiError) => {
+      // Don't retry on permission errors
+      if (error?.response?.status === 403 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
   });
 
   const removeMutation = useMutation({
@@ -167,6 +193,10 @@ export const useCollaborators = (kdomId: string) => {
       });
       queryClient.invalidateQueries({
         queryKey: ["collaboration", "collaborators", kdomId],
+      });
+      // Also invalidate the K-Dom data to update collaborators list
+      queryClient.invalidateQueries({
+        queryKey: ["kdom", kdomId],
       });
     },
     onError: (error: Error & { response?: { data?: { error?: string } } }) => {
@@ -192,22 +222,37 @@ export const useCollaborators = (kdomId: string) => {
 export const useUserCollaborationRequests = () => {
   const [filter, setFilter] = useState<"all" | "sent" | "received">("all");
 
-  const { data: sentData, isLoading: isSentLoading } = useQuery({
+  const {
+    data: sentData,
+    isLoading: isSentLoading,
+    error: sentError,
+  } = useQuery({
     queryKey: ["collaboration", "sent"],
     queryFn: getSentRequests,
     enabled: filter === "all" || filter === "sent",
+    retry: 2,
   });
 
-  const { data: receivedData, isLoading: isReceivedLoading } = useQuery({
+  const {
+    data: receivedData,
+    isLoading: isReceivedLoading,
+    error: receivedError,
+  } = useQuery({
     queryKey: ["collaboration", "received"],
     queryFn: getReceivedRequests,
     enabled: filter === "all" || filter === "received",
+    retry: 2,
   });
 
-  const { data: allData, isLoading: isAllLoading } = useQuery({
+  const {
+    data: allData,
+    isLoading: isAllLoading,
+    error: allError,
+  } = useQuery({
     queryKey: ["collaboration", "all"],
     queryFn: getAllRequests,
     enabled: filter === "all",
+    retry: 2,
   });
 
   return {
@@ -217,6 +262,7 @@ export const useUserCollaborationRequests = () => {
     receivedRequests: receivedData?.requests || [],
     allRequests: allData,
     isLoading: isSentLoading || isReceivedLoading || isAllLoading,
+    error: sentError || receivedError || allError,
     sentSummary: sentData?.summary,
     receivedSummary: receivedData?.summary,
     groupedByKDom: receivedData?.groupedByKDom || [],
@@ -229,36 +275,55 @@ export const useCollaborationStats = () => {
     queryKey: ["collaboration", "stats", "quick"],
     queryFn: getQuickStats,
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
+    retry: 2,
   });
 };
 
-// Hook pentru acțiuni în lot - SIMPLIFICAT
+// Hook pentru acțiuni în lot cu error handling îmbunătățit
 export const useBulkActions = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const executeAction = async (data: {
-    action: "approve" | "reject";
-    requestIds: string[];
-    reason?: string;
-  }) => {
-    // Simulează bulk action pentru moment
-    // În realitate, ar trebui să apeleze API-ul backend
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const mutation = useMutation({
+    mutationFn: async (data: {
+      action: "approve" | "reject";
+      requestIds: string[];
+      reason?: string;
+    }) => {
+      // Simulează bulk action pentru moment
+      // În realitate, ar trebui să apeleze API-ul backend
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    toast({
-      title: "Bulk action completed",
-      description: `Successfully ${data.action}d ${data.requestIds.length} request(s).`,
-      status: "success",
-      duration: 5000,
-    });
+      // Simulează un failure rate de 10% pentru testare
+      if (Math.random() < 0.1) {
+        throw new Error("Simulated bulk action failure");
+      }
 
-    queryClient.invalidateQueries({ queryKey: ["collaboration"] });
-  };
+      return data;
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Bulk action completed",
+        description: `Successfully ${data.action}d ${data.requestIds.length} request(s).`,
+        status: "success",
+        duration: 5000,
+      });
+      queryClient.invalidateQueries({ queryKey: ["collaboration"] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Bulk action failed",
+        description: error.message || "Some requests could not be processed.",
+        status: "error",
+        duration: 5000,
+      });
+    },
+  });
 
   return {
-    executeAction,
-    isPending: false,
+    executeAction: mutation.mutate,
+    isPending: mutation.isPending,
+    error: mutation.error,
   };
 };
 
@@ -268,14 +333,54 @@ export const useKDomCollaborationStats = (kdomId: string) => {
     queryKey: ["collaboration", "stats", kdomId],
     queryFn: () => getKDomCollaborationStats(kdomId),
     enabled: !!kdomId,
+    retry: (failureCount: number, error: ApiError) => {
+      if (error?.response?.status === 403 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    staleTime: 10 * 60 * 1000, // Consider data fresh for 10 minutes
   });
 };
 
-// Hook pentru colaboratori detaliați K-Dom
+// Hook pentru colaboratori detaliați K-Dom cu error handling
 export const useKDomCollaboratorsDetailed = (kdomId: string) => {
   return useQuery({
     queryKey: ["collaboration", "collaborators", "detailed", kdomId],
     queryFn: () => getKDomCollaborators(kdomId),
     enabled: !!kdomId,
+    retry: (failureCount: number, error: ApiError) => {
+      if (error?.response?.status === 403 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+  });
+};
+
+// Hook pentru verificarea rapidă a permisiunilor de colaborare
+export const useCollaborationPermissions = (kdomId: string) => {
+  return useQuery({
+    queryKey: ["collaboration", "permissions", kdomId],
+    queryFn: async () => {
+      try {
+        // Try to fetch collaboration requests to see if user has permissions
+        await getCollaborationRequests(kdomId);
+        return { canManage: true, canView: true };
+      } catch (error: unknown) {
+        const apiError = error as ApiError;
+        if (apiError?.response?.status === 403) {
+          return { canManage: false, canView: false };
+        }
+        if (apiError?.response?.status === 401) {
+          return { canManage: false, canView: false };
+        }
+        throw error;
+      }
+    },
+    enabled: !!kdomId,
+    retry: false, // Don't retry permission checks
+    staleTime: 30 * 60 * 1000, // Cache permissions for 30 minutes
   });
 };

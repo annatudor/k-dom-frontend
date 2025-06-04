@@ -1,4 +1,4 @@
-// src/api/collaboration.ts
+// src/api/collaboration.ts - Updated with new backend endpoints
 import API from "./axios";
 import type {
   CollaborationRequestCreateDto,
@@ -47,14 +47,6 @@ export const rejectRequest = async (
   data: CollaborationRequestActionDto
 ): Promise<void> => {
   await API.post(`/kdoms/${kdomId}/collab-requests/${requestId}/reject`, data);
-};
-
-// Obține colaboratori activi ai unui K-Dom
-export const getCollaborators = async (
-  kdomId: string
-): Promise<CollaboratorReadDto[]> => {
-  const res = await API.get(`/kdoms/${kdomId}/collaborators`);
-  return res.data;
 };
 
 // Elimină colaborator din K-Dom
@@ -121,7 +113,9 @@ export const getKDomCollaborationStats = async (
   return res.data;
 };
 
-// Obține colaboratori pentru un K-Dom cu detalii
+// ===== COLLABORATORS MANAGEMENT =====
+
+// 🆕 UPDATED: Obține colaboratori pentru un K-Dom cu detalii (Primary endpoint)
 export const getKDomCollaborators = async (
   kdomId: string
 ): Promise<{
@@ -132,6 +126,22 @@ export const getKDomCollaborators = async (
   message: string;
 }> => {
   const res = await API.get(`/collaboration/kdoms/${kdomId}/collaborators`);
+  return res.data;
+};
+
+// 🆕 NEW: Alternative endpoint from dedicated collaboration controller
+export const getCollaboratorsById = async (
+  kdomId: string
+): Promise<CollaboratorReadDto[]> => {
+  const res = await API.get(`/collaboration/${kdomId}/collaborators`);
+  return res.data;
+};
+
+// 🆕 UPDATED: Maintain backward compatibility with original K-Dom endpoint
+export const getCollaborators = async (
+  kdomId: string
+): Promise<CollaboratorReadDto[]> => {
+  const res = await API.get(`/kdoms/${kdomId}/collaborators`);
   return res.data;
 };
 
@@ -176,5 +186,32 @@ export const hasNotifications = async (): Promise<boolean> => {
   } catch (error) {
     console.error("Error checking notifications:", error);
     return false;
+  }
+};
+
+// 🆕 NEW: Unified collaborators fetcher with fallback strategy
+export const getCollaboratorsWithFallback = async (
+  kdomId: string
+): Promise<CollaboratorReadDto[]> => {
+  try {
+    // Try the enhanced endpoint first
+    const response = await getKDomCollaborators(kdomId);
+    return response.collaborators;
+  } catch (error) {
+    console.warn(
+      "Enhanced collaborators endpoint failed, falling back to basic endpoint:",
+      error
+    );
+    try {
+      // Fallback to the new dedicated controller endpoint
+      return await getCollaboratorsById(kdomId);
+    } catch (fallbackError) {
+      console.warn(
+        "Dedicated controller endpoint failed, falling back to K-Dom endpoint:",
+        fallbackError
+      );
+      // Final fallback to original K-Dom endpoint
+      return await getCollaborators(kdomId);
+    }
   }
 };
