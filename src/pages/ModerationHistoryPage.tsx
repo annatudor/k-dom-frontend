@@ -5,6 +5,7 @@ import {
   VStack,
   Heading,
   Text,
+  Spinner,
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
@@ -15,16 +16,33 @@ import { AdminModerationHistory } from "@/components/kdom/moderation/AdminModera
 import { UserModerationHistory } from "@/components/kdom/moderation/UserModerationHistory";
 
 export default function ModerationHistoryPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // Redirect if not authenticated
+  if (isLoading) {
+    return (
+      <Box py={8}>
+        <Container maxW="container.lg">
+          <VStack spacing={4}>
+            <Spinner size="xl" thickness="4px" color="purple.500" />
+            <Text>Loading authentication...</Text>
+          </VStack>
+        </Container>
+      </Box>
+    );
+  }
 
   // Redirect if not authenticated
   if (!isAuthenticated) {
+    console.log("Not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
+  // Check if user is admin or moderator
   const isModeratorOrAdmin =
     user?.role === "admin" || user?.role === "moderator";
 
+  console.log("isModeratorOrAdmin:", isModeratorOrAdmin);
   return (
     <Box py={8}>
       <Container maxW="container.xl">

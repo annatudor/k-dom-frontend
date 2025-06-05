@@ -160,19 +160,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/user/moderation",
-        element: <AdminModerationPage />,
-      },
-      {
-        path: "/moderation/dashboard",
-        element: <AdminModerationPage />, // Alias pentru admin moderation
-      },
-      {
-        path: "/my-submissions",
         element: <UserModerationPage />,
-      },
-      {
-        path: "/moderation/status",
-        element: <UserModerationPage />, // Alias pentru user moderation
       },
       {
         path: "/moderation/history",
