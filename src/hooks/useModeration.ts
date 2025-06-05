@@ -19,7 +19,16 @@ import {
   getKDomPriority,
   canViewKDomStatus,
 } from "@/api/moderation";
-import type { BulkModerationDto, ModerationPriority } from "@/types/Moderation";
+import type { BulkModerationDto } from "@/types/Moderation";
+
+// Define specific error types
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+}
 
 // ========================================
 // MODERATION DASHBOARD
@@ -89,7 +98,7 @@ export function useModerationActions() {
 
   const approveMutation = useMutation({
     mutationFn: approveKDom,
-    onSuccess: (_, kdomId) => {
+    onSuccess: () => {
       toast({
         title: "K-DOM Approved",
         description:
@@ -99,7 +108,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: "Approval Failed",
         description: error.response?.data?.error || "Failed to approve K-DOM",
@@ -130,7 +139,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: "Rejection Failed",
         description: error.response?.data?.error || "Failed to reject K-DOM",
@@ -152,7 +161,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: "Action Failed",
         description:
@@ -175,7 +184,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: "Force Delete Failed",
         description:
@@ -236,7 +245,7 @@ export function useBulkModeration() {
       invalidateModerationQueries(queryClient);
       setSelectedKDoms([]); // Clear selection
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: "Bulk Action Failed",
         description:
@@ -320,7 +329,7 @@ export function useUserKDomStatuses() {
 }
 
 export function useKDomModerationStatus(kdomId: string) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return useQuery({
     queryKey: ["moderation", "kdom-status", kdomId],
@@ -348,7 +357,7 @@ export function useKDomPriority(kdomId: string) {
 }
 
 export function useCanViewKDomStatus(kdomId: string) {
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   return useQuery({
     queryKey: ["moderation", "can-view-status", kdomId],
@@ -362,7 +371,9 @@ export function useCanViewKDomStatus(kdomId: string) {
 // HELPER FUNCTIONS
 // ========================================
 
-function invalidateModerationQueries(queryClient: any) {
+function invalidateModerationQueries(
+  queryClient: ReturnType<typeof useQueryClient>
+) {
   // Invalidate all moderation-related queries
   queryClient.invalidateQueries({ queryKey: ["moderation"] });
   queryClient.invalidateQueries({ queryKey: ["kdom"] }); // Also refresh K-DOM data

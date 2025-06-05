@@ -1,4 +1,4 @@
-// src/routes/router.tsx - Actualizat cu protecția K-DOM
+// src/routes/router.tsx - Temporary fix
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import PublicLayout from "@/components/layout/PublicLayout";
@@ -25,62 +25,13 @@ import CreateSubKDomPageContent from "@/pages/CreateSubKDomPage";
 import KDomDiscussionPageContent from "@/pages/KDomDiscussionPage";
 import KDomCollaborationPageContent from "@/pages/KDomCollaborationPage";
 
-// ✅ PAGINI K-DOM PROTEJATE - folosesc wrapper-ul de protecție
-const ProtectedKDomPage = () => (
-  <KDomProtectionWrapper action="view">
-    {(kdom, accessResult) => (
-      <KDomPageContent kdom={kdom} accessResult={accessResult} />
-    )}
-  </KDomProtectionWrapper>
-);
+// Type assertion helper to handle components that don't accept props yet
+type KDomProps = { kdom: unknown; accessResult: unknown };
 
-const ProtectedKDomHistoryPage = () => (
-  <KDomProtectionWrapper action="history">
-    {(kdom, accessResult) => (
-      <KDomHistoryPageContent kdom={kdom} accessResult={accessResult} />
-    )}
-  </KDomProtectionWrapper>
-);
-
-const ProtectedEditKDomPage = () => (
-  <KDomProtectionWrapper action="edit">
-    {(kdom, accessResult) => (
-      <EditKDomPageContent kdom={kdom} accessResult={accessResult} />
-    )}
-  </KDomProtectionWrapper>
-);
-
-const ProtectedEditKDomMetadataPage = () => (
-  <KDomProtectionWrapper action="metadata">
-    {(kdom, accessResult) => (
-      <EditKDomMetadataPageContent kdom={kdom} accessResult={accessResult} />
-    )}
-  </KDomProtectionWrapper>
-);
-
-const ProtectedCreateSubKDomPage = () => (
-  <KDomProtectionWrapper action="create-sub">
-    {(kdom, accessResult) => (
-      <CreateSubKDomPageContent kdom={kdom} accessResult={accessResult} />
-    )}
-  </KDomProtectionWrapper>
-);
-
-const ProtectedKDomDiscussionPage = () => (
-  <KDomProtectionWrapper action="discussion">
-    {(kdom, accessResult) => (
-      <KDomDiscussionPageContent kdom={kdom} accessResult={accessResult} />
-    )}
-  </KDomProtectionWrapper>
-);
-
-const ProtectedKDomCollaborationPage = () => (
-  <KDomProtectionWrapper action="collaborate">
-    {(kdom, accessResult) => (
-      <KDomCollaborationPageContent kdom={kdom} accessResult={accessResult} />
-    )}
-  </KDomProtectionWrapper>
-);
+const withProps =
+  <P extends KDomProps>(Component: React.ComponentType<P>) =>
+  (props: KDomProps) =>
+    <Component {...(props as P)} />;
 
 export const router = createBrowserRouter([
   {
@@ -99,24 +50,98 @@ export const router = createBrowserRouter([
       { path: "/start-kdom", element: <StartKDom /> },
 
       // ✅ RUTE K-DOM PROTEJATE
-      { path: "/kdoms/slug/:slug", element: <ProtectedKDomPage /> },
-      { path: "/kdoms/:slug/history", element: <ProtectedKDomHistoryPage /> },
-      { path: "/kdoms/:slug/edit", element: <ProtectedEditKDomPage /> },
+      {
+        path: "/kdoms/slug/:slug",
+        element: (
+          <KDomProtectionWrapper action="view">
+            {(kdom, accessResult) => {
+              const ComponentWithProps = withProps(KDomPageContent);
+              return (
+                <ComponentWithProps kdom={kdom} accessResult={accessResult} />
+              );
+            }}
+          </KDomProtectionWrapper>
+        ),
+      },
+      {
+        path: "/kdoms/:slug/history",
+        element: (
+          <KDomProtectionWrapper action="history">
+            {(kdom, accessResult) => {
+              const ComponentWithProps = withProps(KDomHistoryPageContent);
+              return (
+                <ComponentWithProps kdom={kdom} accessResult={accessResult} />
+              );
+            }}
+          </KDomProtectionWrapper>
+        ),
+      },
+      {
+        path: "/kdoms/:slug/edit",
+        element: (
+          <KDomProtectionWrapper action="edit">
+            {(kdom, accessResult) => {
+              const ComponentWithProps = withProps(EditKDomPageContent);
+              return (
+                <ComponentWithProps kdom={kdom} accessResult={accessResult} />
+              );
+            }}
+          </KDomProtectionWrapper>
+        ),
+      },
       {
         path: "/kdoms/:slug/metadata",
-        element: <ProtectedEditKDomMetadataPage />,
+        element: (
+          <KDomProtectionWrapper action="metadata">
+            {(kdom, accessResult) => {
+              const ComponentWithProps = withProps(EditKDomMetadataPageContent);
+              return (
+                <ComponentWithProps kdom={kdom} accessResult={accessResult} />
+              );
+            }}
+          </KDomProtectionWrapper>
+        ),
       },
       {
         path: "/kdoms/:slug/create-sub",
-        element: <ProtectedCreateSubKDomPage />,
+        element: (
+          <KDomProtectionWrapper action="create-sub">
+            {(kdom, accessResult) => {
+              const ComponentWithProps = withProps(CreateSubKDomPageContent);
+              return (
+                <ComponentWithProps kdom={kdom} accessResult={accessResult} />
+              );
+            }}
+          </KDomProtectionWrapper>
+        ),
       },
       {
         path: "/kdoms/slug/:slug/discussion",
-        element: <ProtectedKDomDiscussionPage />,
+        element: (
+          <KDomProtectionWrapper action="discussion">
+            {(kdom, accessResult) => {
+              const ComponentWithProps = withProps(KDomDiscussionPageContent);
+              return (
+                <ComponentWithProps kdom={kdom} accessResult={accessResult} />
+              );
+            }}
+          </KDomProtectionWrapper>
+        ),
       },
       {
         path: "/kdoms/:slug/collaboration",
-        element: <ProtectedKDomCollaborationPage />,
+        element: (
+          <KDomProtectionWrapper action="collaborate">
+            {(kdom, accessResult) => {
+              const ComponentWithProps = withProps(
+                KDomCollaborationPageContent
+              );
+              return (
+                <ComponentWithProps kdom={kdom} accessResult={accessResult} />
+              );
+            }}
+          </KDomProtectionWrapper>
+        ),
       },
 
       // Alte rute neprotejate

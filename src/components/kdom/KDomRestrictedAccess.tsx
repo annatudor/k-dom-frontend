@@ -31,6 +31,7 @@ import type {
   KDomAccessCheckResult,
   KDomModerationStatus,
 } from "@/types/Moderation";
+import { getAlertStatus } from "@/utils/restrictedAccessUtils";
 
 interface KDomRestrictedAccessProps {
   accessResult: KDomAccessCheckResult;
@@ -309,46 +310,4 @@ export function KDomRestrictedAccess({
       </Card>
     </Box>
   );
-}
-
-/**
- * Helper pentru determinarea statusului de alert
- */
-function getAlertStatus(status?: KDomModerationStatus) {
-  switch (status) {
-    case "Pending":
-      return "warning";
-    case "Rejected":
-    case "Deleted":
-      return "error";
-    default:
-      return "info";
-  }
-}
-
-/**
- * Hook pentru utilizarea facilă a componentei
- */
-export function useRestrictedAccessRedirect(
-  accessResult: KDomAccessCheckResult,
-  options?: {
-    autoRedirect?: boolean;
-    redirectDelay?: number;
-  }
-) {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!accessResult.hasAccess && accessResult.redirectTo) {
-      if (options?.autoRedirect !== false) {
-        const timer = setTimeout(() => {
-          navigate(accessResult.redirectTo!);
-        }, options?.redirectDelay || 3000);
-
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [accessResult, navigate, options]);
-
-  return accessResult;
 }

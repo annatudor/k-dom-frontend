@@ -280,7 +280,7 @@ function checkPendingKDomAccess(
 function checkRejectedKDomAccess(
   action: string,
   status: KDomModerationStatus,
-  kdom: KDomReadDtoWithModeration,
+  kdomWithModeration: KDomReadDtoWithModeration,
   permissions: { isOwner: boolean; isModeratorOrAdmin: boolean }
 ): KDomAccessCheckResult {
   const { isOwner, isModeratorOrAdmin } = permissions;

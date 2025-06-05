@@ -7,11 +7,12 @@ import { getKDomBySlug } from "@/api/kdom";
 import { useKDomAccess } from "@/hooks/useKDomAccess";
 import { KDomRestrictedAccess } from "./KDomRestrictedAccess";
 import type { KDomAccessCheckResult } from "@/types/Moderation";
+import type { KDomReadDto } from "@/types/KDom";
 
 interface KDomProtectionWrapperProps {
   children:
     | ReactNode
-    | ((kdom: any, accessResult: KDomAccessCheckResult) => ReactNode);
+    | ((kdom: KDomReadDto, accessResult: KDomAccessCheckResult) => ReactNode);
   action:
     | "view"
     | "edit"
@@ -150,55 +151,4 @@ function getActionDisplayName(action: string): string {
     default:
       return "access";
   }
-}
-
-/**
- * Hook pentru utilizarea ușoară a wrapper-ului în componente
- */
-export function useKDomProtection(
-  action: KDomProtectionWrapperProps["action"]
-) {
-  const { slug } = useParams<{ slug: string }>();
-
-  const {
-    data: kdom,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["kdom", slug],
-    queryFn: () => getKDomBySlug(slug!),
-    enabled: !!slug,
-    retry: false,
-  });
-
-  const accessResult = useKDomAccess({ kdom, action });
-
-  return {
-    kdom,
-    isLoading,
-    error,
-    accessResult,
-    hasAccess: accessResult.hasAccess,
-    slug,
-  };
-}
-
-/**
- * HOC pentru protejarea paginilor K-DOM
- */
-export function withKDomProtection<P extends object>(
-  Component: React.ComponentType<
-    P & { kdom: any; accessResult: KDomAccessCheckResult }
-  >,
-  action: KDomProtectionWrapperProps["action"]
-) {
-  return function ProtectedKDomComponent(props: P) {
-    return (
-      <KDomProtectionWrapper action={action}>
-        {(kdom, accessResult) => (
-          <Component {...props} kdom={kdom} accessResult={accessResult} />
-        )}
-      </KDomProtectionWrapper>
-    );
-  };
 }
