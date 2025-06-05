@@ -382,7 +382,7 @@ export default function EditKDomPage() {
             borderRadius="lg"
             borderWidth="1px"
             borderColor={borderColor}
-            height="calc(100vh - 280px)"
+            height="390px"
             display="flex"
             flexDirection="column"
           >
@@ -440,74 +440,6 @@ export default function EditKDomPage() {
                       placeholder="Start editing your K-Dom content..."
                     />
                   </Box>
-
-                  {/* Form pentru descrierea schimbărilor */}
-                  {!previewMode && (
-                    <Box
-                      p={6}
-                      borderTop="1px"
-                      borderColor={borderColor}
-                      bg={cardBg}
-                      flexShrink={0}
-                      maxHeight="200px"
-                      overflowY="auto"
-                    >
-                      <VStack spacing={4} align="stretch">
-                        <FormControl>
-                          <FormLabel fontSize="sm" fontWeight="medium">
-                            Describe what you changed
-                          </FormLabel>
-                          <Textarea
-                            placeholder="Describe what you changed..."
-                            value={editNote}
-                            onChange={(e) => setEditNote(e.target.value)}
-                            size="sm"
-                            resize="vertical"
-                            minH="80px"
-                            maxH="120px"
-                          />
-                        </FormControl>
-
-                        <HStack justify="space-between" align="center">
-                          <Checkbox
-                            isChecked={isMinorEdit}
-                            onChange={(e) => setIsMinorEdit(e.target.checked)}
-                            size="sm"
-                          >
-                            This is a minor edit
-                          </Checkbox>
-
-                          <HStack spacing={2}>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setEditNote("");
-                                setIsMinorEdit(false);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              colorScheme="green"
-                              size="sm"
-                              leftIcon={<FiSave />}
-                              onClick={handleSaveWithNote}
-                              isLoading={editMutation.isPending}
-                              isDisabled={!editNote.trim()}
-                            >
-                              Save
-                            </Button>
-                          </HStack>
-                        </HStack>
-
-                        <Text fontSize="xs" color="gray.500">
-                          Please note that all contributions to the K-Dom are
-                          considered to be released under the CC-BY-SA license.
-                        </Text>
-                      </VStack>
-                    </Box>
-                  )}
                 </TabPanel>
 
                 {/* Tab Preview */}

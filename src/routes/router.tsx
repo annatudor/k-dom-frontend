@@ -1,7 +1,8 @@
+// src/routes/router.tsx - Actualizat cu protecția K-DOM
 import { createBrowserRouter } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import PublicLayout from "@/components/layout/PublicLayout";
-// import RequireAuth from "@/components/RequireAuth";
+import { KDomProtectionWrapper } from "@/components/kdom/KDomProtectionWrapper";
 
 // Pagini
 import { Home } from "@/pages/Home";
@@ -10,24 +11,76 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import StartKDom from "@/pages/StartKDom";
-import KDomPage from "@/pages/KDomPage";
-import KDomHistoryPage from "@/pages/KDomHistoryPage";
-import EditKDomPage from "@/pages/EditKDomPage";
-import EditKDomMetadataPage from "@/pages/EditKDomMetadataPage";
-import CreateSubKDomPage from "@/pages/CreateSubKDomPage";
 import CreatePostPage from "@/pages/CreatePostPage";
 import PostDetailPage from "@/pages/PostDetailPage";
-import KDomDiscussionPage from "@/pages/KDomDiscussionPage";
 import CommunityPage from "@/pages/CommunityPage";
-import KDomCollaborationPage from "@/pages/KDomCollaborationPage";
 import CollaborationPage from "@/pages/CollaborationPage";
-// import ProfilePage from "@/pages/ProfilePage";
-// import EditProfilePage from "@/pages/EditProfilePage";
 
-// import NotFound from "@/pages/NotFound";
+// Componente K-DOM (componente existente, fără logica de protecție)
+import KDomPageContent from "@/pages/KDomPage";
+import KDomHistoryPageContent from "@/pages/KDomHistoryPage";
+import EditKDomPageContent from "@/pages/EditKDomPage";
+import EditKDomMetadataPageContent from "@/pages/EditKDomMetadataPage";
+import CreateSubKDomPageContent from "@/pages/CreateSubKDomPage";
+import KDomDiscussionPageContent from "@/pages/KDomDiscussionPage";
+import KDomCollaborationPageContent from "@/pages/KDomCollaborationPage";
 
-// import KDomPage from "@/pages/KDom";
-// import NotFound from "@/pages/NotFound";
+// ✅ PAGINI K-DOM PROTEJATE - folosesc wrapper-ul de protecție
+const ProtectedKDomPage = () => (
+  <KDomProtectionWrapper action="view">
+    {(kdom, accessResult) => (
+      <KDomPageContent kdom={kdom} accessResult={accessResult} />
+    )}
+  </KDomProtectionWrapper>
+);
+
+const ProtectedKDomHistoryPage = () => (
+  <KDomProtectionWrapper action="history">
+    {(kdom, accessResult) => (
+      <KDomHistoryPageContent kdom={kdom} accessResult={accessResult} />
+    )}
+  </KDomProtectionWrapper>
+);
+
+const ProtectedEditKDomPage = () => (
+  <KDomProtectionWrapper action="edit">
+    {(kdom, accessResult) => (
+      <EditKDomPageContent kdom={kdom} accessResult={accessResult} />
+    )}
+  </KDomProtectionWrapper>
+);
+
+const ProtectedEditKDomMetadataPage = () => (
+  <KDomProtectionWrapper action="metadata">
+    {(kdom, accessResult) => (
+      <EditKDomMetadataPageContent kdom={kdom} accessResult={accessResult} />
+    )}
+  </KDomProtectionWrapper>
+);
+
+const ProtectedCreateSubKDomPage = () => (
+  <KDomProtectionWrapper action="create-sub">
+    {(kdom, accessResult) => (
+      <CreateSubKDomPageContent kdom={kdom} accessResult={accessResult} />
+    )}
+  </KDomProtectionWrapper>
+);
+
+const ProtectedKDomDiscussionPage = () => (
+  <KDomProtectionWrapper action="discussion">
+    {(kdom, accessResult) => (
+      <KDomDiscussionPageContent kdom={kdom} accessResult={accessResult} />
+    )}
+  </KDomProtectionWrapper>
+);
+
+const ProtectedKDomCollaborationPage = () => (
+  <KDomProtectionWrapper action="collaborate">
+    {(kdom, accessResult) => (
+      <KDomCollaborationPageContent kdom={kdom} accessResult={accessResult} />
+    )}
+  </KDomProtectionWrapper>
+);
 
 export const router = createBrowserRouter([
   {
@@ -43,34 +96,34 @@ export const router = createBrowserRouter([
     element: <Layout />,
     children: [
       { path: "/", element: <Home /> },
-      { path: "/start-kdom", element: <StartKDom /> }, // Placeholder for Start K-Dom page
-      { path: "/kdoms/slug/:slug", element: <KDomPage /> },
-      { path: "/kdoms/:slug/history", element: <KDomHistoryPage /> },
-      { path: "/kdoms/:slug/edit", element: <EditKDomPage /> },
-      { path: "/kdoms/:slug/metadata", element: <EditKDomMetadataPage /> },
-      { path: "/kdoms/:slug/create-sub", element: <CreateSubKDomPage /> },
-      { path: "/create-post", element: <CreatePostPage /> }, // Add this line
-      { path: "/posts/:postId", element: <PostDetailPage /> },
-      { path: "/kdoms/slug/:slug/discussion", element: <KDomDiscussionPage /> },
-      { path: "/community", element: <CommunityPage /> },
-      { path: "/collaboration", element: <CollaborationPage /> },
+      { path: "/start-kdom", element: <StartKDom /> },
+
+      // ✅ RUTE K-DOM PROTEJATE
+      { path: "/kdoms/slug/:slug", element: <ProtectedKDomPage /> },
+      { path: "/kdoms/:slug/history", element: <ProtectedKDomHistoryPage /> },
+      { path: "/kdoms/:slug/edit", element: <ProtectedEditKDomPage /> },
+      {
+        path: "/kdoms/:slug/metadata",
+        element: <ProtectedEditKDomMetadataPage />,
+      },
+      {
+        path: "/kdoms/:slug/create-sub",
+        element: <ProtectedCreateSubKDomPage />,
+      },
+      {
+        path: "/kdoms/slug/:slug/discussion",
+        element: <ProtectedKDomDiscussionPage />,
+      },
       {
         path: "/kdoms/:slug/collaboration",
-        element: <KDomCollaborationPage />,
+        element: <ProtectedKDomCollaborationPage />,
       },
-      // {
-      //   path: "/profile/my-profile",
-      //   element: <ProfilePage />,
-      // },
-      // {
-      //   path: "/profile/edit-profile",
-      //   element: (
-      //     <RequireAuth>
-      //       <EditProfilePage />
-      //     </RequireAuth>
-      //   ),
-      // },
-      // { path: "*", element: <NotFound /> },
+
+      // Alte rute neprotejate
+      { path: "/create-post", element: <CreatePostPage /> },
+      { path: "/posts/:postId", element: <PostDetailPage /> },
+      { path: "/community", element: <CommunityPage /> },
+      { path: "/collaboration", element: <CollaborationPage /> },
     ],
   },
 ]);
