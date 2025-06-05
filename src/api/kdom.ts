@@ -11,13 +11,20 @@ import type {
   KDomTagSearchResultDto,
   KDomTrendingDto,
   KDomSubCreateDto,
+  KDomStatsDto,
+  SimilarSuggestionsDto,
+  ValidateTitleResponse,
   Language,
   Hub,
   KDomTheme,
   KDomSearchResult,
+  KDomPermissions,
 } from "../types/KDom";
 
-// CRUD
+// ========================================
+// CRUD OPERATIONS
+// ========================================
+
 export const createKDom = async (data: KDomCreateDto) => {
   const response = await API.post("/kdoms", data, {
     headers: {
@@ -27,7 +34,7 @@ export const createKDom = async (data: KDomCreateDto) => {
   return response;
 };
 
-// Updated to use slug-based editing (primary method)
+// ✅ ACTUALIZAT - Slug-based editing (primary method)
 export const editKDomBySlug = async (slug: string, data: KDomEditDto) => {
   await API.put(`/kdoms/slug/${slug}`, data);
 };
@@ -37,7 +44,7 @@ export const editKDom = async (id: string, data: KDomEditDto) => {
   await API.put(`/kdoms/${id}`, data);
 };
 
-// Updated to use slug-based metadata updates (primary method)
+// ✅ ACTUALIZAT - Slug-based metadata updates (primary method)
 export const updateMetadataBySlug = async (
   slug: string,
   data: KDomUpdateMetadataDto
@@ -53,21 +60,10 @@ export const updateMetadata = async (
   await API.put(`/kdoms/${id}/metadata`, data);
 };
 
-// Approve/Reject (still ID-based for admin operations)
-export const approveKDom = async (id: string) => {
-  await API.post(`/kdoms/${id}/approve`);
-};
+// ========================================
+// READ OPERATIONS
+// ========================================
 
-export const rejectKDom = async (id: string, data: KDomRejectDto) => {
-  await API.post(`/kdoms/${id}/reject`, data);
-};
-
-export const getPendingKdoms = async (): Promise<KDomDisplayDto[]> => {
-  const res = await API.get("/kdoms/pending");
-  return res.data;
-};
-
-// Read operations - supporting both ID and slug
 export const getKDomById = async (id: string): Promise<KDomReadDto> => {
   const res = await API.get(`/kdoms/${id}`);
   return res.data;
@@ -78,7 +74,31 @@ export const getKDomBySlug = async (slug: string): Promise<KDomReadDto> => {
   return res.data;
 };
 
-// Edit History - supporting both slug and ID
+// ✅ NOU - Pentru obținerea permisiunilor utilizatorului
+export const getUserPermissions = async (
+  id: string
+): Promise<KDomPermissions> => {
+  const res = await API.get(`/kdoms/${id}/permissions`);
+  return res.data;
+};
+
+export const getUserPermissionsBySlug = async (
+  slug: string
+): Promise<KDomPermissions> => {
+  const res = await API.get(`/kdoms/slug/${slug}/permissions`);
+  return res.data;
+};
+
+// ✅ NOU - Pentru statistici K-DOM
+export const getKDomStats = async (id: string): Promise<KDomStatsDto> => {
+  const res = await API.get(`/kdoms/${id}/stats`);
+  return res.data;
+};
+
+// ========================================
+// EDIT HISTORY
+// ========================================
+
 export const getEditHistoryBySlug = async (
   slug: string
 ): Promise<KDomEditReadDto[]> => {
@@ -93,7 +113,10 @@ export const getEditHistory = async (
   return res.data;
 };
 
-// Metadata History - supporting both slug and ID
+// ========================================
+// METADATA HISTORY
+// ========================================
+
 export const getMetadataHistoryBySlug = async (
   slug: string
 ): Promise<KDomMetadataEditReadDto[]> => {
@@ -108,7 +131,10 @@ export const getMetadataHistory = async (
   return res.data;
 };
 
-// Relations (can work with both ID and slug)
+// ========================================
+// RELATIONS
+// ========================================
+
 export const getParentKDom = async (
   idOrSlug: string
 ): Promise<KDomTagSearchResultDto | null> => {
@@ -134,12 +160,29 @@ export const getRelatedKDoms = async (
   return res.data;
 };
 
-// SubKDom
+// ========================================
+// SUB K-DOM
+// ========================================
+
 export const createSubKDom = async (id: string, data: KDomSubCreateDto) => {
   await API.post(`/kdoms/${id}/sub`, data);
 };
 
-// Follow operations (using ID)
+// ✅ NOU - Verifică dacă poate crea sub-pagini
+export const canCreateSubKDom = async (
+  parentId: string
+): Promise<{
+  canCreate: boolean;
+  message: string;
+}> => {
+  const res = await API.get(`/kdoms/${parentId}/can-create-sub`);
+  return res.data;
+};
+
+// ========================================
+// FOLLOW OPERATIONS
+// ========================================
+
 export const followKDom = async (id: string) => {
   await API.post(`/kdoms/${id}/follow`);
 };
@@ -163,11 +206,30 @@ export const getKDomFollowersCount = async (id: string): Promise<number> => {
   return res.data.count;
 };
 
-// Utility
+// ========================================
+// VALIDATION & UTILITY
+// ========================================
+
+// ✅ ACTUALIZAT - Validare îmbunătățită pentru titlu
+export const validateKDomTitle = async (
+  title: string
+): Promise<ValidateTitleResponse> => {
+  const res = await API.post("/kdoms/validate-title", { title });
+  return res.data;
+};
+
 export const checkKDomTitleExists = async (
   title: string
-): Promise<{ exists: boolean }> => {
+): Promise<{ exists: boolean; suggestions: string[] }> => {
   const res = await API.get(`/kdoms/check`, { params: { title } });
+  return res.data;
+};
+
+// ✅ NOU - Pentru sugestii similare
+export const getSimilarSuggestions = async (
+  title: string
+): Promise<SimilarSuggestionsDto> => {
+  const res = await API.get(`/kdoms/suggest-similar`, { params: { title } });
   return res.data;
 };
 
@@ -175,10 +237,14 @@ export const searchKDomTags = async (
   query: string
 ): Promise<KDomTagSearchResultDto[]> => {
   const res = await API.get(`/kdoms/search-tag-slug`, {
-    params: { query }, // Changed from 'q' to 'query' to match backend
+    params: { query },
   });
   return res.data;
 };
+
+// ========================================
+// TRENDING & SUGGESTIONS
+// ========================================
 
 export const getTrendingKdoms = async (
   days: number = 7
@@ -191,10 +257,8 @@ export const getTrendingKdomsForGuests = async (
   limit: number = 15
 ): Promise<KDomTagSearchResultDto[]> => {
   try {
-    // Try the trending endpoint first
     const trendingKdoms = await getTrendingKdoms(7);
 
-    // Transform to TagSearchResult format
     const transformed = trendingKdoms.slice(0, limit).map((kdom) => ({
       id: kdom.id,
       title: kdom.title,
@@ -216,6 +280,10 @@ export const getSuggestedKdoms = async (): Promise<
   return res.data;
 };
 
+// ========================================
+// ENUM VALUES
+// ========================================
+
 export const getLanguages = async (): Promise<Language[]> => {
   const res = await API.get<Language[]>("/kdoms/languages");
   return res.data;
@@ -231,22 +299,110 @@ export const getThemes = async (): Promise<KDomTheme[]> => {
   return res.data;
 };
 
-export const searchKDomsForParent: (
-  query: string
-) => Promise<KDomSearchResult[]> = async (
+// ========================================
+// SEARCH
+// ========================================
+
+export const searchKDomsForParent = async (
   query: string
 ): Promise<KDomSearchResult[]> => {
   if (!query.trim()) return [];
 
   const res = await API.get(`/kdoms/search-tag-slug`, {
-    params: { query: query.trim() }, // Changed from 'q' to 'query'
+    params: { query: query.trim() },
   });
 
-  // Transform results to have the correct interface
   return res.data.map((item: KDomSearchResult) => ({
     id: item.id,
     title: item.title,
     slug: item.slug,
     description: item.description || "Unknown",
   }));
+};
+
+// ========================================
+// MODERATION (pentru administratori)
+// ========================================
+
+export const getPendingKdoms = async (): Promise<KDomDisplayDto[]> => {
+  const res = await API.get("/kdoms/pending");
+  return res.data;
+};
+
+export const approveKDom = async (id: string) => {
+  await API.post(`/kdoms/${id}/approve`);
+};
+
+export const rejectKDom = async (id: string, data: KDomRejectDto) => {
+  await API.post(`/kdoms/${id}/reject`, data);
+};
+
+// ========================================
+// DISCUSSION (pentru pagina de discuții)
+// ========================================
+
+export const getKDomDiscussion = async (
+  slug: string,
+  filter?: {
+    page?: number;
+    pageSize?: number;
+  }
+) => {
+  const params = {
+    page: filter?.page || 1,
+    pageSize: filter?.pageSize || 20,
+  };
+
+  const res = await API.get(`/kdoms/slug/${slug}/discussion`, { params });
+  return res.data;
+};
+
+export const getKDomDiscussionStats = async (slug: string) => {
+  const res = await API.get(`/kdoms/slug/${slug}/discussion/stats`);
+  return res.data;
+};
+
+export const hasActiveDiscussion = async (
+  slug: string
+): Promise<{
+  slug: string;
+  hasActiveDiscussion: boolean;
+  message: string;
+}> => {
+  const res = await API.get(`/kdoms/slug/${slug}/has-discussion`);
+  return res.data;
+};
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+export const formatKDomStatus = (status: string): string => {
+  switch (status) {
+    case "Pending":
+      return "Pending Moderation";
+    case "Approved":
+      return "Live";
+    case "Rejected":
+      return "Rejected";
+    case "Deleted":
+      return "Deleted";
+    default:
+      return status;
+  }
+};
+
+export const getStatusColor = (status: string): string => {
+  switch (status) {
+    case "Approved":
+      return "green";
+    case "Pending":
+      return "yellow";
+    case "Rejected":
+      return "red";
+    case "Deleted":
+      return "gray";
+    default:
+      return "gray";
+  }
 };

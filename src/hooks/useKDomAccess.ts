@@ -109,28 +109,20 @@ export const useKDomAccess = ({
 function getModerationStatus(
   kdom: KDomReadDto | KDomReadDtoWithModeration
 ): KDomModerationStatus {
-  // Prioritizează statusul computed dacă există
+  // Dacă avem statusul computed, îl folosim
   if ("moderationStatus" in kdom && kdom.moderationStatus) {
-    return kdom.moderationStatus as KDomModerationStatus;
+    return kdom.moderationStatus;
   }
 
-  // Verifică flag-urile boolean
+  // Calculăm statusul pe baza flag-urilor booleene
   if ("isApproved" in kdom && "isRejected" in kdom) {
     if (kdom.isApproved) return "Approved";
     if (kdom.isRejected) return "Rejected";
     return "Pending";
   }
 
-  // Pentru KDomReadDto standard, verifică dacă avem proprietățile
-  const standardKdom = kdom as KDomReadDto;
-  if (standardKdom.isApproved !== undefined) {
-    if (standardKdom.isApproved) return "Approved";
-    if (standardKdom.isRejected) return "Rejected";
-    return "Pending";
-  }
-
-  // Fallback conservator - nu presupune nimic
-  return "Pending";
+  // Dacă nu avem informații despre moderare, considerăm aprobat (pentru compatibility)
+  return "Approved";
 }
 
 /**

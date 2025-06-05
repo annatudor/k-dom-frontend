@@ -7,6 +7,11 @@ export type Hub =
   | "Literature"
   | "Fashion";
 export type KDomTheme = "Light" | "Dark" | "Vibrant" | "Pastel";
+export type KDomModerationStatus =
+  | "Pending"
+  | "Approved"
+  | "Rejected"
+  | "Deleted";
 
 export interface KDomCreateDto {
   title: string;
@@ -80,12 +85,13 @@ export interface KDomReadDto {
   createdAt: string;
   updatedAt?: string;
   lastEditedAt?: string;
+  collaborators?: number[];
   isApproved: boolean;
   isRejected: boolean;
   rejectionReason?: string;
   moderatedAt?: string;
   moderatorUsername?: string;
-  moderationStatus: string;
+  moderationStatus: KDomModerationStatus;
   isPending: boolean;
   isModerated: boolean;
 }
@@ -100,6 +106,10 @@ export interface KDomDisplayDto {
   theme: KDomTheme;
   createdAt: string;
   isForKids: boolean;
+
+  status?: KDomModerationStatus;
+  isApproved?: boolean;
+  isRejected?: boolean;
 }
 
 export interface KDomTagSearchResultDto {
@@ -131,4 +141,54 @@ export interface KDomSearchResult {
   title: string;
   slug: string;
   description?: string;
+}
+
+export interface KDomAccessCheckResult {
+  hasAccess: boolean;
+  reason?: string;
+  status?: KDomModerationStatus;
+  redirectTo?: string;
+  showMessage?: boolean;
+}
+
+export interface KDomPermissions {
+  canEdit: boolean;
+  canEditMetadata: boolean;
+  canViewSensitive: boolean;
+  canManageCollaborators: boolean;
+  canCreateSubPages: boolean;
+  canViewEditHistory: boolean;
+  canApproveReject: boolean;
+  canDelete: boolean;
+  role: "owner" | "collaborator" | "admin" | "moderator" | "user" | "guest";
+  reason: string;
+}
+
+// ✅ NOU - Pentru statistici K-DOM
+export interface KDomStatsDto {
+  viewsCount: number;
+  followersCount: number;
+  commentsCount: number;
+  editsCount: number;
+  collaboratorsCount: number;
+  lastActivity?: string;
+  createdAt?: string;
+  totalInteractions: number;
+}
+
+// ✅ NOU - Pentru sugestii similare
+export interface SimilarSuggestionsDto {
+  similarTitles: string[];
+  relatedKDoms: KDomTagSearchResultDto[];
+  message: string;
+  hasSuggestions: boolean;
+}
+
+// ✅ NOU - Pentru validarea titlului
+export interface ValidateTitleResponse {
+  exists: boolean;
+  suggestions: string[];
+  isValid: boolean;
+  message: string;
+  suggestedAlternatives: string[];
 }

@@ -86,7 +86,6 @@ export default function EditKDomPage() {
     enabled: !!slug,
   });
 
-  // ✅ FOLOSIM NOUL HOOK PENTRU PERMISIUNI
   const permissions = useKDomPermissions(kdom);
 
   // Mutation pentru editarea K-Dom-ului
