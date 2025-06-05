@@ -1,4 +1,4 @@
-// src/types/Moderation.ts
+// src/types/Moderation.ts - Actualizat conform backend-ului
 export type KDomModerationStatus =
   | "Pending"
   | "Approved"
@@ -9,38 +9,14 @@ export type ModerationPriority = "Low" | "Normal" | "High" | "Urgent";
 
 export type ModerationDecision = "Approved" | "Rejected" | "Pending";
 
-export interface KDomModerationDto {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  contentHtml: string;
-  hub: string;
-  language: string;
-  isForKids: boolean;
-  theme: string;
-  authorUsername: string;
-  authorId: number;
-  createdAt: string;
-  parentId?: string;
-  parentTitle?: string;
-  priority: ModerationPriority;
-  flags: string[];
-  waitingTime: string; // ISO duration sau string formatat
-}
+// ========================================
+// ADMIN DASHBOARD TYPES
+// ========================================
 
-export interface UserKDomStatusDto {
-  id: string;
-  title: string;
-  slug: string;
-  createdAt: string;
-  status: KDomModerationStatus;
-  rejectionReason?: string;
-  moderatedAt?: string;
-  moderatorUsername?: string;
-  processingTime?: string; // ISO duration sau string formatat
-  canEdit: boolean;
-  canResubmit: boolean;
+export interface ModerationDashboardDto {
+  stats: ModerationStatsDto;
+  pendingKDoms: KDomModerationDto[];
+  recentActions: ModerationActionDto[];
 }
 
 export interface ModerationStatsDto {
@@ -70,15 +46,62 @@ export interface ModerationActionDto {
   decision: ModerationDecision;
   reason?: string;
   actionDate: string;
-  processingTime: string; // ISO duration sau string formatat
+  processingTime: string;
   authorUsername: string;
 }
 
-export interface ModerationDashboardDto {
-  stats: ModerationStatsDto;
-  pendingKDoms: KDomModerationDto[];
-  recentActions: ModerationActionDto[];
+// ========================================
+// K-DOM MODERATION TYPES
+// ========================================
+
+export interface KDomModerationDto {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  contentHtml: string;
+  hub: string;
+  language: string;
+  isForKids: boolean;
+  theme: string;
+  authorUsername: string;
+  authorId: number;
+  createdAt: string;
+  parentId?: string;
+  parentTitle?: string;
+  priority: ModerationPriority;
+  flags: string[];
+  status: string;
+  waitingTime: string;
 }
+
+// ========================================
+// USER MODERATION TYPES
+// ========================================
+
+export interface UserKDomStatusDto {
+  id: string;
+  title: string;
+  slug: string;
+  createdAt: string;
+  status: KDomModerationStatus;
+  rejectionReason?: string;
+  moderatedAt?: string;
+  moderatorUsername?: string;
+  processingTime?: string;
+  canEdit: boolean;
+  canResubmit: boolean;
+}
+
+export interface ModerationHistoryDto {
+  allSubmissions: UserKDomStatusDto[];
+  userStats: ModerationStatsDto;
+  recentDecisions: ModerationActionDto[];
+}
+
+// ========================================
+// BULK OPERATIONS TYPES
+// ========================================
 
 export interface BulkModerationDto {
   kdomIds: string[];
@@ -103,6 +126,10 @@ export interface ModerationResultItemDto {
   error?: string;
 }
 
+// ========================================
+// ACTION DTOS
+// ========================================
+
 export interface RejectAndDeleteDto {
   reason: string;
 }
@@ -111,14 +138,10 @@ export interface ForceDeleteReasonDto {
   reason: string;
 }
 
-// Pentru utilizatori
-export interface ModerationHistoryDto {
-  allSubmissions: UserKDomStatusDto[];
-  userStats: ModerationStatsDto;
-  recentDecisions: ModerationActionDto[];
-}
+// ========================================
+// ACCESS & PERMISSIONS
+// ========================================
 
-// Pentru permisiuni
 export interface KDomAccessCheckResult {
   hasAccess: boolean;
   reason?: string;
@@ -127,30 +150,30 @@ export interface KDomAccessCheckResult {
   showMessage?: boolean;
 }
 
-// Actualizare pentru KDomReadDto - adăugăm statusul de moderare
-export interface KDomReadDtoWithModeration {
-  id: string;
-  parentId?: string | null;
-  title: string;
-  slug: string;
-  description: string;
-  hub: string;
-  theme: string;
-  contentHtml: string;
-  language: string;
-  isForKids: boolean;
-  userId: number;
-  authorUsername: string;
-  createdAt: string;
-  updatedAt?: string;
-  lastEditedAt?: string;
-  collaborators?: number[];
+// ========================================
+// DASHBOARD SUMMARY TYPES (pentru user)
+// ========================================
 
-  // ✅ Statusuri de moderare
-  isApproved: boolean;
-  isRejected: boolean;
-  rejectionReason?: string;
-  moderationStatus: KDomModerationStatus; // computed field
-  moderatedAt?: string;
-  moderatorUsername?: string;
+export interface UserModerationSummary {
+  totalSubmitted: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  approvalRate: number;
+  hasNotifications: boolean;
+  lastSubmission?: string;
+}
+
+// ========================================
+// FILTER & SEARCH TYPES
+// ========================================
+
+export interface ModerationFilterDto {
+  status?: KDomModerationStatus;
+  priority?: ModerationPriority;
+  authorUsername?: string;
+  fromDate?: string;
+  toDate?: string;
+  page?: number;
+  pageSize?: number;
 }

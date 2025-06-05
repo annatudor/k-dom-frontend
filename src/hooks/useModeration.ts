@@ -1,4 +1,4 @@
-// src/hooks/useModeration.ts
+// src/hooks/useModeration.ts - Actualizat conform backend-ului
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@chakra-ui/react";
@@ -15,23 +15,17 @@ import {
   bulkModerate,
   getUserModerationHistory,
   getUserKDomStatuses,
+  getMyPendingKDoms,
+  getMyRejectedKDoms,
+  getMyQuickStats,
   getKDomStatus,
   getKDomPriority,
   canViewKDomStatus,
 } from "@/api/moderation";
 import type { BulkModerationDto } from "@/types/Moderation";
 
-// Define specific error types
-interface ApiError {
-  response?: {
-    data?: {
-      error?: string;
-    };
-  };
-}
-
 // ========================================
-// MODERATION DASHBOARD
+// ADMIN DASHBOARD HOOKS
 // ========================================
 
 export function useModerationDashboard() {
@@ -43,8 +37,8 @@ export function useModerationDashboard() {
     queryKey: ["moderation", "dashboard"],
     queryFn: getModerationDashboard,
     enabled: isModeratorOrAdmin,
-    refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes
-    staleTime: 2 * 60 * 1000, // Consider stale after 2 minutes
+    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 }
 
@@ -57,7 +51,7 @@ export function useModerationStats() {
     queryKey: ["moderation", "stats"],
     queryFn: getModerationStats,
     enabled: isModeratorOrAdmin,
-    refetchInterval: 10 * 60 * 1000, // Refresh every 10 minutes
+    refetchInterval: 10 * 60 * 1000, // 10 minutes
     staleTime: 5 * 60 * 1000,
   });
 }
@@ -71,7 +65,7 @@ export function useRecentModerationActions(limit: number = 20) {
     queryKey: ["moderation", "recent-actions", limit],
     queryFn: () => getRecentModerationActions(limit),
     enabled: isModeratorOrAdmin,
-    refetchInterval: 2 * 60 * 1000, // Refresh every 2 minutes
+    refetchInterval: 2 * 60 * 1000, // 2 minutes
     staleTime: 60 * 1000,
   });
 }
@@ -89,7 +83,7 @@ export function useTopModerators(days: number = 30, limit: number = 10) {
 }
 
 // ========================================
-// MODERATION ACTIONS
+// ADMIN MODERATION ACTIONS
 // ========================================
 
 export function useModerationActions() {
@@ -108,7 +102,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: ApiError) => {
+    onError: (error: { response?: { data?: { error?: string } } }) => {
       toast({
         title: "Approval Failed",
         description: error.response?.data?.error || "Failed to approve K-DOM",
@@ -139,7 +133,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: ApiError) => {
+    onError: (error: { response?: { data?: { error?: string } } }) => {
       toast({
         title: "Rejection Failed",
         description: error.response?.data?.error || "Failed to reject K-DOM",
@@ -161,7 +155,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: ApiError) => {
+    onError: (error: { response?: { data?: { error?: string } } }) => {
       toast({
         title: "Action Failed",
         description:
@@ -184,7 +178,7 @@ export function useModerationActions() {
       });
       invalidateModerationQueries(queryClient);
     },
-    onError: (error: ApiError) => {
+    onError: (error: { response?: { data?: { error?: string } } }) => {
       toast({
         title: "Force Delete Failed",
         description:
@@ -243,9 +237,9 @@ export function useBulkModeration() {
       }
 
       invalidateModerationQueries(queryClient);
-      setSelectedKDoms([]); // Clear selection
+      setSelectedKDoms([]);
     },
-    onError: (error: ApiError) => {
+    onError: (error: { response?: { data?: { error?: string } } }) => {
       toast({
         title: "Bulk Action Failed",
         description:
@@ -303,7 +297,7 @@ export function useBulkModeration() {
 }
 
 // ========================================
-// USER MODERATION HISTORY
+// USER MODERATION HOOKS
 // ========================================
 
 export function useUserModerationHistory() {
@@ -323,6 +317,39 @@ export function useUserKDomStatuses() {
   return useQuery({
     queryKey: ["moderation", "user-kdom-statuses", user?.id],
     queryFn: getUserKDomStatuses,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useMyPendingKDoms() {
+  const { user, isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["moderation", "my-pending-kdoms", user?.id],
+    queryFn: getMyPendingKDoms,
+    enabled: isAuthenticated,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+export function useMyRejectedKDoms() {
+  const { user, isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["moderation", "my-rejected-kdoms", user?.id],
+    queryFn: getMyRejectedKDoms,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useMyQuickStats() {
+  const { user, isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ["moderation", "my-quick-stats", user?.id],
+    queryFn: getMyQuickStats,
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -377,55 +404,6 @@ function invalidateModerationQueries(
   // Invalidate all moderation-related queries
   queryClient.invalidateQueries({ queryKey: ["moderation"] });
   queryClient.invalidateQueries({ queryKey: ["kdom"] }); // Also refresh K-DOM data
-}
-
-// ========================================
-// PRIORITY UTILITIES
-// ========================================
-
-export function usePriorityColors() {
-  return {
-    Urgent: "red",
-    High: "orange",
-    Normal: "blue",
-    Low: "gray",
-  } as const;
-}
-
-export function useModerationStatusColors() {
-  return {
-    Pending: "yellow",
-    Approved: "green",
-    Rejected: "red",
-    Deleted: "gray",
-  } as const;
-}
-
-// ========================================
-// REAL-TIME UPDATES (OPTIONAL)
-// ========================================
-
-export function useModerationRealTimeUpdates() {
-  const queryClient = useQueryClient();
-
-  // Această funcție poate fi extinsă pentru a folosi WebSockets sau polling
-  const enableRealTimeUpdates = useCallback(
-    (enabled: boolean) => {
-      if (enabled) {
-        // Set up interval for real-time updates
-        const interval = setInterval(() => {
-          queryClient.invalidateQueries({
-            queryKey: ["moderation", "dashboard"],
-          });
-        }, 30000); // Update every 30 seconds
-
-        return () => clearInterval(interval);
-      }
-    },
-    [queryClient]
-  );
-
-  return { enableRealTimeUpdates };
 }
 
 // ========================================

@@ -1,4 +1,4 @@
-// src/api/moderation.ts
+// src/api/moderation.ts - Actualizat conform backend-ului
 import API from "./axios";
 import type {
   ModerationDashboardDto,
@@ -14,8 +14,10 @@ import type {
   ModerationPriority,
 } from "@/types/Moderation";
 
+import type { KDomDisplayDto, KDomReadDto } from "@/types/KDom";
+
 // ========================================
-// MODERATION ACTIONS
+// ADMIN MODERATION ACTIONS
 // ========================================
 
 export const approveKDom = async (kdomId: string): Promise<void> => {
@@ -51,6 +53,13 @@ export const forceDeleteKDom = async (
 // BULK OPERATIONS
 // ========================================
 
+export const bulkModerate = async (
+  data: BulkModerationDto
+): Promise<BulkModerationResultDto> => {
+  const response = await API.post("/moderation/bulk-action", data);
+  return response.data;
+};
+
 export const bulkApproveKDoms = async (kdomIds: string[]): Promise<void> => {
   await API.post("/moderation/bulk-approve", { kdomIds });
 };
@@ -69,21 +78,14 @@ export const bulkRejectKDoms = async (
   );
 };
 
-export const bulkModerate = async (
-  data: BulkModerationDto
-): Promise<BulkModerationResultDto> => {
-  const response = await API.post("/moderation/bulk-action", data);
-  return response.data;
-};
-
 // ========================================
-// DASHBOARD & STATS
+// ADMIN DASHBOARD & STATS
 // ========================================
 
 export const getModerationDashboard =
   async (): Promise<ModerationDashboardDto> => {
     const response = await API.get("/moderation/dashboard");
-    return response.data;
+    return response.data.dashboard;
   };
 
 export const getModerationStats = async (): Promise<ModerationStatsDto> => {
@@ -109,7 +111,7 @@ export const getTopModerators = async (
 };
 
 // ========================================
-// K-DOM STATUS & PRIORITY
+// K-DOM PRIORITY & STATUS CHECKS
 // ========================================
 
 export const getKDomPriority = async (
@@ -136,73 +138,140 @@ export const canViewKDomStatus = async (
 };
 
 // ========================================
-// USER MODERATION HISTORY
+// USER MODERATION HISTORY (pentru utilizatori normali)
 // ========================================
 
 export const getUserModerationHistory =
   async (): Promise<ModerationHistoryDto> => {
-    const response = await API.get("/moderation/user/history");
-    return response.data;
+    const response = await API.get("/user/moderation/history");
+    return response.data.history;
   };
 
 export const getUserKDomStatuses = async (): Promise<UserKDomStatusDto[]> => {
-  const response = await API.get("/moderation/user/kdom-status");
+  const response = await API.get("/user/moderation/my-kdoms-status");
+  return response.data.statuses;
+};
+
+export const getMyPendingKDoms = async (): Promise<UserKDomStatusDto[]> => {
+  const response = await API.get("/user/moderation/pending-kdoms");
+  return response.data.pendingKDoms;
+};
+
+export const getMyRejectedKDoms = async (): Promise<UserKDomStatusDto[]> => {
+  const response = await API.get("/user/moderation/rejected-kdoms");
+  return response.data.rejectedKDoms;
+};
+
+export const getMyQuickStats = async (): Promise<{
+  totalSubmitted: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  approvalRate: number;
+  averageProcessingTime: number;
+  lastSubmission: string | null;
+  hasNotifications: boolean;
+}> => {
+  const response = await API.get("/user/moderation/quick-stats");
   return response.data;
 };
 
 export const getKDomStatus = async (
   kdomId: string
 ): Promise<UserKDomStatusDto> => {
-  const response = await API.get(`/moderation/user/kdom-status/${kdomId}`);
-  return response.data;
+  const response = await API.get(`/user/moderation/kdom-status/${kdomId}`);
+  return response.data.status;
 };
 
-// ========================================
-// HELPER FUNCTIONS
-// ========================================
+export const isKDomPending = (kdom: KDomReadDto): boolean => {
+  return kdom.status === "Pending" || kdom.isPending;
+};
 
-export const formatProcessingTime = (duration: string): string => {
+export const isKDomApproved = (kdom: KDomReadDto): boolean => {
+  return kdom.status === "Approved" || kdom.isApproved;
+};
+
+export const isKDomRejected = (kdom: KDomReadDto): boolean => {
+  return kdom.status === "Rejected" || kdom.isRejected;
+};
+
+export const canUserAccessKDom = (
+  kdom: KDomReadDto,
+  userId?: number
+): boolean => {
+  // K-Dom-uri aprobate sunt accesibile tuturor
+  if (isKDomApproved(kdom)) {
+    return true;
+  }
+
+  // K-Dom-uri pending sau rejected sunt accesibile doar autorului
+  if (userId && kdom.userId === userId) {
+    return true;
+  }
+
+  return false;
+};
+
+export const getKDomModerationStatusDisplay = (
+  kdom: KDomReadDto
+): {
+  status: string;
+  color: string;
+  message: string;
+} => {
+  if (isKDomApproved(kdom)) {
+    return {
+      status: "Live",
+      color: "green",
+      message: "Your K-Dom is live and visible to everyone",
+    };
+  }
+
+  if (isKDomPending(kdom)) {
+    return {
+      status: "Pending Review",
+      color: "yellow",
+      message: "Your K-Dom is being reviewed by moderators",
+    };
+  }
+
+  if (isKDomRejected(kdom)) {
+    return {
+      status: "Rejected",
+      color: "red",
+      message: kdom.rejectionReason || "Your K-Dom was rejected by moderators",
+    };
+  }
+
+  return {
+    status: "Unknown",
+    color: "gray",
+    message: "Unknown moderation status",
+  };
+};
+
+export const formatProcessingTime = (timespan: string): string => {
   try {
-    // Dacă e deja formatat, returnează direct
-    if (duration.includes("hours") || duration.includes("days")) {
-      return duration;
+    // Parseaza TimeSpan din C# (format: "days.hours:minutes:seconds")
+    const parts = timespan.split(/[.:]/).map(Number);
+
+    if (parts.length >= 4) {
+      const [days, hours, minutes] = parts;
+
+      if (days > 0) {
+        return `${days} day${days !== 1 ? "s" : ""} ${hours}h`;
+      } else if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      } else {
+        return `${minutes}m`;
+      }
     }
 
-    // Parsează ISO duration (PT1H30M) sau milisecunde
-    const ms =
-      typeof duration === "string" && duration.startsWith("PT")
-        ? parsePTDuration(duration)
-        : parseFloat(duration);
-
-    const hours = Math.floor(ms / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) {
-      return `${days} day${days !== 1 ? "s" : ""} ${hours % 24} hour${
-        hours % 24 !== 1 ? "s" : ""
-      }`;
-    } else if (hours > 0) {
-      return `${hours} hour${hours !== 1 ? "s" : ""}`;
-    } else {
-      const minutes = Math.floor(ms / (1000 * 60));
-      return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
-    }
+    return timespan;
   } catch {
     return "Unknown";
   }
 };
-
-function parsePTDuration(duration: string): number {
-  // Parsează PT1H30M -> milisecunde
-  const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-  if (!matches) return 0;
-
-  const hours = parseInt(matches[1] || "0");
-  const minutes = parseInt(matches[2] || "0");
-  const seconds = parseInt(matches[3] || "0");
-
-  return (hours * 60 * 60 + minutes * 60 + seconds) * 1000;
-}
 
 export const getModerationStatusColor = (status: string) => {
   switch (status) {
@@ -232,4 +301,44 @@ export const getPriorityColor = (priority: ModerationPriority) => {
     default:
       return "gray";
   }
+};
+
+export const getPriorityLabel = (priority: ModerationPriority): string => {
+  switch (priority) {
+    case "Urgent":
+      return "Urgent";
+    case "High":
+      return "High Priority";
+    case "Normal":
+      return "Normal";
+    case "Low":
+      return "Low Priority";
+    default:
+      return "Unknown";
+  }
+};
+// ========================================
+// MODERATION (pentru administratori)
+// ========================================
+
+export const getPendingKdoms = async (): Promise<KDomDisplayDto[]> => {
+  const res = await API.get("/kdoms/pending");
+  return res.data;
+};
+// ========================================
+// USER MODERATION STATUS (pentru utilizatori normali)
+// ========================================
+
+export const getMyKDomModerationStatus = async (): Promise<
+  UserKDomStatusDto[]
+> => {
+  const res = await API.get("/user/moderation/my-kdoms-status");
+  return res.data.statuses;
+};
+
+export const getKDomModerationStatus = async (
+  kdomId: string
+): Promise<UserKDomStatusDto> => {
+  const res = await API.get(`/user/moderation/kdom-status/${kdomId}`);
+  return res.data.status;
 };

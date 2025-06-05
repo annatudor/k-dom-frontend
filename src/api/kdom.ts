@@ -3,7 +3,6 @@ import type {
   KDomCreateDto,
   KDomEditDto,
   KDomUpdateMetadataDto,
-  KDomRejectDto,
   KDomReadDto,
   KDomEditReadDto,
   KDomMetadataEditReadDto,
@@ -34,7 +33,6 @@ export const createKDom = async (data: KDomCreateDto) => {
   return response;
 };
 
-// ✅ ACTUALIZAT - Slug-based editing (primary method)
 export const editKDomBySlug = async (slug: string, data: KDomEditDto) => {
   await API.put(`/kdoms/slug/${slug}`, data);
 };
@@ -44,7 +42,6 @@ export const editKDom = async (id: string, data: KDomEditDto) => {
   await API.put(`/kdoms/${id}`, data);
 };
 
-// ✅ ACTUALIZAT - Slug-based metadata updates (primary method)
 export const updateMetadataBySlug = async (
   slug: string,
   data: KDomUpdateMetadataDto
@@ -74,7 +71,6 @@ export const getKDomBySlug = async (slug: string): Promise<KDomReadDto> => {
   return res.data;
 };
 
-// ✅ NOU - Pentru obținerea permisiunilor utilizatorului
 export const getUserPermissions = async (
   id: string
 ): Promise<KDomPermissions> => {
@@ -89,7 +85,6 @@ export const getUserPermissionsBySlug = async (
   return res.data;
 };
 
-// ✅ NOU - Pentru statistici K-DOM
 export const getKDomStats = async (id: string): Promise<KDomStatsDto> => {
   const res = await API.get(`/kdoms/${id}/stats`);
   return res.data;
@@ -168,7 +163,6 @@ export const createSubKDom = async (id: string, data: KDomSubCreateDto) => {
   await API.post(`/kdoms/${id}/sub`, data);
 };
 
-// ✅ NOU - Verifică dacă poate crea sub-pagini
 export const canCreateSubKDom = async (
   parentId: string
 ): Promise<{
@@ -210,7 +204,6 @@ export const getKDomFollowersCount = async (id: string): Promise<number> => {
 // VALIDATION & UTILITY
 // ========================================
 
-// ✅ ACTUALIZAT - Validare îmbunătățită pentru titlu
 export const validateKDomTitle = async (
   title: string
 ): Promise<ValidateTitleResponse> => {
@@ -225,7 +218,6 @@ export const checkKDomTitleExists = async (
   return res.data;
 };
 
-// ✅ NOU - Pentru sugestii similare
 export const getSimilarSuggestions = async (
   title: string
 ): Promise<SimilarSuggestionsDto> => {
@@ -318,23 +310,6 @@ export const searchKDomsForParent = async (
     slug: item.slug,
     description: item.description || "Unknown",
   }));
-};
-
-// ========================================
-// MODERATION (pentru administratori)
-// ========================================
-
-export const getPendingKdoms = async (): Promise<KDomDisplayDto[]> => {
-  const res = await API.get("/kdoms/pending");
-  return res.data;
-};
-
-export const approveKDom = async (id: string) => {
-  await API.post(`/kdoms/${id}/approve`);
-};
-
-export const rejectKDom = async (id: string, data: KDomRejectDto) => {
-  await API.post(`/kdoms/${id}/reject`, data);
 };
 
 // ========================================

@@ -32,26 +32,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
+    const storedToken = localStorage.getItem("token");
+    console.log("useEffect - stored token:", storedToken);
+    setToken(storedToken);
   }, []);
 
   const user = useMemo(() => {
-    if (!token) return null;
+    console.log("=== AuthContext useMemo Debug ===");
+    console.log("Token exists:", !!token);
+
+    if (!token) {
+      console.log("No token, returning null");
+      return null;
+    }
+
     const decoded = decodeToken(token);
-    if (!decoded) return null;
+    console.log("Decoded token:", decoded);
+
+    if (!decoded) {
+      console.log("Token decode failed, returning null");
+      return null;
+    }
 
     const { sub, username, role, avatarUrl } = decoded;
-    return {
+    console.log("Extracted values:", { sub, username, role, avatarUrl });
+
+    const userObj = {
       id: parseInt(sub),
       username,
       role,
       avatarUrl,
     };
+
+    console.log("Final user object:", userObj);
+    console.log("=== End AuthContext Debug ===");
+
+    return userObj;
   }, [token]);
 
   const login = (data: SignInResponse) => {
+    console.log("Login called with data:", data);
+    console.log("Setting token:", data.token);
     localStorage.setItem("token", data.token);
     setToken(data.token);
+    console.log("Token set in localStorage:", localStorage.getItem("token"));
   };
 
   const logout = () => {

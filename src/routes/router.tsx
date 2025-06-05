@@ -24,6 +24,10 @@ import EditKDomMetadataPageContent from "@/pages/EditKDomMetadataPage";
 import CreateSubKDomPageContent from "@/pages/CreateSubKDomPage";
 import KDomDiscussionPageContent from "@/pages/KDomDiscussionPage";
 import KDomCollaborationPageContent from "@/pages/KDomCollaborationPage";
+import ModerationGuidelines from "@/components/kdom/moderation/ModerationGuidelines";
+import AdminModerationPage from "@/pages/AdminModerationPage";
+import UserModerationPage from "@/pages/UserModerationPage";
+import ModerationHistoryPage from "@/pages/ModerationHistoryPage";
 
 // Type assertion helper to handle components that don't accept props yet
 type KDomProps = { kdom: unknown; accessResult: unknown };
@@ -149,6 +153,31 @@ export const router = createBrowserRouter([
       { path: "/posts/:postId", element: <PostDetailPage /> },
       { path: "/community", element: <CommunityPage /> },
       { path: "/collaboration", element: <CollaborationPage /> },
+      { path: "/kdom-guidelines", element: <ModerationGuidelines /> },
+      {
+        path: "/admin/moderation",
+        element: <AdminModerationPage />,
+      },
+      {
+        path: "/user/moderation",
+        element: <AdminModerationPage />,
+      },
+      {
+        path: "/moderation/dashboard",
+        element: <AdminModerationPage />, // Alias pentru admin moderation
+      },
+      {
+        path: "/my-submissions",
+        element: <UserModerationPage />,
+      },
+      {
+        path: "/moderation/status",
+        element: <UserModerationPage />, // Alias pentru user moderation
+      },
+      {
+        path: "/moderation/history",
+        element: <ModerationHistoryPage />, // Pagină dedicată pentru istoric (admin/user)
+      },
     ],
   },
 ]);
