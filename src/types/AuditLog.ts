@@ -1,4 +1,4 @@
-import type { PagedFilterDto } from "./Pagination";
+import type { PagedFilterDto } from "@/types/Pagination";
 
 export type AuditAction =
   | "CreateUser"
@@ -17,23 +17,30 @@ export type AuditAction =
   | "ChangeRole"
   | "ApproveCollaboration"
   | "RejectCollaboration"
-  | "RemoveCollaborator";
+  | "RemoveCollaborator"
+  | "DeleteKDom"
+  | "BulkApproveKDom"
+  | "BulkRejectKDom"
+  | "ForceDeleteKDom"
+  | "ViewModerationDashboard"
+  | "ViewUserModerationHistory"
+  | "ResubmitKDom";
 
 export type AuditTargetType = "User" | "Post" | "Comment" | "KDom" | "Flag";
 
 export interface AuditLogReadDto {
   id: number;
   userId: number;
-  action: AuditAction;
-  targetType: AuditTargetType;
+  action: AuditAction; // Schimbă din string în AuditAction
+  targetType: AuditTargetType; // Schimbă din string în AuditTargetType
   targetId: string;
   details: string;
   createdAt: string;
 }
 
 export interface AuditLogFilterDto extends PagedFilterDto {
-  action?: string;
+  action?: AuditAction; // Schimbă din string în AuditAction
   userId?: number;
-  from?: string; // ISO date string
+  from?: string;
   to?: string;
 }

@@ -66,6 +66,7 @@ export interface KDomReadDto {
   id: string;
   parentId?: string | null; // Allow null for no parent
   // Changed from kdomId to slug for frontend-backend compatibility
+  status: "Pending" | "Approved" | "Rejected";
   title: string;
   slug: string;
   description: string;
@@ -79,6 +80,14 @@ export interface KDomReadDto {
   createdAt: string;
   updatedAt?: string;
   lastEditedAt?: string;
+  isApproved: boolean;
+  isRejected: boolean;
+  rejectionReason?: string;
+  moderatedAt?: string;
+  moderatorUsername?: string;
+  moderationStatus: string;
+  isPending: boolean;
+  isModerated: boolean;
 }
 
 export interface KDomDisplayDto {

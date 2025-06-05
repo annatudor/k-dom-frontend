@@ -83,7 +83,7 @@ export const bulkModerate = async (
 export const getModerationDashboard =
   async (): Promise<ModerationDashboardDto> => {
     const response = await API.get("/moderation/dashboard");
-    return response.data.dashboard;
+    return response.data;
   };
 
 export const getModerationStats = async (): Promise<ModerationStatsDto> => {
