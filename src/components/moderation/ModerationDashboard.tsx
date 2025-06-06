@@ -1,4 +1,4 @@
-// src/components/moderation/ModerationDashboard.tsx
+// src/components/moderation/ModerationDashboard.tsx - Updated with new components
 import {
   Box,
   VStack,
@@ -31,6 +31,8 @@ import { PendingKDomsGrid } from "./PendingKDomsGrid";
 import { RecentModerationActions } from "./RecentModerationActions";
 import { ModerationStats } from "./ModerationStats";
 import { AdminModerationHistory } from "./AdminModerationHistory";
+import { FlagManagement } from "./FlagManagement";
+import { UserManagement } from "./UserManagement";
 
 export function ModerationDashboard() {
   const { canViewDashboard } = useModerationPermissions();
@@ -88,7 +90,7 @@ export function ModerationDashboard() {
                 Moderation Dashboard
               </Heading>
               <Text fontSize="lg" color="gray.600">
-                Manage K-DOM submissions and review queue
+                Manage K-Dom submissions, flags, and users
               </Text>
             </VStack>
 
@@ -116,7 +118,7 @@ export function ModerationDashboard() {
             <Card bg={cardBg}>
               <CardBody>
                 <Stat>
-                  <StatLabel>Pending Review</StatLabel>
+                  <StatLabel>Pending K-Doms</StatLabel>
                   <StatNumber color="orange.500">
                     {dashboard.stats.totalPending}
                   </StatNumber>
@@ -168,7 +170,7 @@ export function ModerationDashboard() {
           <TabList>
             <Tab>
               <HStack spacing={2}>
-                <Text>Pending K-DOMs</Text>
+                <Text>Pending K-Doms</Text>
                 {dashboard.stats.totalPending > 0 && (
                   <Badge colorScheme="orange" borderRadius="full">
                     {dashboard.stats.totalPending}
@@ -177,11 +179,14 @@ export function ModerationDashboard() {
               </HStack>
             </Tab>
             <Tab>Recent Actions</Tab>
+            <Tab>Flag Management</Tab>
+            <Tab>User Management</Tab>
             <Tab>Statistics</Tab>
             <Tab>Full History</Tab>
           </TabList>
 
           <TabPanels>
+            {/* Pending K-DOMs Tab */}
             <TabPanel px={0} py={6}>
               <PendingKDomsGrid
                 pendingKDoms={dashboard.pendingKDoms}
@@ -189,6 +194,7 @@ export function ModerationDashboard() {
               />
             </TabPanel>
 
+            {/* Recent Actions Tab */}
             <TabPanel px={0} py={6}>
               <RecentModerationActions
                 actions={dashboard.recentActions}
@@ -196,10 +202,22 @@ export function ModerationDashboard() {
               />
             </TabPanel>
 
+            {/* Flag Management Tab */}
+            <TabPanel px={0} py={6}>
+              <FlagManagement />
+            </TabPanel>
+
+            {/* User Management Tab */}
+            <TabPanel px={0} py={6}>
+              <UserManagement />
+            </TabPanel>
+
+            {/* Statistics Tab */}
             <TabPanel px={0} py={6}>
               <ModerationStats stats={dashboard.stats} />
             </TabPanel>
 
+            {/* Full History Tab */}
             <TabPanel px={0} py={6}>
               <AdminModerationHistory
                 limit={100}

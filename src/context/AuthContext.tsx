@@ -1,4 +1,4 @@
-// src/context/AuthContext.tsx
+// src/context/AuthContext.tsx - FIXED VERSION
 import React, {
   createContext,
   useContext,
@@ -31,39 +31,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // ✅ Start with true
+  const [isInitialized, setIsInitialized] = useState(false); // ✅ Track initialization
 
+  // ✅ Initialize token from localStorage
   useEffect(() => {
-    console.log("=== AuthProvider useEffect ===");
+    console.log("=== AuthProvider INITIALIZATION ===");
 
-    const storedToken = localStorage.getItem("token");
-    console.log("Stored token exists:", !!storedToken);
+    const initializeAuth = () => {
+      const storedToken = localStorage.getItem("token");
+      console.log("📦 Stored token exists:", !!storedToken);
 
-    if (storedToken) {
-      console.log("Setting token from localStorage");
-      setToken(storedToken);
-    }
+      if (storedToken) {
+        console.log("🔄 Setting token from localStorage");
+        setToken(storedToken);
+      }
 
-    setIsLoading(false);
-    console.log("=== End AuthProvider useEffect ===");
+      console.log("✅ Auth initialization complete");
+      setIsInitialized(true);
+      setIsLoading(false);
+    };
+
+    // Small delay to ensure localStorage is ready
+    const timer = setTimeout(initializeAuth, 10);
+    return () => clearTimeout(timer);
   }, []);
 
+  // ✅ Calculate user from token
   const user = useMemo(() => {
-    console.log("=== AuthContext useMemo Debug ===");
-    console.log("Token exists:", !!token);
-    console.log("Is loading:", isLoading);
+    console.log("=== AuthContext useMemo User Calculation ===");
+    console.log("🔍 isLoading:", isLoading);
+    console.log("🔍 isInitialized:", isInitialized);
+    console.log("🔍 token exists:", !!token);
 
-    if (!token || isLoading) {
-      console.log("No token or still loading, returning null");
+    // ✅ Don't calculate user until initialization is complete
+    if (!isInitialized || isLoading) {
+      console.log("⏳ Still initializing, returning null user");
+      return null;
+    }
+
+    if (!token) {
+      console.log("❌ No token, returning null user");
       return null;
     }
 
     const decoded = decodeToken(token);
-    console.log("Decoded token:", decoded);
+    console.log("🔍 Decoded token:", decoded);
 
     if (!decoded) {
-      console.log("Token decode failed, returning null");
-      // Remove invalid token
+      console.log("❌ Token decode failed, removing invalid token");
       localStorage.removeItem("token");
       setToken(null);
       return null;
@@ -72,17 +88,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     // Check if token is expired
     const now = Date.now() / 1000;
     if (decoded.exp && decoded.exp < now) {
-      console.log("Token expired, removing");
+      console.log("❌ Token expired, removing");
       localStorage.removeItem("token");
       setToken(null);
       return null;
     }
 
     const { sub, username, role, avatarUrl } = decoded;
-    console.log("Extracted values:", { sub, username, role, avatarUrl });
-
     if (!sub || !username || !role) {
-      console.log("Missing required fields in token");
+      console.log("❌ Missing required fields in token");
       return null;
     }
 
@@ -93,50 +107,60 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       avatarUrl,
     };
 
-    console.log("Final user object:", userObj);
-    console.log("User role:", userObj.role);
-    console.log("Is admin?", userObj.role === "admin");
-    console.log("Is moderator?", userObj.role === "moderator");
-    console.log("=== End AuthContext Debug ===");
-
+    console.log("✅ User calculated successfully:", userObj);
     return userObj;
-  }, [token, isLoading]);
+  }, [token, isLoading, isInitialized]);
+
+  // ✅ Calculate isAuthenticated more carefully
+  const isAuthenticated = useMemo(() => {
+    const authenticated = !isLoading && isInitialized && !!token && !!user;
+    console.log("🔐 isAuthenticated calculation:");
+    console.log("  - isLoading:", isLoading);
+    console.log("  - isInitialized:", isInitialized);
+    console.log("  - hasToken:", !!token);
+    console.log("  - hasUser:", !!user);
+    console.log("  - RESULT:", authenticated);
+    return authenticated;
+  }, [isLoading, isInitialized, token, user]);
 
   const login = (data: SignInResponse) => {
-    console.log("Login called with data:", data);
+    console.log("🔑 Login called with data:", data);
 
     if (!data.token) {
-      console.error("No token in login data");
+      console.error("❌ No token in login data");
       return;
     }
 
-    console.log("Setting token:", data.token);
+    console.log("💾 Saving token to localStorage");
     localStorage.setItem("token", data.token);
     setToken(data.token);
-    console.log("Token set in localStorage");
+    console.log("✅ Login complete");
   };
 
   const logout = () => {
-    console.log("Logout called");
+    console.log("🚪 Logout called");
     localStorage.removeItem("token");
     setToken(null);
+    setIsLoading(false);
+    console.log("✅ Logout complete");
   };
 
   const contextValue = {
     token,
-    isAuthenticated: !!token && !!user,
+    isAuthenticated,
     user,
     login,
     logout,
     isLoading,
   };
 
-  console.log("AuthContext providing:", {
+  console.log("🎯 AuthContext final state:", {
     hasToken: !!token,
     hasUser: !!user,
-    isAuthenticated: contextValue.isAuthenticated,
+    isAuthenticated,
     userRole: user?.role,
     isLoading,
+    isInitialized,
   });
 
   return (

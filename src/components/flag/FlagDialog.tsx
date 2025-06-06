@@ -1,4 +1,4 @@
-// src/components/flag/FlagDialog.tsx - Updated for content-specific reasons
+// src/components/flag/FlagDialog.tsx - Updated with improved logic
 import { useState } from "react";
 import {
   Modal,
@@ -23,14 +23,13 @@ import {
   Icon,
   useColorModeValue,
   Badge,
+  Progress,
 } from "@chakra-ui/react";
 import { FiFlag, FiAlertTriangle, FiShield, FiCheck } from "react-icons/fi";
-import { useMutation } from "@tanstack/react-query";
-
-import { createFlag } from "@/api/flag";
+import { useCreateFlag } from "@/hooks/useFlags";
 import { useAuth } from "@/context/AuthContext";
-import { getApplicableReasons } from "@/types/Flag"; // Updated import
-import type { FlagDialogProps } from "@/types/Flag";
+import { getApplicableReasons } from "@/types/Flag";
+import type { FlagDialogProps, ContentType } from "@/types/Flag";
 
 export function FlagDialog({
   contentType,
@@ -42,9 +41,12 @@ export function FlagDialog({
   onSuccess,
 }: FlagDialogProps) {
   const { user } = useAuth();
+  const { submitFlag, isSubmitting } = useCreateFlag();
+
   const [selectedReason, setSelectedReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [step, setStep] = useState<"select" | "confirm" | "success">("select");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const overlayBg = useColorModeValue("blackAlpha.300", "blackAlpha.600");
   const contentBg = useColorModeValue("white", "gray.800");
@@ -53,35 +55,26 @@ export function FlagDialog({
   // Get applicable reasons for this content type
   const applicableReasons = getApplicableReasons(contentType);
 
-  // Verifică dacă utilizatorul încearcă să-și raporteze propriul conținut
+  // Check if user is trying to report their own content
   const isOwnContent = user?.id === contentOwnerId;
-
-  // Mutation pentru crearea flag-ului
-  const flagMutation = useMutation({
-    mutationFn: createFlag,
-    onSuccess: () => {
-      setStep("success");
-      setTimeout(() => {
-        handleClose();
-        onSuccess?.();
-      }, 2000);
-    },
-  });
 
   const selectedReasonData = applicableReasons.find(
     (r) => r.id === selectedReason
   );
   const finalReason =
-    selectedReason === "other" ? customReason : selectedReasonData?.label || "";
+    selectedReason === "other"
+      ? customReason.trim()
+      : selectedReasonData?.label || "";
 
   const handleClose = () => {
     setSelectedReason("");
     setCustomReason("");
     setStep("select");
+    setSubmitError(null);
     onClose();
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedReason) return;
 
     const reason =
@@ -91,16 +84,37 @@ export function FlagDialog({
 
     if (!reason) return;
 
-    flagMutation.mutate({
-      contentType,
-      contentId,
-      reason,
-    });
+    setSubmitError(null);
+
+    try {
+      await submitFlag({
+        contentType: contentType as ContentType,
+        contentId,
+        reason,
+      });
+
+      setStep("success");
+      setTimeout(() => {
+        handleClose();
+        onSuccess?.();
+      }, 2000);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Failed to submit report. Please try again."
+      );
+    }
+  };
+
+  const handleContinue = () => {
+    if (!canSubmit) return;
+    setStep("confirm");
   };
 
   const canSubmit =
     selectedReason &&
-    (selectedReason !== "other" || customReason.trim().length > 0);
+    (selectedReason !== "other" || customReason.trim().length >= 10);
 
   // Helper function to get content type display name
   const getContentTypeDisplayName = (type: string) => {
@@ -116,6 +130,7 @@ export function FlagDialog({
     }
   };
 
+  // Not authenticated
   if (!user) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
@@ -147,7 +162,7 @@ export function FlagDialog({
     );
   }
 
-  // Verifică dacă utilizatorul încearcă să-și raporteze propriul conținut
+  // User trying to report own content
   if (isOwnContent) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} size="md" isCentered>
@@ -202,6 +217,8 @@ export function FlagDialog({
               <Text fontSize="lg" fontWeight="bold">
                 {step === "success"
                   ? "Report Submitted"
+                  : step === "confirm"
+                  ? "Confirm Report"
                   : `Report ${getContentTypeDisplayName(contentType)}`}
               </Text>
               {contentTitle && step !== "success" && (
@@ -211,6 +228,27 @@ export function FlagDialog({
               )}
             </VStack>
           </HStack>
+
+          {/* Progress indicator */}
+          {step !== "success" && (
+            <Box mt={4}>
+              <Progress
+                value={step === "select" ? 50 : 100}
+                colorScheme="red"
+                size="sm"
+                borderRadius="full"
+              />
+              <HStack
+                justify="space-between"
+                mt={1}
+                fontSize="xs"
+                color="gray.500"
+              >
+                <Text>Select Reason</Text>
+                <Text>Confirm</Text>
+              </HStack>
+            </Box>
+          )}
         </ModalHeader>
 
         <ModalCloseButton />
@@ -332,9 +370,17 @@ export function FlagDialog({
                       rows={3}
                       maxLength={500}
                     />
-                    <Text fontSize="xs" color="gray.500" alignSelf="end">
-                      {customReason.length}/500 characters
-                    </Text>
+                    <HStack justify="space-between">
+                      <Text fontSize="xs" color="gray.500">
+                        {customReason.length}/500 characters
+                      </Text>
+                      {selectedReason === "other" &&
+                        customReason.length < 10 && (
+                          <Text fontSize="xs" color="red.500">
+                            At least 10 characters required
+                          </Text>
+                        )}
+                    </HStack>
                   </VStack>
                 )}
               </VStack>
@@ -372,6 +418,16 @@ export function FlagDialog({
                   )}
                 </VStack>
               </Box>
+
+              {submitError && (
+                <Alert status="error" borderRadius="lg">
+                  <AlertIcon />
+                  <VStack align="start" spacing={1}>
+                    <AlertTitle>Submission Failed</AlertTitle>
+                    <AlertDescription>{submitError}</AlertDescription>
+                  </VStack>
+                </Alert>
+              )}
             </VStack>
           )}
 
@@ -394,13 +450,17 @@ export function FlagDialog({
         {step !== "success" && (
           <ModalFooter>
             <HStack spacing={3}>
-              <Button variant="ghost" onClick={handleClose}>
+              <Button
+                variant="ghost"
+                onClick={handleClose}
+                isDisabled={isSubmitting}
+              >
                 Cancel
               </Button>
               {step === "select" && (
                 <Button
                   colorScheme="red"
-                  onClick={() => setStep("confirm")}
+                  onClick={handleContinue}
                   isDisabled={!canSubmit}
                   leftIcon={<FiFlag />}
                 >
@@ -409,13 +469,17 @@ export function FlagDialog({
               )}
               {step === "confirm" && (
                 <>
-                  <Button variant="outline" onClick={() => setStep("select")}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep("select")}
+                    isDisabled={isSubmitting}
+                  >
                     Back
                   </Button>
                   <Button
                     colorScheme="red"
                     onClick={handleSubmit}
-                    isLoading={flagMutation.isPending}
+                    isLoading={isSubmitting}
                     loadingText="Submitting..."
                     leftIcon={<FiFlag />}
                   >
