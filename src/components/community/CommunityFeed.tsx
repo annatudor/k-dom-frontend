@@ -1,4 +1,4 @@
-// src/components/community/CommunityFeed.tsx - Compact fandom-style
+// src/components/community/CommunityFeed.tsx - FIXED VERSION with proper error handling
 import {
   VStack,
   Text,
@@ -31,6 +31,20 @@ export function CommunityFeed({
   const headerBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
+  // ✅ STEP 1: Add safety check for posts prop
+  console.log("🔍 CommunityFeed props:", {
+    posts,
+    postsType: typeof posts,
+    isArray: Array.isArray(posts),
+    postsLength: Array.isArray(posts) ? posts.length : "N/A",
+    isLoading,
+    isAuthenticated,
+  });
+
+  // ✅ STEP 2: Ensure posts is always an array
+  const safePosts = Array.isArray(posts) ? posts : [];
+
+  // ✅ STEP 3: Handle loading state
   if (isLoading) {
     return (
       <VStack spacing={4} py={8} w="full">
@@ -42,7 +56,8 @@ export function CommunityFeed({
     );
   }
 
-  if (posts.length === 0) {
+  // ✅ STEP 4: Handle empty posts array
+  if (safePosts.length === 0) {
     return (
       <VStack spacing={6} py={12} textAlign="center" w="full">
         <Icon as={FiMessageCircle} boxSize={16} color="gray.400" />
@@ -82,6 +97,7 @@ export function CommunityFeed({
     );
   }
 
+  // ✅ STEP 5: Render posts with additional safety checks
   return (
     <VStack spacing={4} align="stretch" w="full">
       {/* Feed header - compact */}
@@ -117,19 +133,27 @@ export function CommunityFeed({
         </HStack>
       </Box>
 
-      {/* Posts */}
-      {posts.map((post, index) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          showComments={false}
-          onUpdate={onRefresh}
-          enableViewTracking={true}
-        />
-      ))}
+      {/* Posts with additional safety checks */}
+      {safePosts.map((post, index) => {
+        // ✅ STEP 6: Add safety check for each post object
+        if (!post || !post.id) {
+          console.warn(`⚠️ Invalid post at index ${index}:`, post);
+          return null;
+        }
+
+        return (
+          <PostCard
+            key={post.id}
+            post={post}
+            showComments={false}
+            onUpdate={onRefresh}
+            enableViewTracking={true}
+          />
+        );
+      })}
 
       {/* Load more button */}
-      {posts.length >= 20 && (
+      {safePosts.length >= 20 && (
         <Box textAlign="center" py={4}>
           <Button
             variant="outline"
