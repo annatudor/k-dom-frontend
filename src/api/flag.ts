@@ -1,7 +1,16 @@
-// src/api/flag.ts - Updated API functions with content-specific messages
+// src/api/flag.ts - Complet refăcut pentru backend
 import API from "./axios";
-import type { FlagCreateDto, FlagReadDto, FlagResponse } from "@/types/Flag";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type {
+  FlagCreateDto,
+  FlagReadDto,
+  FlagResponse,
+  FlagStatsDto,
+  ContentRemovalDto,
+} from "@/types/Flag";
+
+// ========================================
+// FLAG OPERATIONS
+// ========================================
 
 /**
  * Creează un flag pentru conținut
@@ -12,24 +21,42 @@ export const createFlag = async (
   const response = await API.post("/flags", data);
   return {
     success: true,
-    message:
-      response.data.message || getDefaultSuccessMessage(data.contentType),
+    message: response.data.message || "Content reported successfully!",
   };
 };
 
 /**
  * Obține toate flag-urile (admin/moderator only)
  */
-export const getAllFlags = async (): Promise<FlagReadDto[]> => {
+export const getAllFlags = async (): Promise<{
+  pending: FlagReadDto[];
+  resolved: FlagReadDto[];
+  summary: {
+    totalPending: number;
+    totalResolved: number;
+    total: number;
+  };
+  message: string;
+}> => {
   const response = await API.get("/flags");
   return response.data;
 };
 
 /**
- * Rezolvă un flag (admin/moderator only)
+ * Rezolvă un flag (conținutul e ok) - admin/moderator only
  */
 export const resolveFlag = async (id: number): Promise<void> => {
   await API.post(`/flags/${id}/resolve`);
+};
+
+/**
+ * Șterge conținutul flagged - admin/moderator only
+ */
+export const removeFlaggedContent = async (
+  id: number,
+  data: ContentRemovalDto
+): Promise<void> => {
+  await API.post(`/flags/${id}/remove-content`, data);
 };
 
 /**
@@ -39,91 +66,77 @@ export const deleteFlag = async (id: number): Promise<void> => {
   await API.delete(`/flags/${id}`);
 };
 
-// Helper function for default success messages
-const getDefaultSuccessMessage = (contentType: string): string => {
-  switch (contentType) {
-    case "KDom":
-      return "K-Dom reported successfully. Thank you for helping maintain quality content!";
-    case "Post":
-      return "Post reported successfully. Thank you for keeping discussions respectful!";
-    case "Comment":
-      return "Comment reported successfully. Thank you for maintaining constructive conversations!";
+/**
+ * Obține statistici flag-uri (admin/moderator only)
+ */
+export const getFlagStats = async (): Promise<FlagStatsDto> => {
+  const response = await API.get("/flags/stats");
+  return response.data;
+};
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+/**
+ * Obține culoarea corespunzătoare pentru categoria de flag
+ */
+export const getFlagCategoryColor = (category: string): string => {
+  switch (category) {
+    case "spam":
+      return "orange";
+    case "inappropriate":
+      return "yellow";
+    case "harmful":
+      return "red";
+    case "other":
+      return "gray";
     default:
-      return "Content reported successfully. Thank you for your feedback!";
+      return "gray";
   }
 };
 
-// Hook for flag operations with enhanced success handling
-export const useFlagOperations = () => {
-  const queryClient = useQueryClient();
-
-  const createFlagMutation = useMutation({
-    mutationFn: createFlag,
-    onSuccess: (data, variables) => {
-      // Invalidate any relevant queries
-      queryClient.invalidateQueries({ queryKey: ["flags"] });
-
-      // You can add additional success handling here based on content type
-      console.log(
-        `Successfully flagged ${variables.contentType}:`,
-        data.message
-      );
-    },
-    onError: (error: unknown) => {
-      console.error("Error creating flag:", error);
-    },
-  });
-
-  const resolveFlagMutation = useMutation({
-    mutationFn: resolveFlag,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flags"] });
-    },
-  });
-
-  const deleteFlagMutation = useMutation({
-    mutationFn: deleteFlag,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["flags"] });
-    },
-  });
-
-  return {
-    createFlag: createFlagMutation,
-    resolveFlag: resolveFlagMutation,
-    deleteFlag: deleteFlagMutation,
-  };
+/**
+ * Obține textul pentru statusul flag-ului
+ */
+export const getFlagStatusText = (isResolved: boolean): string => {
+  return isResolved ? "Resolved" : "Pending";
 };
 
-// Enhanced hook specifically for K-Dom flagging
-export const useKDomFlag = () => {
-  const { createFlag } = useFlagOperations();
+/**
+ * Obține culoarea pentru statusul flag-ului
+ */
+export const getFlagStatusColor = (isResolved: boolean): string => {
+  return isResolved ? "green" : "orange";
+};
 
-  const flagKDom = useMutation({
-    mutationFn: async ({
-      kdomId,
-      reason,
-    }: {
-      kdomId: string;
-      reason: string;
-      title?: string;
-    }) => {
-      return createFlag.mutateAsync({
-        contentType: "KDom",
-        contentId: kdomId,
-        reason,
-      });
-    },
-    onSuccess: (data, variables) => {
-      console.log(
-        `K-Dom "${variables.title || variables.kdomId}" flagged successfully`
-      );
-    },
-  });
+/**
+ * Formatează data pentru afișare
+ */
+export const formatFlagDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleString();
+};
 
-  return {
-    flagKDom: flagKDom.mutateAsync,
-    isLoading: flagKDom.isPending,
-    error: flagKDom.error,
-  };
+/**
+ * Obține textul descriptiv pentru tipul de conținut
+ */
+export const getContentTypeLabel = (contentType: string): string => {
+  switch (contentType) {
+    case "KDom":
+      return "K-Dom";
+    case "Post":
+      return "Post";
+    case "Comment":
+      return "Comment";
+    default:
+      return contentType;
+  }
+};
+
+/**
+ * Truncate text pentru afișare
+ */
+export const truncateText = (text: string, maxLength: number = 100): string => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
 };

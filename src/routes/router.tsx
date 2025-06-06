@@ -24,7 +24,7 @@ import EditKDomMetadataPageContent from "@/pages/EditKDomMetadataPage";
 import CreateSubKDomPageContent from "@/pages/CreateSubKDomPage";
 import KDomDiscussionPageContent from "@/pages/KDomDiscussionPage";
 import KDomCollaborationPageContent from "@/pages/KDomCollaborationPage";
-import ModerationGuidelines from "@/components/kdom/moderation/ModerationGuidelines";
+import ModerationGuidelines from "@/components/moderation/ModerationGuidelines";
 import AdminModerationPage from "@/pages/AdminModerationPage";
 import UserModerationPage from "@/pages/UserModerationPage";
 import ModerationHistoryPage from "@/pages/ModerationHistoryPage";

@@ -12,8 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { Link as RouterLink, Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { AdminModerationHistory } from "@/components/kdom/moderation/AdminModerationHistory";
-import { UserModerationHistory } from "@/components/kdom/moderation/UserModerationHistory";
+import { AdminModerationHistory } from "@/components/moderation/AdminModerationHistory";
+import { UserModerationHistory } from "@/components/moderation/UserModerationHistory";
 
 export default function ModerationHistoryPage() {
   const { user, isAuthenticated, isLoading } = useAuth();

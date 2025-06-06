@@ -421,6 +421,8 @@ export function useModerationPermissions() {
     canViewStats: user?.role === "admin" || user?.role === "moderator",
     canViewDashboard: user?.role === "admin" || user?.role === "moderator",
     canBulkModerate: user?.role === "admin" || user?.role === "moderator",
+    canManageFlags: user?.role === "admin" || user?.role === "moderator",
+    canManageUsers: user?.role === "admin",
     isAdmin: user?.role === "admin",
     isModerator: user?.role === "moderator",
     isModeratorOrAdmin: user?.role === "admin" || user?.role === "moderator",

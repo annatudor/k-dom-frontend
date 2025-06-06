@@ -1,4 +1,8 @@
 // Sincronizat cu backend-ul: ProfileTheme enum din C#
+
+export interface ChangeUserRoleDto {
+  newRole: string; // "user" | "moderator" | "admin"
+}
 export type ProfileTheme =
   | "Default"
   | "Cyber"

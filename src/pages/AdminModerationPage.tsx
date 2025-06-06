@@ -10,7 +10,7 @@ import {
 } from "@chakra-ui/react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { ModerationDashboard } from "@/components/kdom/moderation/ModerationDashboard";
+import { ModerationDashboard } from "@/components/moderation/ModerationDashboard";
 
 export default function AdminModerationPage() {
   const { user, isAuthenticated, isLoading } = useAuth();

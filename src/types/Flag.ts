@@ -1,4 +1,4 @@
-// src/types/Flag.ts - Updated with K-Dom specific reasons
+// src/types/Flag.ts - Actualizat cu backend-ul
 export type ContentType = "Post" | "Comment" | "KDom";
 
 export interface FlagCreateDto {
@@ -10,11 +10,41 @@ export interface FlagCreateDto {
 export interface FlagReadDto {
   id: number;
   userId: number;
+  reporterUsername: string;
   contentType: ContentType;
   contentId: string;
   reason: string;
   createdAt: string;
   isResolved: boolean;
+  content?: FlaggedContentDto;
+  contentExists: boolean;
+}
+
+export interface FlaggedContentDto {
+  authorUsername: string;
+  authorId: number;
+  title: string; // Pentru K-Dom
+  text: string; // Pentru Post/Comment
+  createdAt: string;
+  parentInfo?: string; // Pentru Comments
+  tags: string[]; // Pentru Posts
+}
+
+export interface ContentRemovalDto {
+  reason: string;
+}
+
+export interface FlagStatsDto {
+  totalPending: number;
+  totalToday: number;
+  totalAllTime: number;
+  flagsByContentType: Record<string, number>;
+  requiresAttention: boolean;
+}
+
+export interface FlagResponse {
+  success: boolean;
+  message: string;
 }
 
 // Pentru dropdown-ul de motive
@@ -23,12 +53,11 @@ export interface FlagReason {
   label: string;
   description: string;
   category: "spam" | "inappropriate" | "harmful" | "other";
-  applicableTo: ContentType[]; // NEW: Specify which content types this reason applies to
+  applicableTo: ContentType[];
 }
 
-// Updated reasons with K-Dom specific options
+// Actualizăm motivele cu suport pentru backend
 export const FLAG_REASONS: FlagReason[] = [
-  // General reasons (apply to all content types)
   {
     id: "spam",
     label: "Spam or Promotion",
@@ -78,7 +107,6 @@ export const FLAG_REASONS: FlagReason[] = [
     category: "other",
     applicableTo: ["Post", "Comment", "KDom"],
   },
-
   // K-Dom specific reasons
   {
     id: "misleading_title",
@@ -115,7 +143,6 @@ export const FLAG_REASONS: FlagReason[] = [
     category: "inappropriate",
     applicableTo: ["KDom"],
   },
-
   // Post/Comment specific reasons
   {
     id: "off_topic",
@@ -124,8 +151,6 @@ export const FLAG_REASONS: FlagReason[] = [
     category: "other",
     applicableTo: ["Post", "Comment"],
   },
-
-  // Universal fallback
   {
     id: "other",
     label: "Other",
@@ -163,11 +188,5 @@ export interface FlagButtonProps {
   variant?: "ghost" | "outline" | "solid";
   size?: "xs" | "sm" | "md" | "lg";
   showLabel?: boolean;
-  onSuccess?: () => void; // NEW: Add onSuccess callback
-}
-
-// Response types
-export interface FlagResponse {
-  success: boolean;
-  message: string;
+  onSuccess?: () => void;
 }

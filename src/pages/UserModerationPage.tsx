@@ -2,7 +2,7 @@
 import { Box, Container } from "@chakra-ui/react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { UserModerationDashboard } from "@/components/kdom/moderation/UserModerationDashboard";
+import { UserModerationDashboard } from "@/components/moderation/UserModerationDashboard";
 
 export default function UserModerationPage() {
   const { isAuthenticated } = useAuth();
