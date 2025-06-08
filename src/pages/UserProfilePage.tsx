@@ -1,4 +1,4 @@
-// src/pages/UserProfilePage.tsx
+// src/pages/UserProfilePage.tsx - VERSIUNEA CORECTĂ fără violarea Rules of Hooks
 import { useParams } from "react-router-dom";
 import {
   Container,
@@ -12,7 +12,9 @@ import {
   useColorModeValue,
 } from "@chakra-ui/react";
 import { useAuth } from "@/context/AuthContext";
-import { useMyProfile, useUserProfile } from "@/hooks/useUserProfile";
+import {
+  useCompleteProfile, // ✅ Hook-ul fix fără violarea regulilor
+} from "@/hooks/useUserProfile";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileStats } from "@/components/profile/ProfileStats";
 import { ProfileContentTabs } from "@/components/profile/ProfileContentTabs";
@@ -27,12 +29,15 @@ export default function UserProfilePage() {
   const targetUserId = userId ? parseInt(userId) : undefined;
   const isOwnProfile = !targetUserId || currentUser?.id === targetUserId;
 
-  // Folosește hook-ul corespunzător
-  const {
-    data: profile,
-    isLoading,
-    error,
-  } = isOwnProfile ? useMyProfile() : useUserProfile(targetUserId);
+  // ✅ SOLUȚIA 1: Folosește hook-ul complex fix
+  const profileData = useCompleteProfile(targetUserId);
+
+  // ✅ SOLUȚIA 2 (Alternativă): Folosește hook-uri separate pentru cazuri specifice
+  // const profileData = isOwnProfile
+  //   ? useMyCompleteProfile()
+  //   : useOtherUserProfile(targetUserId!);
+
+  const { profile, isLoading, error } = profileData;
 
   if (!isAuthenticated && isOwnProfile) {
     return (

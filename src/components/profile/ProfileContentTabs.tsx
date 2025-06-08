@@ -28,6 +28,8 @@ import {
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import type { UserProfileReadDto } from "@/types/User";
+import type { KDomDisplayDto } from "@/types/KDom";
+import type { PostReadDto } from "@/types/Post";
 
 interface ProfileContentTabsProps {
   profile: UserProfileReadDto;
@@ -40,6 +42,7 @@ export function ProfileContentTabs({
 }: ProfileContentTabsProps) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
+  const itemCardBg = useColorModeValue("gray.50", "gray.700");
 
   if (isLoading) {
     return (
@@ -133,10 +136,10 @@ export function ProfileContentTabs({
                     templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }}
                     gap={4}
                   >
-                    {profile.ownedKDoms.map((kdom) => (
+                    {profile.ownedKDoms.map((kdom: KDomDisplayDto) => (
                       <GridItem key={kdom.id}>
                         <Card
-                          bg={useColorModeValue("gray.50", "gray.700")}
+                          bg={itemCardBg}
                           _hover={{
                             shadow: "md",
                             transform: "translateY(-2px)",
@@ -198,10 +201,10 @@ export function ProfileContentTabs({
                     templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }}
                     gap={4}
                   >
-                    {profile.collaboratedKDoms.map((kdom) => (
+                    {profile.collaboratedKDoms.map((kdom: KDomDisplayDto) => (
                       <GridItem key={kdom.id}>
                         <Card
-                          bg={useColorModeValue("gray.50", "gray.700")}
+                          bg={itemCardBg}
                           _hover={{
                             shadow: "md",
                             transform: "translateY(-2px)",
@@ -248,6 +251,7 @@ export function ProfileContentTabs({
                 </Box>
               )}
 
+              {/* Empty State */}
               {profile.ownedKDoms.length === 0 &&
                 profile.collaboratedKDoms.length === 0 && (
                   <VStack spacing={4} py={12} textAlign="center">
@@ -285,10 +289,10 @@ export function ProfileContentTabs({
           <TabPanel>
             <VStack spacing={4} align="stretch">
               {profile.recentPosts.length > 0 ? (
-                profile.recentPosts.map((post) => (
+                profile.recentPosts.map((post: PostReadDto) => (
                   <Card
                     key={post.id}
-                    bg={useColorModeValue("gray.50", "gray.700")}
+                    bg={itemCardBg}
                     _hover={{ shadow: "md", transform: "translateY(-2px)" }}
                     transition="all 0.2s"
                   >
@@ -330,7 +334,7 @@ export function ProfileContentTabs({
 
                         {post.tags.length > 0 && (
                           <HStack spacing={2} flexWrap="wrap">
-                            {post.tags.slice(0, 3).map((tag) => (
+                            {post.tags.slice(0, 3).map((tag: string) => (
                               <Badge
                                 key={tag}
                                 colorScheme="blue"
@@ -408,7 +412,7 @@ export function ProfileContentTabs({
                       {profile.followedKDoms.map((kdom) => (
                         <GridItem key={kdom.id}>
                           <Card
-                            bg={useColorModeValue("gray.50", "gray.700")}
+                            bg={itemCardBg}
                             _hover={{
                               shadow: "md",
                               transform: "translateY(-2px)",
@@ -485,10 +489,10 @@ export function ProfileContentTabs({
                     }}
                     gap={4}
                   >
-                    {profile.recentlyViewedKDoms.map((kdom) => (
+                    {profile.recentlyViewedKDoms.map((kdom: KDomDisplayDto) => (
                       <GridItem key={kdom.id}>
                         <Card
-                          bg={useColorModeValue("gray.50", "gray.700")}
+                          bg={itemCardBg}
                           _hover={{
                             shadow: "md",
                             transform: "translateY(-2px)",

@@ -1,4 +1,4 @@
-// src/components/profile/EditProfileForm.tsx
+// src/components/profile/EditProfileForm.tsx - FIXED VERSION
 import { useState } from "react";
 import {
   VStack,
@@ -22,7 +22,7 @@ import {
   Divider,
 } from "@chakra-ui/react";
 import { FiCamera, FiSave, FiX } from "react-icons/fi";
-import { useForm } from "react-hook-form";
+// Remove react-hook-form import - we'll use native React state instead
 import { useUpdateProfile } from "@/hooks/useUserProfile";
 import type {
   UserProfileUpdateDto,
@@ -54,24 +54,17 @@ export function EditProfileForm({
 
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isDirty },
-  } = useForm<ProfileFormData>({
-    defaultValues: {
-      nickname: profile.nickname || "",
-      bio: profile.bio || "",
-      avatarUrl: profile.avatarUrl || "",
-      profileTheme: profile.profileTheme || "Default",
-    },
+  // Use React state instead of react-hook-form
+  const [formData, setFormData] = useState<ProfileFormData>({
+    nickname: profile.nickname || "",
+    bio: profile.bio || "",
+    avatarUrl: profile.avatarUrl || "",
+    profileTheme: profile.profileTheme || "Default",
   });
 
+  const [errors, setErrors] = useState<Partial<ProfileFormData>>({});
+
   const updateProfileMutation = useUpdateProfile();
-  const watchedAvatarUrl = watch("avatarUrl");
-  const watchedTheme = watch("profileTheme");
 
   const profileThemes: {
     value: ProfileTheme;
@@ -120,6 +113,47 @@ export function EditProfileForm({
     }
   };
 
+  const handleInputChange = (
+    field: keyof ProfileFormData,
+    value: string | ProfileTheme
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field]: undefined,
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Partial<ProfileFormData> = {};
+
+    if (formData.nickname && formData.nickname.length > 50) {
+      newErrors.nickname = "Display name cannot exceed 50 characters";
+    }
+
+    if (formData.bio && formData.bio.length > 500) {
+      newErrors.bio = "Bio cannot exceed 500 characters";
+    }
+
+    if (formData.avatarUrl) {
+      const urlPattern =
+        /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+      if (!urlPattern.test(formData.avatarUrl)) {
+        newErrors.avatarUrl = "Please enter a valid URL";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleAvatarUpload = async () => {
     setIsUploadingAvatar(true);
 
@@ -136,13 +170,19 @@ export function EditProfileForm({
     setIsUploadingAvatar(false);
   };
 
-  const onSubmit = async (data: ProfileFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       const updateData: UserProfileUpdateDto = {
-        nickname: data.nickname.trim() || undefined,
-        bio: data.bio.trim() || undefined,
-        avatarUrl: data.avatarUrl.trim() || undefined,
-        profileTheme: data.profileTheme,
+        nickname: formData.nickname.trim() || undefined,
+        bio: formData.bio.trim() || undefined,
+        avatarUrl: formData.avatarUrl.trim() || undefined,
+        profileTheme: formData.profileTheme,
       };
 
       await updateProfileMutation.mutateAsync(updateData);
@@ -156,7 +196,7 @@ export function EditProfileForm({
       });
 
       onSuccess?.();
-    } catch (error) {
+    } catch {
       toast({
         title: "Update Failed",
         description: "Failed to update profile. Please try again.",
@@ -166,6 +206,13 @@ export function EditProfileForm({
       });
     }
   };
+
+  // Check if form has changes
+  const hasChanges =
+    formData.nickname !== (profile.nickname || "") ||
+    formData.bio !== (profile.bio || "") ||
+    formData.avatarUrl !== (profile.avatarUrl || "") ||
+    formData.profileTheme !== (profile.profileTheme || "Default");
 
   return (
     <Card
@@ -181,7 +228,7 @@ export function EditProfileForm({
       </CardHeader>
 
       <CardBody>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit}>
           <VStack spacing={6} align="stretch">
             {/* Theme Preview */}
             <Box>
@@ -190,7 +237,7 @@ export function EditProfileForm({
               </Text>
               <Box
                 h="80px"
-                bgGradient={getThemeGradient(watchedTheme)}
+                bgGradient={getThemeGradient(formData.profileTheme)}
                 borderRadius="lg"
                 position="relative"
                 overflow="hidden"
@@ -213,7 +260,7 @@ export function EditProfileForm({
               <VStack spacing={4}>
                 <Avatar
                   size="xl"
-                  src={watchedAvatarUrl}
+                  src={formData.avatarUrl}
                   name={profile.nickname || profile.username}
                 />
 
@@ -232,18 +279,13 @@ export function EditProfileForm({
                   <FormControl isInvalid={!!errors.avatarUrl}>
                     <Input
                       placeholder="Or paste image URL"
-                      {...register("avatarUrl", {
-                        pattern: {
-                          value:
-                            /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
-                          message: "Please enter a valid URL",
-                        },
-                      })}
+                      value={formData.avatarUrl}
+                      onChange={(e) =>
+                        handleInputChange("avatarUrl", e.target.value)
+                      }
                       size="sm"
                     />
-                    <FormErrorMessage>
-                      {errors.avatarUrl?.message}
-                    </FormErrorMessage>
+                    <FormErrorMessage>{errors.avatarUrl}</FormErrorMessage>
                   </FormControl>
                 </VStack>
               </VStack>
@@ -256,14 +298,10 @@ export function EditProfileForm({
               <FormLabel>Display Name</FormLabel>
               <Input
                 placeholder="Enter your display name"
-                {...register("nickname", {
-                  maxLength: {
-                    value: 50,
-                    message: "Display name cannot exceed 50 characters",
-                  },
-                })}
+                value={formData.nickname}
+                onChange={(e) => handleInputChange("nickname", e.target.value)}
               />
-              <FormErrorMessage>{errors.nickname?.message}</FormErrorMessage>
+              <FormErrorMessage>{errors.nickname}</FormErrorMessage>
               <Text fontSize="xs" color="gray.500" mt={1}>
                 This is how your name will appear to other users
               </Text>
@@ -274,23 +312,27 @@ export function EditProfileForm({
               <Textarea
                 placeholder="Tell us about yourself..."
                 rows={4}
-                {...register("bio", {
-                  maxLength: {
-                    value: 500,
-                    message: "Bio cannot exceed 500 characters",
-                  },
-                })}
+                value={formData.bio}
+                onChange={(e) => handleInputChange("bio", e.target.value)}
               />
-              <FormErrorMessage>{errors.bio?.message}</FormErrorMessage>
+              <FormErrorMessage>{errors.bio}</FormErrorMessage>
               <Text fontSize="xs" color="gray.500" mt={1}>
-                {watch("bio")?.length || 0}/500 characters
+                {formData.bio.length}/500 characters
               </Text>
             </FormControl>
 
             {/* Theme Selection */}
             <FormControl>
               <FormLabel>Profile Theme</FormLabel>
-              <Select {...register("profileTheme")}>
+              <Select
+                value={formData.profileTheme}
+                onChange={(e) =>
+                  handleInputChange(
+                    "profileTheme",
+                    e.target.value as ProfileTheme
+                  )
+                }
+              >
                 {profileThemes.map((theme) => (
                   <option key={theme.value} value={theme.value}>
                     {theme.label} - {theme.description}
@@ -310,7 +352,7 @@ export function EditProfileForm({
                 leftIcon={<Icon as={FiSave} />}
                 isLoading={updateProfileMutation.isPending}
                 loadingText="Saving..."
-                isDisabled={!isDirty}
+                isDisabled={!hasChanges}
                 flex="1"
               >
                 Save Changes

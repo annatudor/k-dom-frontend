@@ -28,6 +28,8 @@ import ModerationGuidelines from "@/components/moderation/ModerationGuidelines";
 import AdminModerationPage from "@/pages/AdminModerationPage";
 import UserModerationPage from "@/pages/UserModerationPage";
 import ModerationHistoryPage from "@/pages/ModerationHistoryPage";
+import UserProfilePage from "@/pages/UserProfilePage";
+import EditProfilePage from "@/pages/EditProfilePage";
 
 // Type assertion helper to handle components that don't accept props yet
 type KDomProps = { kdom: unknown; accessResult: unknown };
@@ -165,6 +167,14 @@ export const router = createBrowserRouter([
       {
         path: "/moderation/history",
         element: <ModerationHistoryPage />, // Pagină dedicată pentru istoric (admin/user)
+      },
+      {
+        path: "/profile",
+        element: <UserProfilePage />, // Pagină dedicată pentru istoric (admin/user)
+      },
+      {
+        path: "/profile/edit",
+        element: <EditProfilePage />, // Pagină dedicată pentru istoric (admin/user)
       },
     ],
   },

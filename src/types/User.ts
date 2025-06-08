@@ -1,8 +1,9 @@
-// Sincronizat cu backend-ul: ProfileTheme enum din C#
+// src/types/User.ts - Actualizat pentru a include toate proprietățile necesare
 
-export interface ChangeUserRoleDto {
-  newRole: string; // "user" | "moderator" | "admin"
-}
+// Tipuri pentru post imports
+import type { PostReadDto } from "@/types/Post";
+import type { KDomDisplayDto, KDomTagSearchResultDto } from "@/types/KDom";
+
 export type ProfileTheme =
   | "Default"
   | "Cyber"
@@ -45,23 +46,43 @@ export interface UserPublicDto {
   createdAt: string;
 }
 
+// ✅ ACTUALIZAT: UserProfileReadDto cu toate proprietățile necesare
 export interface UserProfileReadDto {
   userId: number;
-  username: string; // Adăugat - lipsea în versiunea originală
+  username: string;
   nickname: string;
   avatarUrl: string;
   bio: string;
-  profileTheme: ProfileTheme; // Redenumit pentru consistență cu backend-ul
+  profileTheme: ProfileTheme;
   followersCount: number;
-  followingCount: number; // Adăugat - lipsea în versiunea originală
-  joinedAt: string; // Adăugat - data înregistrării (createdAt din User)
+  followingCount: number;
+  joinedAt: string;
+
+  // Statistici de activitate
+  createdKDomsCount: number;
+  collaboratedKDomsCount: number;
+  totalPostsCount: number;
+  totalCommentsCount: number;
+  lastActivityAt?: string;
+
+  // Relații cu utilizatorul curent
+  isFollowedByCurrentUser?: boolean;
+  isOwnProfile: boolean;
+  canEdit: boolean;
+
+  // ✅ ADĂUGAT: Conținut asociat
+  ownedKDoms: KDomDisplayDto[];
+  collaboratedKDoms: KDomDisplayDto[];
+  followedKDoms: KDomTagSearchResultDto[];
+  recentlyViewedKDoms: KDomDisplayDto[];
+  recentPosts: PostReadDto[];
 }
 
 export interface UserProfileUpdateDto {
   nickname?: string;
   avatarUrl?: string;
   bio?: string;
-  profileTheme?: ProfileTheme; // Redenumit pentru consistență
+  profileTheme?: ProfileTheme;
 }
 
 // DTO-uri pentru administrare
@@ -83,7 +104,7 @@ export interface UserFollowData {
   username: string;
   nickname?: string;
   avatarUrl?: string;
-  isFollowedByCurrentUser?: boolean; // Pentru a știi dacă utilizatorul curent îl urmărește
+  isFollowedByCurrentUser?: boolean;
   followersCount?: number;
   followingCount?: number;
 }
@@ -93,10 +114,10 @@ export interface UserKDomData {
   title: string;
   slug: string;
   description?: string;
-  role?: "owner" | "collaborator"; // Rolul utilizatorului în K-Dom
+  role?: "owner" | "collaborator";
   createdAt?: string;
   lastEditedAt?: string;
-  isFollowed?: boolean; // Dacă utilizatorul urmărește acest K-Dom
+  isFollowed?: boolean;
 }
 
 export interface UserProfileActivity {
@@ -130,28 +151,10 @@ export interface UserProfileStats {
 export interface UserProfileData {
   profile: UserProfileReadDto;
   stats: UserProfileStats;
-  isOwnProfile: boolean; // Dacă e profilul utilizatorului curent
-  isFollowing?: boolean; // Dacă utilizatorul curent îl urmărește pe acesta
-  canEdit: boolean; // Dacă utilizatorul curent poate edita acest profil
+  isOwnProfile: boolean;
+  isFollowing?: boolean;
+  canEdit: boolean;
 }
-
-// export interface ProfileTabData {
-//   overview: {
-//     recentActivity: UserProfileActivity[];
-//     topKdoms: UserKDomData[];
-//     recentPosts: any[]; // TODO: Definește tipul pentru Post
-//   };
-//   kdoms: {
-//     owned: UserKDomData[];
-//     collaborated: UserKDomData[];
-//   };
-//   posts: any[]; // TODO: Definește tipul pentru Post
-//   activity: UserProfileActivity[];
-//   following: {
-//     users: UserFollowData[];
-//     kdoms: UserKDomData[];
-//   };
-// }
 
 // Tipuri pentru validare și erori
 export interface UserValidationError {
@@ -226,12 +229,6 @@ export interface UseUserListReturn {
 }
 
 // API Response types pentru consistență
-// export interface UserApiResponse<T = any> {
-//   data: T;
-//   message?: string;
-//   success: boolean;
-// }
-
 export interface UserListResponse {
   users: UserPublicDto[];
   totalCount: number;
