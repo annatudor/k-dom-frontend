@@ -48,7 +48,7 @@ export function KDomRestrictedAccess({
   kdomSlug,
   action = "access",
   autoRedirect = false,
-  redirectDelay = 3000,
+  redirectDelay = 5000,
 }: KDomRestrictedAccessProps) {
   const navigate = useNavigate();
   const bgColor = useColorModeValue("gray.50", "gray.900");

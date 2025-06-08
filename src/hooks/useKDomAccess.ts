@@ -203,7 +203,7 @@ function checkApprovedAccess(
 
     case "collaborate":
       return {
-        hasAccess: isAuthenticated && !isOwner,
+        hasAccess: isAuthenticated && isOwner,
         reason: !isAuthenticated
           ? "Login required to collaborate"
           : isOwner

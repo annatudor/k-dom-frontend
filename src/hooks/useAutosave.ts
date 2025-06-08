@@ -20,8 +20,8 @@ interface UseAutosaveReturn {
   resetError: () => void;
 }
 
-const AUTOSAVE_DELAY = 10000; // 2 seconds after user stops typing
-const AUTOSAVE_INTERVAL = 30000; // Auto-save every 30 seconds if there are changes
+const AUTOSAVE_DELAY = 6000; // 2 seconds after user stops typing
+const AUTOSAVE_INTERVAL = 10000; // Auto-save every 30 seconds if there are changes
 
 export function useAutosave({
   kdomSlug,
