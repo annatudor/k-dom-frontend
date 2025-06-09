@@ -18,6 +18,7 @@ export interface PostReadDto {
   id: string;
   userId: number;
   username: string;
+  userAvatarUrl: string;
   contentHtml: string;
   tags: string[];
   createdAt: string;

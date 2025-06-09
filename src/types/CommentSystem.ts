@@ -10,6 +10,7 @@ export interface BaseComment {
   targetId: string;
   userId: number;
   username: string;
+  userAvatarUrl: string;
   text: string;
   createdAt: string;
   isEdited: boolean;

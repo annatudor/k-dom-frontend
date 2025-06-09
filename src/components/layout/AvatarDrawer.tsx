@@ -16,13 +16,13 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
-//               <Button as={RouterLink} to="/auth/signin">
-
 export function AvatarDrawer() {
   const { user, logout } = useAuth();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   if (!user) return null;
+
+  const isAdminOrModerator = user.role === "admin" || user.role === "moderator";
 
   return (
     <>
@@ -46,30 +46,125 @@ export function AvatarDrawer() {
 
           <DrawerBody>
             <Stack spacing={3} mt={4}>
-              <Link as={RouterLink} to="/settings">
+              {/* My Preferences - link către Settings */}
+              <Link
+                as={RouterLink}
+                to="/profile/edit"
+                onClick={onClose}
+                _hover={{ textDecoration: "none", color: "purple.500" }}
+              >
                 My Preferences
               </Link>
-              <Link as={RouterLink} to={`/profile/${user.id}`}>
+
+              {/* View Profile - link către profilul utilizatorului */}
+              <Link
+                as={RouterLink}
+                to="/profile"
+                onClick={onClose}
+                _hover={{ textDecoration: "none", color: "purple.500" }}
+              >
                 View Profile
               </Link>
-              <Link as={RouterLink} to="/my-contributions">
+
+              {/* My Contributions - link către profilul utilizatorului cu tab-ul contributions */}
+              <Link
+                as={RouterLink}
+                to="/user/moderation"
+                onClick={onClose}
+                _hover={{ textDecoration: "none", color: "purple.500" }}
+              >
                 My Contributions
               </Link>
-              <Link as={RouterLink} to="/create-post">
+
+              {/* Create a Post */}
+              <Link
+                as={RouterLink}
+                to="/create-post"
+                onClick={onClose}
+                _hover={{ textDecoration: "none", color: "purple.500" }}
+              >
                 Create a Post
               </Link>
-              <Button onClick={logout}>Logout</Button>
 
-              {["admin", "moderator"].includes(user.role) && (
+              {/* Logout Button */}
+              <Button
+                onClick={() => {
+                  logout();
+                  onClose();
+                }}
+                colorScheme="red"
+                variant="outline"
+                size="sm"
+              >
+                Logout
+              </Button>
+
+              {/* Admin/Moderator Section */}
+              {isAdminOrModerator && (
                 <>
                   <Divider />
-                  <Box fontSize="sm" textTransform="uppercase" opacity={0.6}>
-                    Admin
+                  <Box
+                    fontSize="sm"
+                    textTransform="uppercase"
+                    opacity={0.6}
+                    fontWeight="bold"
+                  >
+                    {user.role === "admin" ? "Admin" : "Moderator"}
                   </Box>
-                  <Link as={RouterLink} to="/admin/moderation">
+
+                  {/* Moderation */}
+                  <Link
+                    as={RouterLink}
+                    to="/admin/moderation"
+                    onClick={onClose}
+                    _hover={{ textDecoration: "none", color: "purple.500" }}
+                  >
                     Moderation
                   </Link>
-                  <Link as={RouterLink} to="/admin/stats">
+
+                  {/* Logs - doar pentru admin */}
+                  {user.role === "admin" && (
+                    <Link
+                      as={RouterLink}
+                      to="/admin/logs"
+                      onClick={onClose}
+                      _hover={{ textDecoration: "none", color: "purple.500" }}
+                    >
+                      Audit Logs
+                    </Link>
+                  )}
+
+                  {/* Edit Home Page - doar pentru admin */}
+                  {user.role === "admin" && (
+                    <Link
+                      as={RouterLink}
+                      to="/admin/home-editor"
+                      onClick={onClose}
+                      _hover={{ textDecoration: "none", color: "purple.500" }}
+                    >
+                      Edit Home Page
+                    </Link>
+                  )}
+
+                  {/* User Management - doar pentru admin */}
+                  {user.role === "admin" && (
+                    <Link
+                      as={RouterLink}
+                      to="/admin/users"
+                      onClick={onClose}
+                      _hover={{ textDecoration: "none", color: "purple.500" }}
+                    >
+                      User Management
+                    </Link>
+                  )}
+
+                  {/* Statistics */}
+                  <Link
+                    as={RouterLink}
+                    to="/admin/statistics"
+                    onClick={onClose}
+                    _hover={{ textDecoration: "none", color: "purple.500" }}
+                  >
                     Statistics
                   </Link>
                 </>

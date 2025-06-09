@@ -3,18 +3,15 @@ import {
   Flex,
   Button,
   Image,
-  Input,
-  InputGroup,
-  InputLeftElement,
   useColorModeValue,
   HStack,
 } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
-import { FiSearch } from "react-icons/fi";
 import { useAuth } from "@/context/AuthContext";
 import { LoginDropdown } from "./LoginDropdown";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { AvatarDrawer } from "./AvatarDrawer";
+import { GlobalSearchBox } from "@/components/layout/GlobalSearchBox";
 
 export function Navbar() {
   const { isAuthenticated } = useAuth();
@@ -37,7 +34,7 @@ export function Navbar() {
           <Image src="/logo.svg" alt="K-Dom Logo" height="36px" />
         </RouterLink>
 
-        {/* CENTRU: Searchbar */}
+        {/* CENTRU: Global Search */}
         <Box
           flex="1"
           maxW="400px"
@@ -45,13 +42,7 @@ export function Navbar() {
           px={4}
           display={{ base: "none", md: "block" }}
         >
-          <InputGroup>
-            <InputLeftElement
-              pointerEvents="none"
-              children={<FiSearch color="gray" />}
-            />
-            <Input placeholder="Search K-Doms..." />
-          </InputGroup>
+          <GlobalSearchBox />
         </Box>
 
         {/* DREAPTA: Butoane */}
@@ -63,9 +54,7 @@ export function Navbar() {
                   Start a K-Dom
                 </Button>
               </RouterLink>
-              <RouterLink to="/login">
-                <LoginDropdown />
-              </RouterLink>
+              <LoginDropdown />
             </>
           ) : (
             <>
@@ -80,6 +69,11 @@ export function Navbar() {
           )}
         </HStack>
       </Flex>
+
+      {/* Mobile Search - afișat pe mobile */}
+      <Box mt={3} display={{ base: "block", md: "none" }}>
+        <GlobalSearchBox />
+      </Box>
     </Box>
   );
 }
