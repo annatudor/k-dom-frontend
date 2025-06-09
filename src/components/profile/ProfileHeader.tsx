@@ -14,6 +14,11 @@ import {
   Skeleton,
   SkeletonCircle,
   SkeletonText,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
 } from "@chakra-ui/react";
 import {
   FiEdit3,
@@ -21,6 +26,10 @@ import {
   FiUserPlus,
   FiUserMinus,
   FiCalendar,
+  FiUser,
+  FiLock,
+  FiBell,
+  FiChevronDown,
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -36,7 +45,7 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
-  // Determină tema de culori pe baza ProfileTheme
+  // Funcții helper cu tipuri corecte
   const getThemeGradient = (theme: ProfileTheme) => {
     switch (theme) {
       case "Cyber":
@@ -102,9 +111,9 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
       overflow="hidden"
       position="relative"
     >
-      {/* Theme Background */}
+      {/* Theme Background - Made Larger */}
       <Box
-        h="120px"
+        h="200px" // Increased from 120px
         bgGradient={getThemeGradient(profile.profileTheme)}
         position="relative"
       >
@@ -113,91 +122,97 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
           bottom="0"
           left="0"
           right="0"
-          h="40px"
+          h="60px" // Increased fade area
           bgGradient="linear(to-t, white, transparent)"
           opacity={0.8}
         />
       </Box>
 
-      <CardBody pt="0" mt="-60px" position="relative">
-        <VStack spacing={6} align="stretch">
+      <CardBody pt="0" mt="-100px" position="relative">
+        {/* Adjusted overlap */}
+        <VStack spacing={8} align="stretch">
+          {/* Increased spacing */}
+
           {/* Avatar și informații de bază */}
           <HStack
-            spacing={6}
+            spacing={8} // Increased spacing
             align="start"
             flexWrap={{ base: "wrap", md: "nowrap" }}
           >
-            {/* Avatar */}
+            {/* Avatar - Made Larger */}
             <Avatar
               size="2xl"
               src={profile.avatarUrl}
               name={profile.nickname || profile.username}
-              border="6px solid"
+              border="8px solid" // Increased border
               borderColor={cardBg}
-              shadow="xl"
+              shadow="2xl"
+              w="150px" // Custom size - larger than 2xl
+              h="150px"
             />
 
-            {/* Info principal */}
-            <VStack align="start" flex="1" spacing={3} minW="0">
+            {/* Info principal - Made Larger */}
+            <VStack align="start" flex="1" spacing={6} minW="0">
+              {/* Increased spacing */}
+
+              {/* Nume și nickname */}
               <VStack align="start" spacing={2}>
-                {/* Nume și nickname */}
-                <VStack align="start" spacing={1}>
-                  <Text fontSize="2xl" fontWeight="bold" noOfLines={1}>
-                    {profile.nickname || profile.username}
+                <Text fontSize="4xl" fontWeight="bold" noOfLines={1}>
+                  {/* Increased from 2xl */}
+                  {profile.nickname || profile.username}
+                </Text>
+                {profile.nickname && (
+                  <Text fontSize="xl" color="gray.500">
+                    {/* Increased from md */}@{profile.username}
                   </Text>
-                  {profile.nickname && (
-                    <Text fontSize="md" color="gray.500">
-                      @{profile.username}
-                    </Text>
-                  )}
-                </VStack>
+                )}
+              </VStack>
 
-                {/* Badges pentru rol și status */}
-                <HStack spacing={2} flexWrap="wrap">
-                  {currentUser && (
-                    <Badge
-                      colorScheme={getRoleColor(currentUser.role)}
-                      variant="solid"
-                      borderRadius="full"
-                      px={3}
-                      py={1}
-                    >
-                      {currentUser.role.charAt(0).toUpperCase() +
-                        currentUser.role.slice(1)}
-                    </Badge>
-                  )}
-
+              {/* Badges pentru rol și status */}
+              <HStack spacing={2} flexWrap="wrap">
+                {currentUser && (
                   <Badge
-                    colorScheme="purple"
-                    variant="outline"
+                    colorScheme={getRoleColor(currentUser.role)}
+                    variant="solid"
                     borderRadius="full"
                     px={3}
                     py={1}
                   >
-                    {profile.profileTheme} Theme
+                    {currentUser.role.charAt(0).toUpperCase() +
+                      currentUser.role.slice(1)}
                   </Badge>
+                )}
 
-                  {profile.followersCount > 100 && (
-                    <Badge
-                      colorScheme="orange"
-                      variant="solid"
-                      borderRadius="full"
-                      px={3}
-                      py={1}
-                    >
-                      Popular Creator
-                    </Badge>
-                  )}
-                </HStack>
-              </VStack>
+                <Badge
+                  colorScheme="purple"
+                  variant="outline"
+                  borderRadius="full"
+                  px={3}
+                  py={1}
+                >
+                  {profile.profileTheme} Theme
+                </Badge>
 
-              {/* Bio */}
+                {profile.followersCount > 100 && (
+                  <Badge
+                    colorScheme="orange"
+                    variant="solid"
+                    borderRadius="full"
+                    px={3}
+                    py={1}
+                  >
+                    Popular Creator
+                  </Badge>
+                )}
+              </HStack>
+
+              {/* Bio - Made Larger */}
               {profile.bio && (
                 <Text
                   color="gray.600"
-                  fontSize="md"
+                  fontSize="lg" // Increased from md
                   lineHeight="tall"
-                  maxW="600px"
+                  maxW="800px" // Increased max width
                 >
                   {profile.bio}
                 </Text>
@@ -205,9 +220,9 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
 
               {/* Informații suplimentare */}
               <HStack
-                spacing={4}
+                spacing={6} // Increased spacing
                 color="gray.500"
-                fontSize="sm"
+                fontSize="md" // Increased from sm
                 flexWrap="wrap"
               >
                 <HStack spacing={1}>
@@ -227,35 +242,76 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
               </HStack>
             </VStack>
 
-            {/* Action buttons */}
-            <VStack spacing={3} flexShrink={0}>
+            {/* Action buttons - Single Settings Menu */}
+            <VStack spacing={4} flexShrink={0}>
               {isOwnProfile ? (
                 <>
-                  <Button
-                    as={RouterLink}
-                    to="/profile/edit"
-                    leftIcon={<Icon as={FiEdit3} />}
-                    colorScheme="blue"
-                    size="md"
-                    borderRadius="full"
-                    px={6}
-                  >
-                    Edit Profile
-                  </Button>
-                  <Button
-                    as={RouterLink}
-                    to="/profile/preferences"
-                    leftIcon={<Icon as={FiSettings} />}
-                    variant="outline"
-                    size="md"
-                    borderRadius="full"
-                    px={6}
-                  >
-                    Preferences
-                  </Button>
+                  {/* Single Settings Menu Button */}
+                  <Menu>
+                    <MenuButton
+                      as={Button}
+                      leftIcon={<Icon as={FiSettings} />}
+                      rightIcon={<Icon as={FiChevronDown} />}
+                      colorScheme="blue"
+                      size="md"
+                      borderRadius="full"
+                      px={4}
+                      h="50px"
+                      fontSize="md"
+                      variant="solid"
+                    >
+                      Settings
+                    </MenuButton>
+                    <MenuList>
+                      {/* Profile Edit Section */}
+                      <MenuItem
+                        as={RouterLink}
+                        to="/profile/edit"
+                        icon={<Icon as={FiEdit3} />}
+                        fontSize="md"
+                        py={3}
+                      >
+                        Edit Profile
+                      </MenuItem>
+
+                      <MenuDivider />
+
+                      {/* Account Settings Section */}
+                      <MenuItem
+                        as={RouterLink}
+                        to="/profile/preferences"
+                        icon={<Icon as={FiUser} />}
+                        fontSize="md"
+                        py={3}
+                      >
+                        Account Preferences
+                      </MenuItem>
+
+                      <MenuItem
+                        as={RouterLink}
+                        to="/profile/security"
+                        icon={<Icon as={FiLock} />}
+                        fontSize="md"
+                        py={3}
+                      >
+                        Privacy & Security
+                      </MenuItem>
+
+                      <MenuItem
+                        as={RouterLink}
+                        to="/profile/notifications"
+                        icon={<Icon as={FiBell} />}
+                        fontSize="md"
+                        py={3}
+                      >
+                        Notifications
+                      </MenuItem>
+                    </MenuList>
+                  </Menu>
                 </>
               ) : (
                 <>
+                  {/* Follow/Unfollow Button for Other Users */}
                   <Button
                     leftIcon={
                       <Icon
@@ -272,58 +328,75 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
                     variant={
                       profile.isFollowedByCurrentUser ? "outline" : "solid"
                     }
-                    size="md"
+                    size="lg"
                     borderRadius="full"
-                    px={6}
+                    px={8}
+                    h="50px"
+                    fontSize="md"
                   >
                     {profile.isFollowedByCurrentUser ? "Unfollow" : "Follow"}
+                  </Button>
+
+                  {/* Message Button (Optional) */}
+                  <Button
+                    variant="outline"
+                    colorScheme="blue"
+                    size="lg"
+                    borderRadius="full"
+                    px={8}
+                    h="50px"
+                    fontSize="md"
+                  >
+                    Message
                   </Button>
                 </>
               )}
             </VStack>
           </HStack>
 
-          {/* Statistici rapide */}
+          {/* Statistici rapide - Enhanced */}
           <HStack
-            spacing={8}
+            spacing={12} // Increased spacing
             justify="center"
-            py={4}
+            py={6} // Increased padding
             borderTop="1px solid"
             borderColor={borderColor}
             flexWrap="wrap"
           >
             <VStack spacing={1}>
-              <Text fontSize="xl" fontWeight="bold" color="blue.600">
+              <Text fontSize="3xl" fontWeight="bold" color="blue.600">
+                {/* Increased from xl */}
                 {profile.createdKDomsCount}
               </Text>
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="md" color="gray.500">
+                {/* Increased from sm */}
                 K-Doms
               </Text>
             </VStack>
 
             <VStack spacing={1}>
-              <Text fontSize="xl" fontWeight="bold" color="purple.600">
+              <Text fontSize="3xl" fontWeight="bold" color="purple.600">
                 {profile.collaboratedKDomsCount}
               </Text>
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="md" color="gray.500">
                 Collaborations
               </Text>
             </VStack>
 
             <VStack spacing={1}>
-              <Text fontSize="xl" fontWeight="bold" color="green.600">
+              <Text fontSize="3xl" fontWeight="bold" color="green.600">
                 {profile.totalPostsCount}
               </Text>
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="md" color="gray.500">
                 Posts
               </Text>
             </VStack>
 
             <VStack spacing={1}>
-              <Text fontSize="xl" fontWeight="bold" color="orange.600">
+              <Text fontSize="3xl" fontWeight="bold" color="orange.600">
                 {profile.totalCommentsCount}
               </Text>
-              <Text fontSize="sm" color="gray.500">
+              <Text fontSize="md" color="gray.500">
                 Comments
               </Text>
             </VStack>

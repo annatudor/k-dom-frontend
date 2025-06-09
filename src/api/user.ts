@@ -40,18 +40,18 @@ export const resetPassword = async (data: ResetPasswordDto): Promise<void> => {
   await API.post("/auth/reset-password", data);
 };
 
-// === PROFILE APIs (pentru utilizatorul curent) ===
+// ✅ FIXAT: PROFILE APIs (pentru utilizatorul curent) - Corectez endpoint-urile
 // Endpoint-uri pentru profilul utilizatorului autentificat
 
 export const getMyProfile = async (): Promise<UserProfileReadDto> => {
-  const res = await API.get("/profile");
+  const res = await API.get("/profile/my-profile"); // ✅ FIXAT: era "/profile", acum "/profile/my-profile"
   return res.data;
 };
 
 export const updateMyProfile = async (
   data: UserProfileUpdateDto
 ): Promise<void> => {
-  await API.put("/profile", data);
+  await API.put("/profile/edit-profile", data); // ✅ FIXAT: era "/profile", acum "/profile/edit-profile"
 };
 
 export const getProfileThemes = async (): Promise<string[]> => {
@@ -66,6 +66,56 @@ export const getMyKdoms = async (): Promise<KDomDisplayDto[]> => {
 
 export const getRecentlyViewedKdoms = async (): Promise<KDomDisplayDto[]> => {
   const res = await API.get("/profile/recently-viewed-kdoms");
+  return res.data;
+};
+
+// ✅ NOU: Adaug endpoint-urile lipsă din controller
+export const getMyPrivateInfo = async (): Promise<unknown> => {
+  const res = await API.get("/profile/private");
+  return res.data;
+};
+
+export const addRecentlyViewedKdom = async (kdomId: string): Promise<void> => {
+  await API.post(`/profile/recently-viewed/${kdomId}`);
+};
+
+export const canUpdateProfile = async (
+  targetUserId: number
+): Promise<{ canUpdate: boolean }> => {
+  const res = await API.get(`/profile/can-update/${targetUserId}`);
+  return res.data;
+};
+
+export const getMyDetailedStats = async (): Promise<unknown> => {
+  const res = await API.get("/profile/detailed-stats");
+  return res.data;
+};
+
+export const isCurrentUserAdmin = async (): Promise<{ isAdmin: boolean }> => {
+  const res = await API.get("/profile/is-admin");
+  return res.data;
+};
+
+export const isCurrentUserAdminOrModerator = async (): Promise<{
+  isAdminOrModerator: boolean;
+}> => {
+  const res = await API.get("/profile/is-admin-or-moderator");
+  return res.data;
+};
+
+export const getRecentlyViewedKDomIds = async (): Promise<{
+  kdomIds: string[];
+}> => {
+  const res = await API.get("/profile/recently-viewed-ids");
+  return res.data;
+};
+
+export const validateUpdatePermissions = async (
+  targetUserId: number
+): Promise<{ message: string }> => {
+  const res = await API.post(
+    `/profile/validate-update-permissions/${targetUserId}`
+  );
   return res.data;
 };
 
