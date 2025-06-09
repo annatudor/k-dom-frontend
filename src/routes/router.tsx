@@ -176,6 +176,10 @@ export const router = createBrowserRouter([
         path: "/profile/edit",
         element: <EditProfilePage />, // Pagină dedicată pentru istoric (admin/user)
       },
+      {
+        path: "/profile/:userId",
+        element: <UserProfilePage />, // Profilul altui user
+      },
     ],
   },
 ]);

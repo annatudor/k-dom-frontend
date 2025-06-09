@@ -1,3 +1,4 @@
+// src/hooks/useUserFollow.ts - FIXED VERSION
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@chakra-ui/react";
 import {
@@ -15,7 +16,7 @@ export function useUserFollow(targetUserId: number) {
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  // Query pentru a verifica dacă urmărește utilizatorul
+  // ✅ Query pentru a verifica dacă urmărește utilizatorul
   const { data: isFollowing = false } = useQuery({
     queryKey: ["user-follow-status", targetUserId],
     queryFn: async () => {
@@ -27,30 +28,32 @@ export function useUserFollow(targetUserId: number) {
     enabled: isAuthenticated && user?.id !== targetUserId,
   });
 
-  // Query pentru numărul de urmăritori
-  const { data: followersCount = 0 } = useQuery({
+  // ✅ FIX: Acum API-ul returnează direct numărul
+  const { data: followersCountData = 0 } = useQuery({
     queryKey: ["user-followers-count", targetUserId],
     queryFn: () => getFollowersCount(targetUserId),
   });
 
-  // Query pentru numărul de urmăriri
-  const { data: followingCount = 0 } = useQuery({
+  // ✅ FIX: Acum API-ul returnează direct numărul
+  const { data: followingCountData = 0 } = useQuery({
     queryKey: ["user-following-count", targetUserId],
     queryFn: () => getFollowingCount(targetUserId),
   });
 
-  // Mutation pentru follow/unfollow
+  // ✅ Mutation pentru follow/unfollow
   const followMutation = useMutation({
     mutationFn: (action: "follow" | "unfollow") =>
       action === "follow"
         ? followUser(targetUserId)
         : unfollowUser(targetUserId),
     onMutate: async (action) => {
+      console.log(`[useUserFollow] ${action} mutation started`);
+
       // Optimistic update
       const newIsFollowing = action === "follow";
       const newFollowersCount = newIsFollowing
-        ? followersCount + 1
-        : followersCount - 1;
+        ? followersCountData + 1
+        : Math.max(0, followersCountData - 1);
 
       // Update cache optimistically
       queryClient.setQueryData(
@@ -64,10 +67,12 @@ export function useUserFollow(targetUserId: number) {
 
       return {
         previousIsFollowing: isFollowing,
-        previousCount: followersCount,
+        previousCount: followersCountData,
       };
     },
     onSuccess: (_, action) => {
+      console.log(`[useUserFollow] ${action} mutation succeeded`);
+
       // Invalidate and refetch to ensure consistency
       queryClient.invalidateQueries({
         queryKey: ["user-follow-status", targetUserId],
@@ -79,6 +84,14 @@ export function useUserFollow(targetUserId: number) {
         queryKey: ["user-following-count", user?.id],
       });
 
+      // ✅ FIX: Invalidează și profilul utilizatorului
+      queryClient.invalidateQueries({
+        queryKey: ["user-profile", targetUserId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["user-profile", "me"],
+      });
+
       toast({
         title: action === "follow" ? "Now following!" : "Unfollowed",
         description:
@@ -87,9 +100,12 @@ export function useUserFollow(targetUserId: number) {
             : "You unfollowed this user",
         status: "success",
         duration: 3000,
+        isClosable: true,
       });
     },
     onError: (error, action, context) => {
+      console.error(`[useUserFollow] ${action} mutation failed:`, error);
+
       // Revert optimistic update
       if (context) {
         queryClient.setQueryData(
@@ -107,6 +123,7 @@ export function useUserFollow(targetUserId: number) {
         description: "Please try again later",
         status: "error",
         duration: 3000,
+        isClosable: true,
       });
     },
   });
@@ -118,6 +135,7 @@ export function useUserFollow(targetUserId: number) {
         description: "You need to be logged in to follow users",
         status: "info",
         duration: 3000,
+        isClosable: true,
       });
       return;
     }
@@ -127,6 +145,7 @@ export function useUserFollow(targetUserId: number) {
         title: "Cannot follow yourself",
         status: "warning",
         duration: 2000,
+        isClosable: true,
       });
       return;
     }
@@ -136,10 +155,11 @@ export function useUserFollow(targetUserId: number) {
 
   const canFollow = isAuthenticated && user?.id !== targetUserId;
 
+  // ✅ FIX: Asigură-te că returnezi primitive values, nu obiecte
   return {
     isFollowing,
-    followersCount,
-    followingCount,
+    followersCount: followersCountData, // Asigură-te că este number
+    followingCount: followingCountData, // Asigură-te că este number
     handleToggleFollow,
     isLoading: followMutation.isPending,
     canFollow,

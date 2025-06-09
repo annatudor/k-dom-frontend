@@ -1,4 +1,4 @@
-// src/components/profile/ProfileHeader.tsx
+// src/components/profile/ProfileHeader.tsx - WITH FOLLOW FUNCTIONALITY
 import {
   Box,
   VStack,
@@ -33,6 +33,7 @@ import {
 } from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useUserFollow } from "@/hooks/useUserFollow";
 import type { UserProfileReadDto, ProfileTheme } from "@/types/User";
 
 interface ProfileHeaderProps {
@@ -44,6 +45,16 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
   const { user: currentUser } = useAuth();
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
+
+  // ✅ Hook pentru follow functionality
+  const {
+    isFollowing,
+    followersCount,
+    followingCount,
+    handleToggleFollow,
+    isLoading: followLoading,
+    canFollow,
+  } = useUserFollow(profile.userId);
 
   // Funcții helper cu tipuri corecte
   const getThemeGradient = (theme: ProfileTheme) => {
@@ -102,6 +113,19 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
 
   const isOwnProfile = currentUser?.id === profile.userId;
 
+  // ✅ FIX: Folosește valorile din hook în loc de profile
+  const displayFollowersCount = followersCount ?? profile.followersCount ?? 0;
+  const displayFollowingCount = followingCount ?? profile.followingCount ?? 0;
+
+  console.log("[ProfileHeader] Debug values:", {
+    profileFollowersCount: profile.followersCount,
+    hookFollowersCount: followersCount,
+    displayFollowersCount,
+    isFollowing,
+    canFollow,
+    isOwnProfile,
+  });
+
   return (
     <Card
       bg={cardBg}
@@ -113,7 +137,7 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
     >
       {/* Theme Background - Made Larger */}
       <Box
-        h="200px" // Increased from 120px
+        h="200px"
         bgGradient={getThemeGradient(profile.profileTheme)}
         position="relative"
       >
@@ -122,20 +146,17 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
           bottom="0"
           left="0"
           right="0"
-          h="60px" // Increased fade area
+          h="60px"
           bgGradient="linear(to-t, white, transparent)"
           opacity={0.8}
         />
       </Box>
 
       <CardBody pt="0" mt="-100px" position="relative">
-        {/* Adjusted overlap */}
         <VStack spacing={8} align="stretch">
-          {/* Increased spacing */}
-
           {/* Avatar și informații de bază */}
           <HStack
-            spacing={8} // Increased spacing
+            spacing={8}
             align="start"
             flexWrap={{ base: "wrap", md: "nowrap" }}
           >
@@ -144,26 +165,23 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
               size="2xl"
               src={profile.avatarUrl}
               name={profile.nickname || profile.username}
-              border="8px solid" // Increased border
+              border="8px solid"
               borderColor={cardBg}
               shadow="2xl"
-              w="150px" // Custom size - larger than 2xl
+              w="150px"
               h="150px"
             />
 
             {/* Info principal - Made Larger */}
             <VStack align="start" flex="1" spacing={6} minW="0">
-              {/* Increased spacing */}
-
               {/* Nume și nickname */}
               <VStack align="start" spacing={2}>
                 <Text fontSize="4xl" fontWeight="bold" noOfLines={1}>
-                  {/* Increased from 2xl */}
                   {profile.nickname || profile.username}
                 </Text>
                 {profile.nickname && (
                   <Text fontSize="xl" color="gray.500">
-                    {/* Increased from md */}@{profile.username}
+                    @{profile.username}
                   </Text>
                 )}
               </VStack>
@@ -193,7 +211,7 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
                   {profile.profileTheme} Theme
                 </Badge>
 
-                {profile.followersCount > 100 && (
+                {displayFollowersCount > 100 && (
                   <Badge
                     colorScheme="orange"
                     variant="solid"
@@ -210,19 +228,19 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
               {profile.bio && (
                 <Text
                   color="gray.600"
-                  fontSize="lg" // Increased from md
+                  fontSize="lg"
                   lineHeight="tall"
-                  maxW="800px" // Increased max width
+                  maxW="800px"
                 >
                   {profile.bio}
                 </Text>
               )}
 
-              {/* Informații suplimentare */}
+              {/* Informații suplimentare - ✅ FIX: Folosește valorile corecte */}
               <HStack
-                spacing={6} // Increased spacing
+                spacing={6}
                 color="gray.500"
-                fontSize="md" // Increased from sm
+                fontSize="md"
                 flexWrap="wrap"
               >
                 <HStack spacing={1}>
@@ -235,14 +253,14 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
                 <HStack spacing={1}>
                   <Icon as={FiUserPlus} />
                   <Text>
-                    {profile.followersCount} followers •{" "}
-                    {profile.followingCount} following
+                    {displayFollowersCount.toLocaleString()} followers •{" "}
+                    {displayFollowingCount.toLocaleString()} following
                   </Text>
                 </HStack>
               </HStack>
             </VStack>
 
-            {/* Action buttons - Single Settings Menu */}
+            {/* Action buttons */}
             <VStack spacing={4} flexShrink={0}>
               {isOwnProfile ? (
                 <>
@@ -311,65 +329,47 @@ export function ProfileHeader({ profile, isLoading }: ProfileHeaderProps) {
                 </>
               ) : (
                 <>
-                  {/* Follow/Unfollow Button for Other Users */}
-                  <Button
-                    leftIcon={
-                      <Icon
-                        as={
-                          profile.isFollowedByCurrentUser
-                            ? FiUserMinus
-                            : FiUserPlus
-                        }
-                      />
-                    }
-                    colorScheme={
-                      profile.isFollowedByCurrentUser ? "gray" : "blue"
-                    }
-                    variant={
-                      profile.isFollowedByCurrentUser ? "outline" : "solid"
-                    }
-                    size="lg"
-                    borderRadius="full"
-                    px={8}
-                    h="50px"
-                    fontSize="md"
-                  >
-                    {profile.isFollowedByCurrentUser ? "Unfollow" : "Follow"}
-                  </Button>
-
-                  {/* Message Button (Optional) */}
-                  <Button
-                    variant="outline"
-                    colorScheme="blue"
-                    size="lg"
-                    borderRadius="full"
-                    px={8}
-                    h="50px"
-                    fontSize="md"
-                  >
-                    Message
-                  </Button>
+                  {/* ✅ Follow/Unfollow Button - FUNCȚIONAL */}
+                  {canFollow && (
+                    <Button
+                      leftIcon={
+                        <Icon as={isFollowing ? FiUserMinus : FiUserPlus} />
+                      }
+                      colorScheme={isFollowing ? "gray" : "blue"}
+                      variant={isFollowing ? "outline" : "solid"}
+                      size="lg"
+                      borderRadius="full"
+                      px={8}
+                      h="50px"
+                      fontSize="md"
+                      onClick={handleToggleFollow}
+                      isLoading={followLoading}
+                      loadingText={
+                        isFollowing ? "Unfollowing..." : "Following..."
+                      }
+                    >
+                      {isFollowing ? "Unfollow" : "Follow"}
+                    </Button>
+                  )}
                 </>
               )}
             </VStack>
           </HStack>
 
-          {/* Statistici rapide - Enhanced */}
+          {/* Statistici rapide - ✅ FIX: Folosește valorile corecte */}
           <HStack
-            spacing={12} // Increased spacing
+            spacing={12}
             justify="center"
-            py={6} // Increased padding
+            py={6}
             borderTop="1px solid"
             borderColor={borderColor}
             flexWrap="wrap"
           >
             <VStack spacing={1}>
               <Text fontSize="3xl" fontWeight="bold" color="blue.600">
-                {/* Increased from xl */}
                 {profile.createdKDomsCount}
               </Text>
               <Text fontSize="md" color="gray.500">
-                {/* Increased from sm */}
                 K-Doms
               </Text>
             </VStack>
