@@ -122,6 +122,7 @@ export interface UseAuthReturn {
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (data: ResetPasswordDto) => Promise<void>;
   refreshToken: () => Promise<void>;
+  refreshUserProfile: () => Promise<void>; // ✅ NOUĂ: Refresh avatar
 }
 
 // Permission helpers

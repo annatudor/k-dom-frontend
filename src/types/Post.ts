@@ -1,3 +1,4 @@
+// src/types/Post.ts - ✅ ACTUALIZAT
 export interface PostCreateDto {
   contentHtml: string;
   kdomId?: string;

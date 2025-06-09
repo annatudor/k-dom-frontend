@@ -30,6 +30,7 @@ import UserModerationPage from "@/pages/UserModerationPage";
 import ModerationHistoryPage from "@/pages/ModerationHistoryPage";
 import UserProfilePage from "@/pages/UserProfilePage";
 import EditProfilePage from "@/pages/EditProfilePage";
+import AuditLogPage from "@/pages/AuditLogPage";
 
 // Type assertion helper to handle components that don't accept props yet
 type KDomProps = { kdom: unknown; accessResult: unknown };
@@ -179,6 +180,10 @@ export const router = createBrowserRouter([
       {
         path: "/profile/:userId",
         element: <UserProfilePage />, // Profilul altui user
+      },
+      {
+        path: "/admin/logs",
+        element: <AuditLogPage />, // Profilul altui user
       },
     ],
   },

@@ -1,5 +1,10 @@
-// src/hooks/useAuth.ts
-import { useAuth } from "@/context/AuthContext";
+// src/hooks/useAuth.ts - FIXED VERSION
+import { useAuth as useAuthContext } from "@/context/AuthContext";
+
+// ✅ EXPORT useAuth hook pentru utilizare în alte componente
+export const useAuth = () => {
+  return useAuthContext();
+};
 
 // Helper functions pentru verificarea rolurilor
 export const useUserRole = () => {
