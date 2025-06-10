@@ -5,7 +5,9 @@ export type Hub =
   | "Kpop"
   | "Gaming"
   | "Literature"
-  | "Fashion";
+  | "Fashion"
+  | "Food"
+  | "Beauty";
 export type KDomTheme = "Light" | "Dark" | "Vibrant" | "Pastel";
 export type KDomModerationStatus =
   | "Pending"

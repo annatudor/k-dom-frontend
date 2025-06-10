@@ -5,7 +5,7 @@ import PublicLayout from "@/components/layout/PublicLayout";
 import { KDomProtectionWrapper } from "@/components/kdom/KDomProtectionWrapper";
 
 // Pagini
-import { Home } from "@/pages/Home";
+import HomePage from "@/pages/HomePage";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -53,7 +53,7 @@ export const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: "/", element: <Home /> },
+      { path: "/", element: <HomePage /> },
       { path: "/start-kdom", element: <StartKDom /> },
 
       // ✅ RUTE K-DOM PROTEJATE
