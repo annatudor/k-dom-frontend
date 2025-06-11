@@ -1,7 +1,6 @@
-// src/hooks/useHomepageData.ts
+// src/hooks/useHomePageData.ts - Updated version
 import { useQuery } from "@tanstack/react-query";
-import { getTrendingKdoms, getHubs } from "@/api/kdom";
-import { globalSearch } from "@/api/search";
+import { getHomepageData, getPlatformStats } from "@/api/statistics";
 import type { Hub } from "@/types/KDom";
 
 interface CategoryStats {
@@ -18,6 +17,9 @@ interface PlatformStats {
   totalKDoms: number;
   totalCategories: number;
   activeCollaborators: number;
+  totalUsers: number;
+  totalPosts: number;
+  totalComments: number;
 }
 
 interface HomepageData {
@@ -32,84 +34,82 @@ interface HomepageData {
   platformStats: PlatformStats;
 }
 
+interface DebugInfo {
+  hasHomepageData: boolean;
+  hasFallbackStats: boolean;
+  homepageError?: string;
+  fallbackError?: string;
+}
+
 export const useHomepageData = () => {
-  // Get trending K-Doms pentru featured section
-  const { data: trendingKDoms = [] } = useQuery({
-    queryKey: ["trending-kdoms-homepage"],
-    queryFn: () => getTrendingKdoms(30), // Ultimele 30 de zile
-    staleTime: 10 * 60 * 1000, // 10 minute cache
+  // Încearcă să obții toate datele printr-un singur request
+  const {
+    data: homepageData,
+    isLoading: isLoadingAll,
+    error: homepageError,
+  } = useQuery({
+    queryKey: ["homepage-data"],
+    queryFn: getHomepageData,
+    staleTime: 5 * 60 * 1000, // 5 minute cache
+    retry: 1, // Doar o reîncercare
   });
 
-  // Get available hubs
-  const { data: availableHubs = [] } = useQuery({
-    queryKey: ["hubs-homepage"],
-    queryFn: getHubs,
-    staleTime: 30 * 60 * 1000, // 30 minute cache
+  // Fallback: dacă endpoint-ul pentru toate datele nu funcționează,
+  // obține măcar statisticile platformei
+  const {
+    data: fallbackStats,
+    isLoading: isLoadingFallback,
+    error: fallbackError,
+  } = useQuery({
+    queryKey: ["platform-stats-fallback"],
+    queryFn: getPlatformStats,
+    enabled: !!homepageError, // Activează doar dacă primul query a eșuat
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Get category stats for each hub
-  const { data: categoryStats = [] } = useQuery({
-    queryKey: ["category-stats-homepage"],
-    queryFn: async (): Promise<CategoryStats[]> => {
-      if (availableHubs.length === 0) return [];
+  // Determină ce date să returnezi
+  const isLoading = isLoadingAll || (!!homepageError && isLoadingFallback);
+  const error = homepageError && fallbackError;
 
-      const stats = await Promise.all(
-        availableHubs.map(async (hub) => {
-          try {
-            // Search for K-Doms in this category
-            const searchResults = await globalSearch(hub);
-            const hubKDoms = searchResults.kdoms || [];
+  let data: HomepageData | null = null;
 
-            return {
-              hub,
-              count: hubKDoms.length,
-              featured: hubKDoms.slice(0, 3), // Top 3 pentru preview
-            };
-          } catch (error) {
-            console.error(`Failed to get stats for hub ${hub}:`, error);
-            return {
-              hub,
-              count: 0,
-              featured: [],
-            };
-          }
-        })
-      );
-
-      return stats;
-    },
-    enabled: availableHubs.length > 0,
-    staleTime: 15 * 60 * 1000, // 15 minute cache
-  });
-
-  // Calculate platform stats
-  const platformStats: PlatformStats = {
-    totalKDoms:
-      trendingKDoms.length > 0
-        ? categoryStats.reduce((sum, cat) => sum + cat.count, 0)
-        : 0,
-    totalCategories: availableHubs.length,
-    activeCollaborators: Math.floor(trendingKDoms.length * 2.5), // Estimare bazată pe trending
-  };
-
-  // Transform trending K-Doms pentru featured section
-  const featuredKDoms = trendingKDoms.slice(0, 6).map((kdom) => ({
-    id: kdom.id,
-    title: kdom.title,
-    slug: kdom.slug,
-    score: kdom.TotalScore,
-    hub: "Music", // Default hub - în viitor poate fi adăugat în trending API
-  }));
-
-  const isLoading = !trendingKDoms || !availableHubs || !categoryStats;
+  if (homepageData) {
+    // Datele complete sunt disponibile
+    data = {
+      featuredKDoms: homepageData.featuredKDoms.map((kdom) => ({
+        id: kdom.id,
+        title: kdom.title,
+        slug: kdom.slug,
+        score: kdom.score,
+        hub: kdom.hub,
+      })),
+      categoryStats: homepageData.categoryStats.map((category) => ({
+        hub: category.hub as Hub, // Explicit cast to Hub type
+        count: category.count,
+        featured: category.featured,
+      })),
+      platformStats: homepageData.platformStats,
+    };
+  } else if (fallbackStats) {
+    // Doar statisticile de bază sunt disponibile
+    console.log("Using fallback stats:", fallbackStats);
+    data = {
+      featuredKDoms: [],
+      categoryStats: [],
+      platformStats: fallbackStats,
+    };
+  }
 
   return {
-    data: {
-      featuredKDoms,
-      categoryStats: categoryStats.filter((cat) => cat.count > 0), // Doar categoriile cu K-Doms
-      platformStats,
-    } as HomepageData,
+    data,
     isLoading,
-    error: null,
+    error,
+    // Debug info with proper typing
+    debugInfo: {
+      hasHomepageData: !!homepageData,
+      hasFallbackStats: !!fallbackStats,
+      homepageError: homepageError?.message,
+      fallbackError: fallbackError?.message,
+    } as DebugInfo,
   };
 };

@@ -1,4 +1,4 @@
-// src/components/home/CategoriesGrid.tsx
+// src/components/home/CategoriesGrid.tsx - Updated version
 import {
   Box,
   Container,
@@ -18,10 +18,9 @@ import { GiLipstick } from "react-icons/gi";
 import { GiAmpleDress } from "react-icons/gi";
 import { GiMusicalNotes } from "react-icons/gi";
 import { IoLogoGameControllerB } from "react-icons/io";
-import type { Hub } from "@/types/KDom";
 
 interface CategoryStats {
-  hub: Hub;
+  hub: string;
   count: number;
   featured: Array<{
     id: string;
@@ -34,9 +33,17 @@ interface CategoriesGridProps {
   categoryStats: CategoryStats[];
 }
 
+// Definim interfața pentru informațiile categoriei
+interface CategoryInfo {
+  icon: React.ComponentType;
+  emoji: string;
+  description: string;
+  color: string;
+}
+
 // Mapping pentru iconițe și emoji-uri pentru fiecare categorie
-const getCategoryInfo = (hub: Hub) => {
-  const categoryMap = {
+const getCategoryInfo = (hub: string): CategoryInfo => {
+  const categoryMap: Record<string, CategoryInfo> = {
     Music: {
       icon: GiMusicalNotes,
       emoji: "🎵",
@@ -188,8 +195,13 @@ export const CategoriesGrid: React.FC<CategoriesGridProps> = ({
 }) => {
   const sectionBg = useColorModeValue("white", "gray.800");
 
-  // Sort categories by count (descending)
-  const sortedCategories = [...categoryStats].sort((a, b) => b.count - a.count);
+  // Debug logging
+  console.log("CategoriesGrid categoryStats:", categoryStats);
+
+  // Sort categories by count (descending) and filter out empty ones
+  const sortedCategories = categoryStats
+    .filter((category) => category.count > 0)
+    .sort((a, b) => b.count - a.count);
 
   return (
     <Box bg={sectionBg} py={20}>
@@ -208,19 +220,30 @@ export const CategoriesGrid: React.FC<CategoriesGridProps> = ({
 
           {/* Categories Grid */}
           {sortedCategories.length > 0 ? (
-            <Grid
-              templateColumns={{
-                base: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-                lg: "repeat(4, 1fr)",
-              }}
-              gap={6}
-              w="100%"
-            >
-              {sortedCategories.map((category) => (
-                <CategoryCard key={category.hub} categoryData={category} />
-              ))}
-            </Grid>
+            <>
+              <Grid
+                templateColumns={{
+                  base: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                  lg: "repeat(4, 1fr)",
+                }}
+                gap={6}
+                w="100%"
+              >
+                {sortedCategories.map((category) => (
+                  <CategoryCard key={category.hub} categoryData={category} />
+                ))}
+              </Grid>
+
+              {/* Total summary */}
+              <VStack spacing={2} textAlign="center">
+                <Text fontSize="sm" color="gray.600">
+                  Explore{" "}
+                  {sortedCategories.reduce((sum, cat) => sum + cat.count, 0)}{" "}
+                  K-Doms across {sortedCategories.length} categories
+                </Text>
+              </VStack>
+            </>
           ) : (
             <VStack spacing={4} py={12}>
               <Text fontSize="lg" color="gray.500">
@@ -229,6 +252,66 @@ export const CategoriesGrid: React.FC<CategoriesGridProps> = ({
               <Text fontSize="sm" color="gray.400">
                 Our community is building amazing K-Culture content!
               </Text>
+
+              {/* Show placeholder categories when no data */}
+              <Grid
+                templateColumns={{
+                  base: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                  lg: "repeat(4, 1fr)",
+                }}
+                gap={6}
+                w="100%"
+                mt={8}
+              >
+                {[
+                  "Music",
+                  "Kpop",
+                  "Food",
+                  "Beauty",
+                  "Gaming",
+                  "Literature",
+                  "Fashion",
+                  "Anime",
+                ].map((hub) => {
+                  const { icon, emoji, description, color } =
+                    getCategoryInfo(hub);
+
+                  return (
+                    <Box
+                      key={hub}
+                      p={6}
+                      borderRadius="xl"
+                      border="1px solid"
+                      opacity={0.7}
+                    >
+                      <VStack spacing={4} align="center" textAlign="center">
+                        <VStack spacing={2}>
+                          <Text fontSize="4xl">{emoji}</Text>
+                          <Icon as={icon} boxSize={6} color={`${color}.400`} />
+                        </VStack>
+                        <VStack spacing={1}>
+                          <Heading size="md" color={`${color}.500`}>
+                            {hub.toUpperCase()}
+                          </Heading>
+                          <Badge
+                            colorScheme={color}
+                            variant="outline"
+                            borderRadius="full"
+                            px={3}
+                            py={1}
+                          >
+                            Coming Soon
+                          </Badge>
+                        </VStack>
+                        <Text fontSize="sm" color="gray.500" noOfLines={2}>
+                          {description}
+                        </Text>
+                      </VStack>
+                    </Box>
+                  );
+                })}
+              </Grid>
             </VStack>
           )}
 

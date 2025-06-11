@@ -1,4 +1,4 @@
-// src/components/home/HeroSection.tsx
+// src/components/home/HeroSection.tsx - Updated version
 import {
   Box,
   Button,
@@ -22,8 +22,13 @@ interface HeroSectionProps {
     totalKDoms: number;
     totalCategories: number;
     activeCollaborators: number;
+    totalUsers?: number;
+    totalPosts?: number;
+    totalComments?: number;
   };
 }
+
+import { formatStatNumber } from "@/utils/numberUtils";
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ platformStats }) => {
   const { isAuthenticated } = useAuth();
@@ -32,6 +37,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ platformStats }) => {
     "linear(to-br, purple.900, pink.900, blue.900)"
   );
   const textColor = useColorModeValue("gray.700", "gray.200");
+
+  // Debug logging
+  console.log("HeroSection platformStats:", platformStats);
 
   return (
     <Box
@@ -173,7 +181,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ platformStats }) => {
                 borderRadius="full"
                 fontSize="sm"
               >
-                {platformStats.totalKDoms.toLocaleString()}+ K-Doms
+                {formatStatNumber(platformStats.totalKDoms)} K-Doms
               </Badge>
             </HStack>
 
@@ -187,7 +195,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ platformStats }) => {
                 borderRadius="full"
                 fontSize="sm"
               >
-                {platformStats.activeCollaborators.toLocaleString()}+
+                {formatStatNumber(platformStats.activeCollaborators)}{" "}
                 Collaborators
               </Badge>
             </HStack>
@@ -206,6 +214,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ platformStats }) => {
               </Badge>
             </HStack>
           </Flex>
+
+          {/* Additional stats if available */}
+          {(platformStats.totalUsers || platformStats.totalPosts) && (
+            <Flex
+              direction={{ base: "column", md: "row" }}
+              gap={4}
+              justify="center"
+              align="center"
+              flexWrap="wrap"
+              fontSize="sm"
+              color="gray.600"
+            >
+              {platformStats.totalUsers && (
+                <Text>
+                  👥 {formatStatNumber(platformStats.totalUsers)} users
+                </Text>
+              )}
+              {platformStats.totalPosts && (
+                <Text>
+                  📝 {formatStatNumber(platformStats.totalPosts)} posts
+                </Text>
+              )}
+              {platformStats.totalComments && (
+                <Text>
+                  💬 {formatStatNumber(platformStats.totalComments)} comments
+                </Text>
+              )}
+            </Flex>
+          )}
 
           {/* Subtitle with cultural emphasis */}
           <Text

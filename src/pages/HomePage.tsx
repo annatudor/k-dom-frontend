@@ -1,4 +1,4 @@
-// src/pages/Home.tsx - NOVA PAGINĂ HOME
+// src/pages/HomePage.tsx - Updated version
 import {
   Box,
   Spinner,
@@ -6,7 +6,10 @@ import {
   Alert,
   AlertIcon,
   VStack,
+  Text,
+  Button,
 } from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom";
 import { useHomepageData } from "@/hooks/useHomePageData";
 import { HeroSection } from "@/components/home/HeroSection";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
@@ -15,7 +18,11 @@ import { FeaturedKDomsSection } from "@/components/home/FeaturedKDomsSection";
 import { CommunityShowcase } from "@/components/home/CommunityShowcase";
 
 export default function Home() {
-  const { data, isLoading, error } = useHomepageData();
+  const { data, isLoading, error, debugInfo } = useHomepageData();
+
+  // Debug logging
+  console.log("HomePage Debug Info:", debugInfo);
+  console.log("HomePage Data:", data);
 
   // Loading state
   if (isLoading) {
@@ -36,36 +43,65 @@ export default function Home() {
     );
   }
 
-  // Error state
-  if (error) {
+  // Error state with more detailed information
+  if (error && !data) {
     return (
       <Center minH="60vh" p={6}>
         <Alert status="error" borderRadius="lg" maxW="md">
           <AlertIcon />
-          <VStack align="start" spacing={2}>
-            <Box fontWeight="bold">Unable to load homepage</Box>
-            <Box fontSize="sm">Please refresh the page or try again later.</Box>
+          <VStack align="start" spacing={3}>
+            <Box fontWeight="bold">Unable to load homepage data</Box>
+            <Box fontSize="sm">
+              The statistics service might be temporarily unavailable.
+            </Box>
+            <Button
+              as={RouterLink}
+              to="/community"
+              size="sm"
+              colorScheme="purple"
+              variant="outline"
+            >
+              Visit Community Instead
+            </Button>
           </VStack>
         </Alert>
       </Center>
     );
   }
 
-  // Ensure we have data before rendering
-  if (!data) {
+  // Ensure we have at least basic data
+  if (!data?.platformStats) {
     return (
       <Center minH="60vh">
         <VStack spacing={4}>
-          <Box fontSize="lg" color="gray.500">
+          <Text fontSize="lg" color="gray.500">
             🎌 Initializing K-Dom...
-          </Box>
+          </Text>
+          <Text fontSize="sm" color="gray.400">
+            Setting up your K-Culture experience
+          </Text>
         </VStack>
       </Center>
     );
   }
 
+  // Partial error state - show what we can with a notice
+  const hasPartialData =
+    data.platformStats &&
+    (!data.categoryStats.length || !data.featuredKDoms.length);
+
   return (
     <Box>
+      {/* Show a subtle notice if we have partial data */}
+      {hasPartialData && (
+        <Box bg="orange.50" p={2} textAlign="center">
+          <Text fontSize="sm" color="orange.700">
+            Some content is still loading. Refresh the page for the full
+            experience.
+          </Text>
+        </Box>
+      )}
+
       {/* Hero Section - Prima impresie cu search și CTA */}
       <HeroSection platformStats={data.platformStats} />
 
@@ -80,6 +116,8 @@ export default function Home() {
 
       {/* Community Showcase - Social proof și CTA final */}
       <CommunityShowcase platformStats={data.platformStats} />
+
+      {/* Debug info for development (remove in production) */}
     </Box>
   );
 }

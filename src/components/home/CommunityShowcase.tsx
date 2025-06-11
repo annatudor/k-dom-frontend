@@ -1,4 +1,4 @@
-// src/components/home/CommunityShowcase.tsx
+// src/components/home/CommunityShowcase.tsx - Updated version
 import {
   Box,
   Container,
@@ -27,6 +27,9 @@ interface CommunityShowcaseProps {
     totalKDoms: number;
     totalCategories: number;
     activeCollaborators: number;
+    totalUsers?: number;
+    totalPosts?: number;
+    totalComments?: number;
   };
 }
 
@@ -81,6 +84,20 @@ export const CommunityShowcase: React.FC<CommunityShowcaseProps> = ({
 }) => {
   const sectionBg = useColorModeValue("white", "gray.800");
   const statsBg = useColorModeValue("purple.50", "purple.900");
+
+  // Debug logging
+  console.log("CommunityShowcase platformStats:", platformStats);
+
+  // Format numbers for better display
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M`;
+    }
+    if (num >= 1000) {
+      return `${Math.floor(num / 100) / 10}K`;
+    }
+    return num.toString();
+  };
 
   const testimonials: TestimonialProps[] = [
     {
@@ -153,7 +170,7 @@ export const CommunityShowcase: React.FC<CommunityShowcaseProps> = ({
             >
               <Stat>
                 <StatNumber fontSize="3xl" color="purple.600">
-                  {platformStats.totalKDoms.toLocaleString()}+
+                  {formatNumber(platformStats.totalKDoms)}+
                 </StatNumber>
                 <StatLabel fontSize="md" color="gray.600">
                   K-Doms Created
@@ -165,7 +182,7 @@ export const CommunityShowcase: React.FC<CommunityShowcaseProps> = ({
 
               <Stat>
                 <StatNumber fontSize="3xl" color="purple.600">
-                  {platformStats.activeCollaborators.toLocaleString()}+
+                  {formatNumber(platformStats.activeCollaborators)}+
                 </StatNumber>
                 <StatLabel fontSize="md" color="gray.600">
                   Active Collaborators
@@ -177,16 +194,67 @@ export const CommunityShowcase: React.FC<CommunityShowcaseProps> = ({
 
               <Stat>
                 <StatNumber fontSize="3xl" color="purple.600">
-                  50+
+                  {platformStats.totalCategories}+
                 </StatNumber>
                 <StatLabel fontSize="md" color="gray.600">
-                  Countries Represented
+                  Categories Available
                 </StatLabel>
                 <StatHelpText color="gray.500">
-                  Global K-Culture community
+                  Different aspects of K-Culture
                 </StatHelpText>
               </Stat>
             </Grid>
+
+            {/* Additional stats row if we have more data */}
+            {(platformStats.totalUsers ||
+              platformStats.totalPosts ||
+              platformStats.totalComments) && (
+              <Grid
+                templateColumns={{
+                  base: "1fr",
+                  md: "repeat(3, 1fr)",
+                }}
+                gap={8}
+                textAlign="center"
+                mt={8}
+                pt={8}
+                borderTop="1px solid"
+                borderTopColor="purple.200"
+              >
+                {platformStats.totalUsers && (
+                  <Stat>
+                    <StatNumber fontSize="2xl" color="purple.500">
+                      {formatNumber(platformStats.totalUsers)}+
+                    </StatNumber>
+                    <StatLabel fontSize="sm" color="gray.600">
+                      Community Members
+                    </StatLabel>
+                  </Stat>
+                )}
+
+                {platformStats.totalPosts && (
+                  <Stat>
+                    <StatNumber fontSize="2xl" color="purple.500">
+                      {formatNumber(platformStats.totalPosts)}+
+                    </StatNumber>
+                    <StatLabel fontSize="sm" color="gray.600">
+                      Posts Shared
+                    </StatLabel>
+                  </Stat>
+                )}
+
+                {platformStats.totalComments && (
+                  <Stat>
+                    <StatNumber fontSize="2xl" color="purple.500">
+                      {formatNumber(platformStats.totalComments)}+
+                    </StatNumber>
+                    <StatLabel fontSize="sm" color="gray.600">
+                      Comments & Discussions
+                    </StatLabel>
+                  </Stat>
+                )}
+              </Grid>
+            )}
           </Box>
 
           {/* Community Features */}

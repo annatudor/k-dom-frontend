@@ -1,4 +1,4 @@
-// src/components/home/FeaturedKDomsSection.tsx
+// src/components/home/FeaturedKDomsSection.tsx - Updated version
 import {
   Box,
   Container,
@@ -15,9 +15,14 @@ import {
   CardBody,
   Flex,
 } from "@chakra-ui/react";
-import { FiTrendingUp, FiUsers, FiClock, FiArrowRight } from "react-icons/fi";
+import {
+  FiTrendingUp,
+  FiUsers,
+  FiClock,
+  FiArrowRight,
+  FiMessageCircle,
+} from "react-icons/fi";
 import { Link as RouterLink } from "react-router-dom";
-import { formatRelativeTime } from "@/utils/commentUtils";
 
 interface FeaturedKDom {
   id: string;
@@ -25,6 +30,9 @@ interface FeaturedKDom {
   slug: string;
   score: number;
   hub: string;
+  followersCount?: number;
+  postsCount?: number;
+  commentsCount?: number;
 }
 
 interface FeaturedKDomsProps {
@@ -36,13 +44,34 @@ interface KDomCardProps {
   rank: number;
 }
 
+// Format relative time helper
+const formatRelativeTime = (date: string): string => {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now.getTime() - past.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "today";
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return `${Math.floor(diffDays / 30)} months ago`;
+};
+
 const KDomCard: React.FC<KDomCardProps> = ({ kdom, rank }) => {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
 
-  // Generate some mock data based on the trending score
+  // Generate some mock data based on the score if not provided
   const mockFollowers =
+    kdom.followersCount ||
     Math.floor(kdom.score / 10) + Math.floor(Math.random() * 20) + 5;
+  const mockPosts =
+    kdom.postsCount ||
+    Math.floor(kdom.score / 5) + Math.floor(Math.random() * 10) + 2;
+  const mockComments =
+    kdom.commentsCount ||
+    Math.floor(kdom.score / 3) + Math.floor(Math.random() * 15) + 3;
   const mockLastUpdate = new Date(
     Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)
   ).toISOString();
@@ -61,6 +90,20 @@ const KDomCard: React.FC<KDomCardProps> = ({ kdom, rank }) => {
     return "⭐";
   };
 
+  const getHubEmoji = (hub: string) => {
+    const hubEmojis: Record<string, string> = {
+      Music: "🎵",
+      Kpop: "⭐",
+      Food: "🍜",
+      Beauty: "💄",
+      Gaming: "🎮",
+      Literature: "📚",
+      Fashion: "👗",
+      Anime: "🎬",
+    };
+    return hubEmojis[hub] || "🎌";
+  };
+
   return (
     <Card
       bg={cardBg}
@@ -75,9 +118,10 @@ const KDomCard: React.FC<KDomCardProps> = ({ kdom, rank }) => {
       cursor="pointer"
       as={RouterLink}
       to={`/kdoms/slug/${kdom.slug}`}
+      h="100%"
     >
       <CardBody p={6}>
-        <VStack spacing={4} align="stretch">
+        <VStack spacing={4} align="stretch" h="100%">
           {/* Rank and Score */}
           <HStack justify="space-between" align="center">
             <HStack spacing={2}>
@@ -100,8 +144,8 @@ const KDomCard: React.FC<KDomCardProps> = ({ kdom, rank }) => {
             </HStack>
           </HStack>
 
-          {/* Title */}
-          <VStack spacing={2} align="stretch">
+          {/* Title and Hub */}
+          <VStack spacing={2} align="stretch" flex="1">
             <Heading size="md" color="purple.600" noOfLines={2}>
               {kdom.title}
             </Heading>
@@ -111,18 +155,44 @@ const KDomCard: React.FC<KDomCardProps> = ({ kdom, rank }) => {
               size="sm"
               alignSelf="flex-start"
             >
-              🎵 {kdom.hub}
+              {getHubEmoji(kdom.hub)} {kdom.hub}
             </Badge>
           </VStack>
 
-          {/* Stats */}
-          <VStack spacing={2} align="stretch">
-            <HStack justify="space-between" fontSize="sm" color="gray.600">
-              <HStack spacing={1}>
-                <Icon as={FiUsers} boxSize={4} />
-                <Text>{mockFollowers} followers</Text>
-              </HStack>
-            </HStack>
+          {/* Enhanced Stats */}
+          <VStack spacing={3} align="stretch">
+            <Grid templateColumns="repeat(3, 1fr)" gap={2} fontSize="xs">
+              <VStack spacing={1}>
+                <HStack spacing={1}>
+                  <Icon as={FiUsers} boxSize={3} color="blue.500" />
+                  <Text fontWeight="bold" color="blue.500">
+                    {mockFollowers}
+                  </Text>
+                </HStack>
+                <Text color="gray.500">followers</Text>
+              </VStack>
+
+              <VStack spacing={1}>
+                <HStack spacing={1}>
+                  <Icon as={FiTrendingUp} boxSize={3} color="green.500" />
+                  <Text fontWeight="bold" color="green.500">
+                    {mockPosts}
+                  </Text>
+                </HStack>
+                <Text color="gray.500">posts</Text>
+              </VStack>
+
+              <VStack spacing={1}>
+                <HStack spacing={1}>
+                  <Icon as={FiMessageCircle} boxSize={3} color="purple.500" />
+                  <Text fontWeight="bold" color="purple.500">
+                    {mockComments}
+                  </Text>
+                </HStack>
+                <Text color="gray.500">comments</Text>
+              </VStack>
+            </Grid>
+
             <HStack spacing={1} fontSize="xs" color="gray.500">
               <Icon as={FiClock} boxSize={3} />
               <Text>Updated {formatRelativeTime(mockLastUpdate)}</Text>
@@ -139,6 +209,7 @@ const KDomCard: React.FC<KDomCardProps> = ({ kdom, rank }) => {
             _hover={{
               bg: "purple.50",
             }}
+            mt="auto"
           >
             Explore K-Dom
           </Button>
@@ -152,6 +223,9 @@ export const FeaturedKDomsSection: React.FC<FeaturedKDomsProps> = ({
   featuredKDoms,
 }) => {
   const sectionBg = useColorModeValue("gray.50", "gray.900");
+
+  // Debug logging
+  console.log("FeaturedKDomsSection featuredKDoms:", featuredKDoms);
 
   return (
     <Box bg={sectionBg} py={20}>
@@ -173,19 +247,32 @@ export const FeaturedKDomsSection: React.FC<FeaturedKDomsProps> = ({
 
           {/* Featured K-Doms Grid */}
           {featuredKDoms.length > 0 ? (
-            <Grid
-              templateColumns={{
-                base: "1fr",
-                md: "repeat(2, 1fr)",
-                lg: "repeat(3, 1fr)",
-              }}
-              gap={6}
-              w="100%"
-            >
-              {featuredKDoms.map((kdom, index) => (
-                <KDomCard key={kdom.id} kdom={kdom} rank={index + 1} />
-              ))}
-            </Grid>
+            <>
+              <Grid
+                templateColumns={{
+                  base: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                }}
+                gap={6}
+                w="100%"
+              >
+                {featuredKDoms.map((kdom, index) => (
+                  <KDomCard key={kdom.id} kdom={kdom} rank={index + 1} />
+                ))}
+              </Grid>
+
+              {/* Summary */}
+              <VStack spacing={2} textAlign="center">
+                <Text fontSize="sm" color="gray.600">
+                  Showing top {featuredKDoms.length} most popular K-Doms
+                </Text>
+                <Text fontSize="xs" color="gray.500">
+                  Rankings based on community engagement, followers, and recent
+                  activity
+                </Text>
+              </VStack>
+            </>
           ) : (
             <VStack spacing={4} py={12}>
               <Text fontSize="lg" color="gray.500">
@@ -194,6 +281,39 @@ export const FeaturedKDomsSection: React.FC<FeaturedKDomsProps> = ({
               <Text fontSize="sm" color="gray.400">
                 Amazing content is being created right now!
               </Text>
+
+              {/* Placeholder cards */}
+              <Grid
+                templateColumns={{
+                  base: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                }}
+                gap={6}
+                w="100%"
+                mt={8}
+              >
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} borderWidth="1px" opacity={0.7}>
+                    <CardBody p={6}>
+                      <VStack spacing={4} align="stretch">
+                        <HStack justify="space-between">
+                          <Badge variant="outline">#{i}</Badge>
+                          <Text fontSize="sm" color="gray.500">
+                            Loading...
+                          </Text>
+                        </HStack>
+                        <Heading size="md" color="gray.500">
+                          Featured K-Dom #{i}
+                        </Heading>
+                        <Text fontSize="sm" color="gray.400">
+                          Exciting K-Culture content coming soon
+                        </Text>
+                      </VStack>
+                    </CardBody>
+                  </Card>
+                ))}
+              </Grid>
             </VStack>
           )}
 
