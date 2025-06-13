@@ -32,7 +32,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { getParentKDom, getChildKDoms, getRelatedKDoms } from "@/api/kdom";
 import { useAuth } from "@/context/AuthContext";
 import { CollaborationButton } from "@/components/collaboration/CollaborationButton";
-import type { KDomPermissions } from "@/hooks/useKDomPermissions";
+import type { ExtendedKDomPermissions } from "@/hooks/useKDomPermissions";
 
 interface KDomSidebarProps {
   kdomId: string;
@@ -41,7 +41,7 @@ interface KDomSidebarProps {
   kdomTitle: string;
   kdomCollaborators?: number[];
   followersCount?: number;
-  permissions: KDomPermissions; // ✅ PRIMIM PERMISIUNILE CA PROP
+  permissions: ExtendedKDomPermissions; // ✅ PRIMIM PERMISIUNILE CA PROP
 }
 
 export function KDomSidebar({

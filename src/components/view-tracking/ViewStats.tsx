@@ -1,4 +1,5 @@
-// src/components/view-tracking/ViewStats.tsx
+// src/components/view-tracking/ViewStats.tsx - ÎNLOCUIEȘTE COMPLET
+import React from "react"; // ADAUGĂ React import
 import {
   VStack,
   HStack,
@@ -11,7 +12,6 @@ import {
   Skeleton,
   Progress,
   useColorModeValue,
-  Tooltip,
   Box,
   Divider,
   Heading,
@@ -20,7 +20,6 @@ import {
   StatLabel,
   StatNumber,
   StatHelpText,
-  StatArrow,
 } from "@chakra-ui/react";
 import {
   FiEye,
@@ -29,15 +28,9 @@ import {
   FiClock,
   FiActivity,
   FiBarChart2,
-  FiTarget,
   FiAlertCircle,
 } from "react-icons/fi";
-import { useQuery } from "@tanstack/react-query";
-import {
-  getViewStats,
-  formatViewCount,
-  getPopularityColor,
-} from "@/api/viewTracking";
+import { useViewTracking } from "@/hooks/useViewTracking"; // NOUL HOOK
 import type { ContentType } from "@/types/ViewTracking";
 
 interface ViewStatsProps {
@@ -48,45 +41,72 @@ interface ViewStatsProps {
   showComparison?: boolean;
 }
 
+// Helper functions (local, nu mai depind de API)
+const formatViewCount = (count: number): string => {
+  if (count < 1000) return count.toString();
+  if (count < 1000000) return `${Math.floor(count / 100) / 10}K`;
+  return `${Math.floor(count / 100000) / 10}M`;
+};
+
+const getPopularityColor = (level: string): string => {
+  switch (level.toLowerCase()) {
+    case "high":
+      return "green";
+    case "medium":
+      return "yellow";
+    case "low":
+      return "gray";
+    default:
+      return "blue";
+  }
+};
+
 export function ViewStats({
   contentType,
   contentId,
   variant = "sidebar",
-  refreshInterval = 300000, // 5 minutes
+  refreshInterval,
 }: ViewStatsProps) {
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const statsBg = useColorModeValue("blue.50", "blue.900");
 
-  const {
-    data: viewStats,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["view-stats", contentType, contentId],
-    queryFn: () => getViewStats(contentType, contentId),
-    enabled: !!contentId,
-    refetchInterval: refreshInterval,
-    staleTime: 60000, // 1 minute
-  });
+  // FOLOSEȘTE NOUL HOOK în loc de useQuery + API
+  const { viewCount, viewStats, isLoadingCount, refreshStats } =
+    useViewTracking({
+      contentType,
+      contentId,
+      options: { enabled: true },
+    });
 
-  if (isLoading) {
+  // Auto-refresh dacă e specificat
+  React.useEffect(() => {
+    if (!refreshInterval) return;
+
+    const interval = setInterval(() => {
+      refreshStats();
+    }, refreshInterval);
+
+    return () => clearInterval(interval);
+  }, [refreshInterval, refreshStats]);
+
+  if (isLoadingCount) {
     return <ViewStatsSkeleton variant={variant} />;
   }
 
-  if (error || !viewStats) {
+  if (!viewStats) {
     return <ViewStatsError variant={variant} />;
   }
 
-  // Calculate percentage for progress bars
+  // Calculate percentages
   const recentViewsPercentage =
-    viewStats.viewCount > 0
-      ? (viewStats.recentViews / viewStats.viewCount) * 100
+    viewStats.totalViews > 0
+      ? (viewStats.recentViews / viewStats.totalViews) * 100
       : 0;
 
   const uniqueViewersPercentage =
-    viewStats.viewCount > 0
-      ? (viewStats.uniqueViewers / viewStats.viewCount) * 100
+    viewStats.totalViews > 0
+      ? (viewStats.uniqueViewers / viewStats.totalViews) * 100
       : 0;
 
   const popularityColor = getPopularityColor(viewStats.popularityLevel);
@@ -96,9 +116,7 @@ export function ViewStats({
       <HStack spacing={4} fontSize="sm">
         <HStack spacing={1}>
           <Icon as={FiEye} boxSize={4} color="blue.500" />
-          <Text fontWeight="medium">
-            {formatViewCount(viewStats.viewCount)}
-          </Text>
+          <Text fontWeight="medium">{formatViewCount(viewCount)}</Text>
         </HStack>
         <HStack spacing={1}>
           <Icon as={FiUsers} boxSize={4} color="purple.500" />
@@ -125,16 +143,8 @@ export function ViewStats({
             <Stat>
               <StatLabel fontSize="xs">Total Views</StatLabel>
               <StatNumber fontSize="lg">
-                {formatViewCount(viewStats.viewCount)}
+                {formatViewCount(viewCount)}
               </StatNumber>
-              {viewStats.growthRate !== 0 && (
-                <StatHelpText fontSize="xs">
-                  <StatArrow
-                    type={viewStats.growthRate > 0 ? "increase" : "decrease"}
-                  />
-                  {Math.abs(viewStats.growthRate).toFixed(1)}%
-                </StatHelpText>
-              )}
             </Stat>
 
             <Stat>
@@ -187,15 +197,9 @@ export function ViewStats({
             {/* Main metrics */}
             <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
               <Box p={4} bg={statsBg} borderRadius="lg" textAlign="center">
-                <Icon
-                  as={FiEye}
-                  boxSize={6}
-                  color="blue.500"
-                  mx="auto"
-                  mb={2}
-                />
+                <Icon as={FiEye} color="blue.500" boxSize={8} mb={2} />
                 <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-                  {formatViewCount(viewStats.viewCount)}
+                  {viewCount}
                 </Text>
                 <Text fontSize="sm" color="gray.600">
                   Total Views
@@ -203,13 +207,7 @@ export function ViewStats({
               </Box>
 
               <Box p={4} bg="green.50" borderRadius="lg" textAlign="center">
-                <Icon
-                  as={FiClock}
-                  boxSize={6}
-                  color="green.500"
-                  mx="auto"
-                  mb={2}
-                />
+                <Icon as={FiClock} color="green.500" boxSize={8} mb={2} />
                 <Text fontSize="2xl" fontWeight="bold" color="green.600">
                   {viewStats.recentViews}
                 </Text>
@@ -219,13 +217,7 @@ export function ViewStats({
               </Box>
 
               <Box p={4} bg="purple.50" borderRadius="lg" textAlign="center">
-                <Icon
-                  as={FiUsers}
-                  boxSize={6}
-                  color="purple.500"
-                  mx="auto"
-                  mb={2}
-                />
+                <Icon as={FiUsers} color="purple.500" boxSize={8} mb={2} />
                 <Text fontSize="2xl" fontWeight="bold" color="purple.600">
                   {viewStats.uniqueViewers}
                 </Text>
@@ -235,13 +227,7 @@ export function ViewStats({
               </Box>
 
               <Box p={4} bg="orange.50" borderRadius="lg" textAlign="center">
-                <Icon
-                  as={FiTarget}
-                  boxSize={6}
-                  color="orange.500"
-                  mx="auto"
-                  mb={2}
-                />
+                <Icon as={FiTrendingUp} color="orange.500" boxSize={8} mb={2} />
                 <Badge
                   colorScheme={popularityColor}
                   fontSize="lg"
@@ -257,74 +243,54 @@ export function ViewStats({
               </Box>
             </SimpleGrid>
 
-            {/* Progress indicators */}
-            <VStack spacing={4} align="stretch">
-              <Box>
-                <HStack justify="space-between" mb={2}>
-                  <Text fontSize="sm" fontWeight="medium">
-                    Recent Activity
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    {recentViewsPercentage.toFixed(1)}% of total
-                  </Text>
-                </HStack>
-                <Progress
-                  value={recentViewsPercentage}
-                  colorScheme="green"
-                  size="md"
-                  borderRadius="full"
-                />
-              </Box>
+            {/* Recent Activity Progress */}
+            <Box>
+              <HStack justify="space-between" mb={2}>
+                <Text fontSize="sm" fontWeight="medium">
+                  Recent Activity
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                  {recentViewsPercentage.toFixed(1)}% of total
+                </Text>
+              </HStack>
+              <Progress
+                value={recentViewsPercentage}
+                colorScheme="green"
+                size="lg"
+                borderRadius="full"
+              />
+            </Box>
 
-              <Box>
-                <HStack justify="space-between" mb={2}>
-                  <Text fontSize="sm" fontWeight="medium">
-                    Unique Engagement
-                  </Text>
-                  <Text fontSize="sm" color="gray.500">
-                    {uniqueViewersPercentage.toFixed(1)}% unique
-                  </Text>
-                </HStack>
-                <Progress
-                  value={uniqueViewersPercentage}
-                  colorScheme="purple"
-                  size="md"
-                  borderRadius="full"
-                />
-              </Box>
-            </VStack>
+            {/* Unique Engagement */}
+            <Box>
+              <HStack justify="space-between" mb={2}>
+                <Text fontSize="sm" fontWeight="medium">
+                  Unique Engagement
+                </Text>
+                <Text fontSize="sm" color="gray.500">
+                  {uniqueViewersPercentage.toFixed(1)}% unique
+                </Text>
+              </HStack>
+              <Progress
+                value={uniqueViewersPercentage}
+                colorScheme="purple"
+                size="lg"
+                borderRadius="full"
+              />
+            </Box>
 
-            {/* Growth indicator */}
-            {viewStats.growthRate !== 0 && (
-              <Box p={4} bg="gray.50" borderRadius="lg">
-                <HStack spacing={3}>
-                  <Icon
-                    as={FiTrendingUp}
-                    boxSize={5}
-                    color={viewStats.growthRate > 0 ? "green.500" : "red.500"}
-                  />
-                  <VStack align="start" spacing={0}>
-                    <Text fontSize="sm" fontWeight="medium">
-                      Growth Rate
-                    </Text>
-                    <Text
-                      fontSize="lg"
-                      fontWeight="bold"
-                      color={viewStats.growthRate > 0 ? "green.600" : "red.600"}
-                    >
-                      {viewStats.growthRate > 0 ? "+" : ""}
-                      {viewStats.growthRate.toFixed(1)}%
-                    </Text>
-                  </VStack>
-                </HStack>
-              </Box>
-            )}
-
-            {/* Last viewed */}
+            {/* Last viewed info */}
             {viewStats.lastViewed && (
-              <Text fontSize="xs" color="gray.500" textAlign="center">
-                Last viewed: {new Date(viewStats.lastViewed).toLocaleString()}
-              </Text>
+              <Box
+                textAlign="center"
+                pt={4}
+                borderTop="1px"
+                borderColor={borderColor}
+              >
+                <Text fontSize="sm" color="gray.500">
+                  Last viewed: {new Date(viewStats.lastViewed).toLocaleString()}
+                </Text>
+              </Box>
             )}
           </VStack>
         </CardBody>
@@ -332,132 +298,54 @@ export function ViewStats({
     );
   }
 
-  // Sidebar variant (default)
+  // Default sidebar variant
   return (
-    <Card bg={cardBg} borderColor={borderColor} borderWidth="1px">
-      <CardHeader pb={3}>
-        <HStack spacing={3}>
-          <Icon as={FiEye} color="blue.500" boxSize={5} />
-          <Heading size="md">View Stats</Heading>
+    <Card bg={cardBg} borderColor={borderColor} borderWidth="1px" size="sm">
+      <CardHeader pb={2}>
+        <HStack spacing={2}>
+          <Icon as={FiEye} color="blue.500" boxSize={4} />
+          <Text fontSize="md" fontWeight="semibold">
+            View Stats
+          </Text>
         </HStack>
       </CardHeader>
-      <CardBody pt={3}>
-        <VStack spacing={4} align="stretch">
-          {/* Total Views */}
-          <Box>
-            <HStack justify="space-between" mb={2}>
-              <Text fontSize="sm" color="gray.600">
-                Total Views
-              </Text>
-              <Text fontSize="lg" fontWeight="bold" color="blue.600">
-                {formatViewCount(viewStats.viewCount)}
-              </Text>
-            </HStack>
-
-            {viewStats.growthRate !== 0 && (
-              <HStack spacing={1} fontSize="xs" color="gray.500">
-                <Icon
-                  as={FiTrendingUp}
-                  boxSize={3}
-                  color={viewStats.growthRate > 0 ? "green.500" : "red.500"}
-                />
-                <Text
-                  color={viewStats.growthRate > 0 ? "green.600" : "red.600"}
-                >
-                  {viewStats.growthRate > 0 ? "+" : ""}
-                  {viewStats.growthRate.toFixed(1)}%
-                </Text>
-                <Text>vs previous period</Text>
-              </HStack>
-            )}
-          </Box>
-
-          <Divider />
-
-          {/* Recent Activity */}
-          <VStack spacing={3} align="stretch">
-            <HStack justify="space-between">
-              <HStack spacing={2}>
-                <Icon as={FiClock} boxSize={4} color="green.500" />
-                <Text fontSize="sm">Recent (24h)</Text>
-              </HStack>
-              <Text fontSize="md" fontWeight="semibold" color="green.600">
-                {viewStats.recentViews}
-              </Text>
-            </HStack>
-
-            <Box>
-              <Progress
-                value={recentViewsPercentage}
-                colorScheme="green"
-                size="sm"
-                borderRadius="full"
-              />
-              <Text fontSize="xs" color="gray.500" mt={1}>
-                {recentViewsPercentage.toFixed(1)}% of total views
-              </Text>
-            </Box>
-          </VStack>
-
-          <Divider />
-
-          {/* Unique Viewers */}
-          <VStack spacing={3} align="stretch">
-            <HStack justify="space-between">
-              <HStack spacing={2}>
-                <Icon as={FiUsers} boxSize={4} color="purple.500" />
-                <Text fontSize="sm">Unique Viewers</Text>
-              </HStack>
-              <Text fontSize="md" fontWeight="semibold" color="purple.600">
-                {viewStats.uniqueViewers}
-              </Text>
-            </HStack>
-
-            <Box>
-              <Progress
-                value={uniqueViewersPercentage}
-                colorScheme="purple"
-                size="sm"
-                borderRadius="full"
-              />
-              <Text fontSize="xs" color="gray.500" mt={1}>
-                {uniqueViewersPercentage.toFixed(1)}% unique engagement
-              </Text>
-            </Box>
-          </VStack>
-
-          <Divider />
-
-          {/* Popularity Level */}
-          <HStack justify="space-between" align="center">
-            <HStack spacing={2}>
-              <Icon as={FiTarget} boxSize={4} color="orange.500" />
-              <Text fontSize="sm">Popularity</Text>
-            </HStack>
-            <Tooltip
-              label={`This content is performing at ${viewStats.popularityLevel.toLowerCase()} level`}
-            >
-              <Badge
-                colorScheme={popularityColor}
-                px={3}
-                py={1}
-                borderRadius="full"
-                cursor="help"
-              >
-                {viewStats.popularityLevel}
-              </Badge>
-            </Tooltip>
+      <CardBody pt={2}>
+        <VStack spacing={3} align="stretch">
+          <HStack justify="space-between">
+            <Text fontSize="sm" color="gray.600">
+              Total Views
+            </Text>
+            <Text fontSize="lg" fontWeight="bold" color="blue.600">
+              {viewCount}
+            </Text>
           </HStack>
 
-          {/* Last Viewed */}
-          {viewStats.lastViewed && (
-            <>
-              <Divider />
-              <Text fontSize="xs" color="gray.500" textAlign="center">
-                Last viewed: {new Date(viewStats.lastViewed).toLocaleString()}
-              </Text>
-            </>
-          )}
+          <HStack justify="space-between">
+            <Text fontSize="sm" color="gray.600">
+              Recent (24h)
+            </Text>
+            <Text fontSize="md" fontWeight="semibold" color="green.600">
+              {viewStats.recentViews}
+            </Text>
+          </HStack>
+
+          <HStack justify="space-between">
+            <Text fontSize="sm" color="gray.600">
+              Unique Viewers
+            </Text>
+            <Text fontSize="md" fontWeight="semibold" color="purple.600">
+              {viewStats.uniqueViewers}
+            </Text>
+          </HStack>
+
+          <HStack justify="space-between">
+            <Text fontSize="sm" color="gray.600">
+              Popularity
+            </Text>
+            <Badge colorScheme={popularityColor} px={2} py={1}>
+              {viewStats.popularityLevel}
+            </Badge>
+          </HStack>
         </VStack>
       </CardBody>
     </Card>
@@ -497,7 +385,7 @@ function ViewStatsSkeleton({ variant }: { variant: string }) {
     );
   }
 
-  // Default skeleton for sidebar/detailed variants
+  // Default skeleton
   return (
     <Card>
       <CardHeader>
@@ -505,14 +393,11 @@ function ViewStatsSkeleton({ variant }: { variant: string }) {
       </CardHeader>
       <CardBody>
         <VStack spacing={4} align="stretch">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Box key={i}>
-              <HStack justify="space-between" mb={2}>
-                <Skeleton height="16px" width="80px" />
-                <Skeleton height="20px" width="40px" />
-              </HStack>
-              {i < 3 && <Skeleton height="8px" width="100%" />}
-            </Box>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <HStack key={i} justify="space-between">
+              <Skeleton height="16px" width="80px" />
+              <Skeleton height="20px" width="40px" />
+            </HStack>
           ))}
         </VStack>
       </CardBody>
@@ -551,7 +436,7 @@ function ViewStatsError({ variant }: { variant: string }) {
   );
 }
 
-// Quick stats for dashboards
+// Export helper components (compatibility)
 export function QuickViewStats({
   contentType,
   contentId,
@@ -564,33 +449,28 @@ export function QuickViewStats({
       contentType={contentType}
       contentId={contentId}
       variant="minimal"
-      refreshInterval={0} // No auto-refresh for quick stats
+      refreshInterval={0}
     />
   );
 }
 
-// Detailed analytics for content pages
 export function DetailedViewStats({
   contentType,
   contentId,
-  showComparison = true,
 }: {
   contentType: ContentType;
   contentId: string;
-  showComparison?: boolean;
 }) {
   return (
     <ViewStats
       contentType={contentType}
       contentId={contentId}
       variant="detailed"
-      showComparison={showComparison}
-      refreshInterval={300000} // 5 minutes
+      refreshInterval={30000} // 30 seconds pentru real-time feel
     />
   );
 }
 
-// Sidebar stats for content editing
 export function SidebarViewStats({
   contentType,
   contentId,
@@ -603,7 +483,7 @@ export function SidebarViewStats({
       contentType={contentType}
       contentId={contentId}
       variant="sidebar"
-      refreshInterval={600000} // 10 minutes
+      refreshInterval={60000} // 1 minute
     />
   );
 }

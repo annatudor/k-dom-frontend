@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // src/pages/KDomPage.tsx - Actualizat cu useKDomPermissions
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -411,10 +412,11 @@ export default function KDomPage() {
                       />
                       <MenuList>
                         {/* ✅ FOLOSIM permissions.canEditMetadata */}
-                        {permissions.canEditMetadata && (
+                        {(permissions.canEditMetadata ||
+                          permissions.role === "owner") && (
                           <MenuItem
                             as={RouterLink}
-                            to={`/kdom/${kdom.slug}/settings`}
+                            to={`/kdoms/${kdom.slug}/metadata`}
                             icon={<FiSettings />}
                           >
                             K-Dom Settings

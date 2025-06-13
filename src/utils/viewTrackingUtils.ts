@@ -1,7 +1,9 @@
-// src/utils/viewTrackingUtils.ts
+// src/utils/viewTrackingUtils.ts - ÎNLOCUIEȘTE FIȘIERUL EXISTENT
 import React, { useCallback } from "react";
-import { useViewTrackingContext } from "@/components/view-tracking/ViewTrackingProvider";
-import type { ContentType } from "@/types/ViewTracking";
+import { trackView } from "@/lib/posthog";
+
+// Tipuri simple pentru compatibility
+type ContentType = "Post" | "KDom";
 
 // Higher-order component for automatic view tracking
 export function withViewTracking<P extends object>(
@@ -10,14 +12,14 @@ export function withViewTracking<P extends object>(
   getContentId: (props: P) => string
 ): React.ComponentType<P> {
   const WithViewTrackingComponent = (props: P) => {
-    const { trackView: trackViewContext } = useViewTrackingContext();
     const contentId = getContentId(props);
 
+    // Track on mount
     React.useEffect(() => {
       if (contentId) {
-        trackViewContext(contentType, contentId);
+        trackView(contentType, contentId);
       }
-    }, [contentId, trackViewContext]);
+    }, [contentId]);
 
     return React.createElement(WrappedComponent, props);
   };
@@ -29,41 +31,40 @@ export function withViewTracking<P extends object>(
   return WithViewTrackingComponent;
 }
 
-// Hook for manual view tracking
+// Hook simplu pentru manual tracking
 export function useManualViewTracking() {
-  const { trackView, batchTrackViews, isEnabled, debugMode } =
-    useViewTrackingContext();
-
   const trackNow = useCallback(
     (contentType: ContentType, contentId: string) => {
-      return trackView(contentType, contentId);
+      trackView(contentType, contentId);
+      return Promise.resolve({ success: true });
     },
-    [trackView]
+    []
   );
 
   const trackMultiple = useCallback(
     (items: Array<{ contentType: ContentType; contentId: string }>) => {
-      return batchTrackViews(items);
+      items.forEach((item) => {
+        trackView(item.contentType, item.contentId);
+      });
+      return Promise.resolve();
     },
-    [batchTrackViews]
+    []
   );
 
   return {
     trackNow,
     trackMultiple,
-    isEnabled,
-    debugMode,
+    isEnabled: true,
+    debugMode: false,
   };
 }
 
-// Hook for automatic view tracking on component mount
+// Hook pentru auto tracking
 export function useAutoViewTracking(
   contentType: ContentType,
   contentId: string,
   delay: number = 2000
 ) {
-  const { trackView } = useViewTrackingContext();
-
   React.useEffect(() => {
     if (!contentId) return;
 
@@ -72,5 +73,5 @@ export function useAutoViewTracking(
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [contentType, contentId, delay, trackView]);
+  }, [contentType, contentId, delay]);
 }
