@@ -8,13 +8,15 @@ import {
   VStack,
   Text,
   useToast,
+  Divider,
+  HStack,
 } from "@chakra-ui/react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link as RouterLink } from "react-router-dom";
 import { useState } from "react";
 import { login as apiLogin } from "@/api/user";
 import { getAxiosErrorMessage } from "@/utils/getAxiosErrorMessage";
 import { useAuth } from "@/context/AuthContext";
-import { Link as RouterLink } from "react-router-dom";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 export default function Login() {
   const [identifier, setIdentifier] = useState("");
@@ -32,8 +34,12 @@ export default function Login() {
     setLoading(true);
     try {
       const { token } = await apiLogin({ identifier, password });
-      login({ token }); // folosim contextul
-      toast({ title: "Login successful", status: "success", duration: 2000 });
+      login({ token });
+      toast({
+        title: "Login successful",
+        status: "success",
+        duration: 2000,
+      });
       navigate(from, { replace: true });
     } catch (err) {
       toast({
@@ -47,48 +53,90 @@ export default function Login() {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && identifier && password && !loading) {
+      handleLogin();
+    }
+  };
+
   return (
     <Box>
-      <Heading size="lg" mb={6}>
+      <Heading size="lg" mb={6} textAlign="center">
         Sign In
       </Heading>
-      <VStack spacing={4} align="stretch">
-        <FormControl isRequired>
-          <FormLabel>Email or Username</FormLabel>
-          <Input
-            type="text"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-          />
-        </FormControl>
-        <FormControl isRequired>
-          <FormLabel>Password</FormLabel>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </FormControl>
-        <RouterLink to="/forgot-password">
-          <Text
-            fontSize="sm"
-            color="blue.500"
-            cursor="pointer"
-            onClick={() => navigate("/forgot-password")}
-          >
-            Forgot your password?
+
+      <VStack spacing={6} align="stretch">
+        {/* Google OAuth Button */}
+        <GoogleAuthButton variant="signin" size="lg" />
+
+        {/* Separator */}
+        <HStack>
+          <Divider />
+          <Text fontSize="sm" color="gray.500" px={3} whiteSpace="nowrap">
+            or continue with email
           </Text>
-        </RouterLink>
-        <Button
-          colorScheme="blue"
-          onClick={handleLogin}
-          isLoading={loading}
-          isDisabled={!identifier || !password}
-        >
-          Sign In
-        </Button>
-        <Text fontSize="sm" color="gray.500">
-          Don’t have an account? <a href="/register">Sign up</a>
+          <Divider />
+        </HStack>
+
+        {/* Traditional Login Form */}
+        <VStack spacing={4} align="stretch">
+          <FormControl isRequired>
+            <FormLabel>Email or Username</FormLabel>
+            <Input
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter your email or username"
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Password</FormLabel>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter your password"
+            />
+          </FormControl>
+
+          <Box textAlign="right">
+            <Text
+              as={RouterLink}
+              to="/forgot-password"
+              fontSize="sm"
+              color="blue.500"
+              _hover={{ textDecoration: "underline" }}
+            >
+              Forgot your password?
+            </Text>
+          </Box>
+
+          <Button
+            colorScheme="blue"
+            onClick={handleLogin}
+            isLoading={loading}
+            isDisabled={!identifier || !password}
+            size="lg"
+            mt={2}
+          >
+            Sign In
+          </Button>
+        </VStack>
+
+        <Text fontSize="sm" color="gray.500" textAlign="center">
+          Don't have an account?{" "}
+          <Text
+            as={RouterLink}
+            to="/register"
+            color="blue.500"
+            fontWeight="medium"
+            _hover={{ textDecoration: "underline" }}
+          >
+            Sign up
+          </Text>
         </Text>
       </VStack>
     </Box>

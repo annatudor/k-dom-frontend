@@ -10,6 +10,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import GoogleCallback from "@/pages/GoogleCallback";
 import StartKDom from "@/pages/StartKDom";
 import CreatePostPage from "@/pages/CreatePostPage";
 import PostDetailPage from "@/pages/PostDetailPage";
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
       { path: "/register", element: <Register /> },
       { path: "/forgot-password", element: <ForgotPassword /> },
       { path: "/reset-password", element: <ResetPassword /> },
+      { path: "/auth/google/callback", element: <GoogleCallback /> },
     ],
   },
   {
