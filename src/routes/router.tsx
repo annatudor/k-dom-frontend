@@ -15,6 +15,7 @@ import CreatePostPage from "@/pages/CreatePostPage";
 import PostDetailPage from "@/pages/PostDetailPage";
 import CommunityPage from "@/pages/CommunityPage";
 import CollaborationPage from "@/pages/CollaborationPage";
+import ExplorePage from "@/pages/ExplorePage";
 
 // Componente K-DOM (componente existente, fără logica de protecție)
 import KDomPageContent from "@/pages/KDomPage";
@@ -184,6 +185,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/logs",
         element: <AuditLogPage />, // Profilul altui user
+      },
+      {
+        path: "/explore",
+        element: <ExplorePage />, // Profilul altui user
       },
     ],
   },
